@@ -1,4 +1,4 @@
-# A Microsoft Fabric SDK for Python
+# A Python SDK for Microsoft Fabric
 
 This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs of Fabric*.
 
@@ -9,11 +9,11 @@ They are designed to automate your Fabric processes.
 
 This SDK helps to interact with the Fabric APIs in a more Pythonic way.
 Additionally it brings some extra features like:
-- Authentication is handled for you (currently Azure CLI Authentification and Service Principal Authentification are supported)
+- Authentication is handled for you (currently Azure CLI Authentication  and Service Principal Authentication are supported)
 - Waiting for completion of long running operations
 - Retry logic when hitting the API rate limits
 - Referencing objects by name instead of ID
-- More granular objects, e.g. a Workpace and Item object instead of referencing IDs all the time
+- More granular objects, e.g. a Workspace and Item object instead of referencing IDs all the time
 - Do bulk operations**
 - Pagination support**
 
