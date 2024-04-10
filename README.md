@@ -1,6 +1,6 @@
 # A Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs of Fabric*.
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*.
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
@@ -14,10 +14,12 @@ Additionally it brings some extra features like:
 - Retry logic when hitting the API rate limits
 - Referencing objects by name instead of ID
 - More granular objects, e.g. a Workspace and Item object instead of referencing IDs all the time
-- Do bulk operations**
-- Pagination support**
+- Do bulk operations (see [Usage Patterns](usage_patterns.md))
+- Pagination support
 
-Currently it supports all Core APIs, i.e.:
+See the latest release notes [here](releasenotes/release_notes.md).
+
+Currently it supports all Core APIs and Lakehouse APIs, i.e.:
 - [Capacities](#working-with-capacities)
 - [Git](#working-with-git)
 - [Items](#working-with-items)
@@ -25,13 +27,13 @@ Currently it supports all Core APIs, i.e.:
 - Long Running Operations
 - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
 - [Workspaces](#working-with-workspaces)
+- [Lakehouse APIs](#lakehouse-apis)
 
-It is planned to support also the Admin and Lakehouse APIs and new APIs which are not released yet.
+It is planned to support also the Admin APIs and new APIs which are not released yet.
 Eventually Power BI APIs like the Scanner API will be covered as well.
 
 *Because this SDK uses the API in the background, all limitations and restrictions of the API apply to this SDK as well. This includes rate limits, permissions, etc.
 
-**These features are not yet implemented but are planned for the near future.
 
 
 
@@ -145,11 +147,16 @@ ws.delete_role_assignment(principal_id = "abadfbafb")
 
 ```python
 
+
+capacity_object = fc.get_capacity(capacity_id = "0129389012u8938491") 
+#or 
+capacity_object = fc.get_capacity(capacity_name = "sandboxcapacitygermanywc") 
+
 # Assign a capaycity to a workspace
 fc.assign_to_capacity(workspace_id=workspace_id,
-                      capacity_id="capacityid123123")
+                      capacity_id=capacity_object.id)
 # or
-ws.assign_to_capacity(capacity_id="capacityid123123")      
+ws.assign_to_capacity(capacity_id=capacity_object.id)      
 
 # Unassign from capacity
 fc.unassign_from_capacity(workspace_id=ws.id)
@@ -344,7 +351,34 @@ item.cancel_item_job_instance(job_instance_id="job_instance_id")
 
 ```
 
+## Lakehouse APIs
 
+# List tables in a Lakehouse
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+ws = fc.get_workspace_by_name("testworkspace")
+lakehouse = ws.get_item_by_name(item_name="lakehouse1", item_type="Lakehouse")
+table_list = lakehouse.list_tables()
+# or
+table_list = ws.list_tables(item_id = "someitemid")
+# or
+table_list = fc.list_tables(workspace_id = "someworkspaceid", item_id = "someitemid")
+
+
+# Load a file (like a csv) into a Lakehouse table
+
+lakehouse.load_table(table_name="testtable", path_type= "File", relative_path="Files/folder1/titanic.csv")
+# or
+ws.load_table(item_id = "someitemid", table_name="testtable",
+              path_type= "File", relative_path="Files/folder1/titanic.csv")
+# or
+fc.load_table(workspace_id = "someworkspaceid", item_id = "someitemid", table_name="testtable",
+              path_type= "File", relative_path="Files/folder1/titanic.csv")
+
+```
 
 Note: This SDK is not an official SDK from Microsoft. It is a community project and not supported by Microsoft. Use it at your own risk.
 Also the API is still in preview and might change. This SDK is not yet feature complete and might not cover all APIs yet. Feel free to contribute to this project to make it better.

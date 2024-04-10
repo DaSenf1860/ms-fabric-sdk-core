@@ -6,6 +6,7 @@ from msfabricpysdkcore.onelakeshortcut import OneLakeShortcut
 from msfabricpysdkcore.job_instance import JobInstance
 from msfabricpysdkcore.long_running_operation import check_long_running_operation
 
+
 class Item:
     """Class to represent a item in Microsoft Fabric"""
 
@@ -36,6 +37,12 @@ class Item:
     
     def from_dict(item_dict, auth):
         """Create Item object from dictionary"""
+        
+        if item_dict['type'] == "Lakehouse":
+            from msfabricpysdkcore.lakehouse import Lakehouse
+            return Lakehouse(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+                    properties=item_dict.get('properties', None),
+                    definition=item_dict.get('definition', None), description=item_dict.get('description', ""), auth=auth)
         return Item(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
                     properties=item_dict.get('properties', None),
                     definition=item_dict.get('definition', None), description=item_dict.get('description', ""), auth=auth)
@@ -52,6 +59,7 @@ class Item:
             if response.status_code not in (200, 429):
                 print(response.status_code)
                 print(response.text)
+                print(self)
                 raise Exception(f"Error deleting item: {response.text}")
             break
 
@@ -244,3 +252,10 @@ class Item:
         """Cancel a job instance ofjob the item"""
         return self.get_item_job_instance(job_instance_id=job_instance_id).cancel()
         
+    def list_tables(self):
+        raise NotImplementedError("List tables only works on Lakehouse Items")
+    
+    def load_table(self, table_name, path_type, relative_path,
+                    file_extension = None, format_options = None,
+                    mode = None, recursive = None, wait_for_completion = True):
+        raise NotImplementedError("Load table only works on Lakehouse Items")

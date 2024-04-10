@@ -240,14 +240,29 @@ class Workspace:
                 print(response.text)
                 raise Exception(f"Error creating item: {response.text}")
             break
-        
+
         item_dict = json.loads(response.text)
+        if item_dict is None:
+            print("Item not returned by API, trying to get it by name")
+            return self.get_item_by_name(display_name, type)        
         return Item.from_dict(item_dict, auth=self.auth)
         
 
-    def get_item(self, item_id):
+    def get_item_by_name(self, item_name, item_type):
+        """Get an item from a workspace by name"""
+        ws_items = self.list_items()
+        for item in ws_items:
+            if item.display_name == item_name and item.type == item_type:
+                return item    
+
+    def get_item(self, item_id = None, item_name = None, item_type = None):
         # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}
         """Get an item from a workspace"""
+        if item_id is None and item_name is not None and item_type is not None:
+            return self.get_item_by_name(item_name, item_type)
+        elif item_id is None:
+            raise Exception("item_id or the combination item_name + item_type is required")
+        
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/items/{item_id}"
 
         for _ in range(10):
@@ -259,7 +274,7 @@ class Workspace:
             if response.status_code not in (200, 429):
                 print(response.status_code)
                 print(response.text)
-                raise Exception(f"Error getting item capacity: {response.text}")
+                raise Exception(f"Error getting item: {response.text}")
             break
         
         item_dict = json.loads(response.text)
@@ -268,10 +283,14 @@ class Workspace:
     def delete_item(self, item_id):
         """Delete an item from a workspace"""
         return self.get_item(item_id).delete()
+  
 
-    def list_items(self):
+    def list_items(self, continuationToken = None):
         """List items in a workspace"""
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/items"
+
+        if continuationToken:
+            url = f"{url}?continuationToken={continuationToken}"
 
         for _ in range(10):
             response = requests.get(url=url, headers=self.auth.get_headers())
@@ -284,8 +303,16 @@ class Workspace:
                 print(response.text)
                 raise Exception(f"Error listing items: {response.text}")
             break
-        items = json.loads(response.text)["value"]
-        return [Item.from_dict(item, auth=self.auth) for item in items]
+        
+        resp_dict = json.loads(response.text)
+        items = resp_dict["value"]
+        items = [Item.from_dict(item, auth=self.auth) for item in items]
+
+        if "continuationToken" in resp_dict:
+            item_list_next = self.list_items(continuationToken=resp_dict["continuationToken"])
+            items.extend(item_list_next)
+
+        return items
     
     def get_item_definition(self, item_id):
         """Get the definition of an item from a workspace"""
@@ -479,3 +506,13 @@ class Workspace:
             break
 
         return response.status_code
+    
+    def list_tables(self, item_id):
+        return self.get_item(item_id=item_id).list_tables()
+    
+    def load_table(self, item_id, table_name, path_type, relative_path,
+                    file_extension = None, format_options = None,
+                    mode = None, recursive = None, wait_for_completion = True):
+        return self.get_item(item_id).load_table(table_name, path_type, relative_path,
+                    file_extension, format_options,
+                    mode, recursive, wait_for_completion)

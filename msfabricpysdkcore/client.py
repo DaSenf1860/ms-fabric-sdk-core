@@ -3,6 +3,7 @@ import json
 import os
 from time import sleep
 
+from msfabricpysdkcore.capacity import Capacity
 from msfabricpysdkcore.workspace import Workspace
 from msfabricpysdkcore.auth import FabricAuthClient, FabricServicePrincipal
 
@@ -25,10 +26,12 @@ class FabricClientCore():
         self.scope = "https://api.fabric.microsoft.com/.default"
 
 
-    def list_workspaces(self):
+    def list_workspaces(self, continuationToken = None):
         """List all workspaces in the tenant"""
 
         url = "https://api.fabric.microsoft.com/v1/workspaces"
+        if continuationToken:
+            url = f"{url}?continuationToken={continuationToken}"
 
         for _ in range(10):
             response = requests.get(url=url, headers=self.auth.get_headers())
@@ -39,13 +42,16 @@ class FabricClientCore():
             if response.status_code not in (200, 429):
                 print(response.status_code)
                 print(response.text)
-            items = json.loads(response.text)["value"]
+                raise Exception(f"Error listing workspaces: {response.status_code},  {response.text}")
             break
+        resp_dict = json.loads(response.text)
+        ws_list = resp_dict["value"]
+        ws_list = [Workspace.from_dict(ws, auth=self.auth) for ws in ws_list]
+      
+        if "continuationToken" in resp_dict:
+            ws_list_next = self.list_workspaces(continuationToken=resp_dict["continuationToken"])
+            ws_list.extend(ws_list_next)
 
-        ws_list = []
-        for i in items:
-            ws = Workspace.from_dict(i, auth=self.auth)
-            ws_list.append(ws)
         return ws_list
     
     def get_workspace_by_name(self, name):
@@ -69,12 +75,12 @@ class FabricClientCore():
             if response.status_code not in (200, 429):
                 print(response.status_code)
                 print(response.text)
-            ws_dict = json.loads(response.text)
-            if "id" not in ws_dict:
                 raise Exception(f"Error getting workspace: {response.status_code} {response.text}")
-            ws = Workspace.from_dict(json.loads(response.text), auth=self.auth)
+            break
+        ws_dict = json.loads(response.text)
+        ws = Workspace.from_dict(ws_dict, auth=self.auth)
 
-            return ws
+        return ws
 
     
     def get_workspace(self, id = None, name = None):
@@ -158,9 +164,12 @@ class FabricClientCore():
         ws = self.get_workspace_by_id(workspace_id)
         return ws.unassign_from_capacity()
  
-    def list_capacities(self):
+    def list_capacities(self, continuationToken = None):
         """List all capacities in the tenant"""
         url = "https://api.fabric.microsoft.com/v1/capacities"
+
+        if continuationToken:
+            url = f"{url}?continuationToken={continuationToken}"
 
         for _ in range(10):
             response = requests.get(url=url, headers=self.auth.get_headers())
@@ -174,9 +183,17 @@ class FabricClientCore():
                 raise Exception(f"Error listing capacities: {response.text}")
             break
 
-        items = json.loads(response.text)["value"]
+        resp_dict = json.loads(response.text)
+        items = resp_dict["value"]
 
+        if "continuationToken" in resp_dict:
+            cap_list_next = self.list_capacities(continuationToken=resp_dict["continuationToken"])
+            items.extend(cap_list_next)
+
+        items = json.loads(response.text)["value"]
+        items = [Capacity.from_dict(i) for i in items]
         return items
+
     
     def create_item(self, workspace_id, display_name, type, definition = None, description = None):
         """Create an item in a workspace"""
@@ -187,10 +204,11 @@ class FabricClientCore():
                               definition = definition,
                               description = description)
 
-    def get_item(self, workspace_id, item_id):
+    def get_item(self, workspace_id = None, 
+                  item_id = None, workspace_name = None, item_name = None, item_type = None):
         """Get an item from a workspace"""
-        ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_item(item_id)
+        ws = self.get_workspace(id = workspace_id, name = workspace_name)
+        return ws.get_item(item_id = item_id, item_name = item_name, item_type = item_type)
 
     def delete_item(self, workspace_id, item_id):
         """Delete an item from a workspace"""
@@ -281,3 +299,38 @@ class FabricClientCore():
                                   conflict_resolution=conflict_resolution, 
                                   options=options, 
                                   workspace_head=workspace_head)
+    
+    def get_capacity(self, capacity_id = None, capacity_name = None):
+        """Get a capacity
+        
+        Args:
+            capacity_id (str): The ID of the capacity
+            capacity_name (str): The name of the capacity
+            
+        Returns:
+            Capacity: The capacity object
+            
+        Raises:
+            ValueError: If no capacity is found
+        """
+        if capacity_id is None and capacity_name is None:
+            raise ValueError("Either capacity_id or capacity_name must be provided")
+        caps = self.list_capacities()
+        for cap in caps:
+            if capacity_id and cap.id == capacity_id:
+                return cap
+            if capacity_name and cap.display_name == capacity_name:
+                return cap
+        raise ValueError("No capacity found") 
+    
+    def list_tables(self, workspace_id, item_id):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.list_tables(item_id=item_id)
+    
+    def load_table(self, workspace_id, item_id, table_name, path_type, relative_path,
+                    file_extension = None, format_options = None,
+                    mode = None, recursive = None, wait_for_completion = True):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.load_table(item_id, table_name, path_type, relative_path,
+                    file_extension, format_options,
+                    mode, recursive, wait_for_completion)
