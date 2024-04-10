@@ -351,11 +351,13 @@ item.cancel_item_job_instance(job_instance_id="job_instance_id")
 
 ```
 
-## Lakehouse APIs
+### Lakehouse APIs
 
-# List tables in a Lakehouse
+
 
 ```python
+# List tables in a Lakehouse
+
 from msfabricpysdkcore import FabricClientCore
 
 fc = FabricClientCore()
