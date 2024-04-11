@@ -2,7 +2,10 @@ import json
 import requests
 from time import sleep
 from msfabricpysdkcore.item import Item
+from msfabricpysdkcore.lakehouse import Lakehouse
 from msfabricpysdkcore.long_running_operation import check_long_running_operation
+from msfabricpysdkcore.otheritems import SparkJobDefinition
+from msfabricpysdkcore.otheritems import Warehouse
 
 class Workspace:
     """Class to represent a workspace in Microsoft Fabric"""
@@ -247,26 +250,29 @@ class Workspace:
         item_dict = json.loads(response.text)
         if item_dict is None:
             print("Item not returned by API, trying to get it by name")
-            return self.get_item_by_name(display_name, type)        
-        return Item.from_dict(item_dict, auth=self.auth)
+            return self.get_item_by_name(display_name, type)    
+
+        if item_dict["type"] == "Lakehouse":
+            return self.get_lakehouse(item_dict["id"])
+        if item_dict["type"] == "Warehouse":
+            return self.get_warehouse(item_dict["id"])
+        if item_dict["type"] == "SparkJobDefinition":
+            return self.get_spark_job_definition(item_dict["id"])
         
+        item_obj = Item.from_dict(item_dict, auth=self.auth)
+        if item_obj.type in ["Notebook", "Report", "SemanticModel"]:
+            item_obj.get_definition()
+        return item_obj
 
     def get_item_by_name(self, item_name, item_type):
         """Get an item from a workspace by name"""
-        ws_items = self.list_items()
+        ws_items = self.list_items(with_properties=False)
         for item in ws_items:
             if item.display_name == item_name and item.type == item_type:
-                return item    
+                return self.get_item(item.id, item_type)    
 
-    def get_item(self, item_id = None, item_name = None, item_type = None):
-        # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}
-        """Get an item from a workspace"""
-        if item_id is None and item_name is not None and item_type is not None:
-            return self.get_item_by_name(item_name, item_type)
-        elif item_id is None:
-            raise Exception("item_id or the combination item_name + item_type is required")
-        
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/items/{item_id}"
+
+    def get_item_internal(self, url):
 
         for _ in range(10):
             response = requests.get(url=url, headers=self.auth.get_headers())
@@ -281,14 +287,103 @@ class Workspace:
             break
         
         item_dict = json.loads(response.text)
-        return Item.from_dict(item_dict, auth=self.auth)
+        return item_dict
+
+    def get_lakehouse(self, lakehouse_id = None, lakehouse_name = None):
+        """Get a lakehouse from a workspace"""
+
+        if lakehouse_id is None and lakehouse_name is not None:
+            return self.get_item_by_name(lakehouse_name, "Lakehouse")
+        elif lakehouse_id is None:
+            raise Exception("lakehouse_id or the lakehouse_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/lakehouses/{lakehouse_id}"
+
+        item_dict = self.get_item_internal(url)
+        return Lakehouse.from_dict(item_dict, auth=self.auth)
+    
+    def get_warehouse(self, warehouse_id = None, warehouse_name = None):
+        """Get a warehouse from a workspace"""
+        if warehouse_id is None and warehouse_name is not None:
+            return self.get_item_by_name(warehouse_name, "Warehouse")
+        elif warehouse_id is None:
+            raise Exception("warehouse_id or the warehouse_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/warehouses/{warehouse_id}"
+
+        item_dict = self.get_item_internal(url)
+        return Warehouse.from_dict(item_dict, auth=self.auth)
+
+    def get_spark_job_definition(self, spark_job_definition_id = None, spark_job_definition_name = None):
+        """Get a spark job definition from a workspace"""
+        if spark_job_definition_id is None and spark_job_definition_name is not None:
+            return self.get_item_by_name(spark_job_definition_name, "SparkJobDefinition")
+        elif spark_job_definition_id is None:
+            raise Exception("spark_job_definition_id or the spark_job_definition_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/sparkjobdefinitions/{spark_job_definition_id}"
+
+        item_dict = self.get_item_internal(url)
+        sjd_obj =  SparkJobDefinition.from_dict(item_dict, auth=self.auth)
+        sjd_obj.get_definition()
+        return sjd_obj
+
+    def get_item(self, item_id = None, item_name = None, item_type = None):
+        # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}
+        """Get an item from a workspace"""
+        if item_type:
+            if item_type.lower() == "lakehouse":
+                return self.get_lakehouse(item_id, item_name)
+            if item_type.lower() == "warehouse":
+                return self.get_warehouse(item_id, item_name)
+            if item_type.lower() == "sparkjobdefinition":
+                return self.get_spark_job_definition(item_id, item_name)
+                
+        if item_id is None and item_name is not None and item_type is not None:
+            return self.get_item_by_name(item_name, item_type)
+        elif item_id is None:
+            raise Exception("item_id or the combination item_name + item_type is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/items/{item_id}"
+
+        item_dict = self.get_item_internal(url)
+        if item_dict["type"] == "Lakehouse":
+            return self.get_lakehouse(item_dict["id"])
+        if item_dict["type"] == "Warehouse":
+            return self.get_warehouse(item_dict["id"])
+        if item_dict["type"] == "SparkJobDefinition":
+            return self.get_spark_job_definition(item_dict["id"])
+        
+
+        item_obj = Item.from_dict(item_dict, auth=self.auth)
+        if item_obj.type in ["Notebook", "Report", "SemanticModel"]:
+            item_obj.get_definition()
+        return item_obj
+
 
     def delete_item(self, item_id):
         """Delete an item from a workspace"""
         return self.get_item(item_id).delete()
   
 
-    def list_items(self, continuationToken = None):
+    def get_item_object_w_properties(self, item_list):
+
+        new_item_list = []
+        for item in item_list:
+            if item["type"] == "Lakehouse":
+                item = self.get_lakehouse(item["id"])
+            elif item["type"] == "Warehouse":
+                item = self.get_warehouse(item["id"])
+            elif item["type"] == "SparkJobDefinition":
+                item = self.get_spark_job_definition(item["id"])
+            else:
+                item = Item.from_dict(item, auth=self.auth)
+                if item.type in ["Notebook", "Report", "SemanticModel"]:
+                    item.get_definition()
+            new_item_list.append(item)
+        return new_item_list
+
+    def list_items(self, with_properties = False, continuationToken = None):
         """List items in a workspace"""
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/items"
 
@@ -309,10 +404,14 @@ class Workspace:
         
         resp_dict = json.loads(response.text)
         items = resp_dict["value"]
-        items = [Item.from_dict(item, auth=self.auth) for item in items]
+        if with_properties:
+            items = self.get_item_object_w_properties(items)
+        else:
+            items = [Item.from_dict(item, auth=self.auth) for item in items]
 
         if "continuationToken" in resp_dict:
-            item_list_next = self.list_items(continuationToken=resp_dict["continuationToken"])
+            item_list_next = self.list_items(with_properties=with_properties, 
+                                             continuationToken=resp_dict["continuationToken"])
             items.extend(item_list_next)
 
         return items

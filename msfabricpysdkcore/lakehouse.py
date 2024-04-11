@@ -2,7 +2,6 @@ import json
 import requests
 from time import sleep
 
-from msfabricpysdkcore.long_running_operation import check_long_running_operation
 from msfabricpysdkcore.item import Item
 
 class Lakehouse(Item):

@@ -203,10 +203,10 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.delete_item(item_id)
 
-    def list_items(self, workspace_id):
+    def list_items(self, workspace_id, with_properties = False):
         """List items in a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.list_items()
+        return ws.list_items(with_properties=with_properties)
     
     def get_item_definition(self, workspace_id, item_id):
         """Get the definition of an item"""

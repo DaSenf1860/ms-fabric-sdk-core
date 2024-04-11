@@ -80,7 +80,9 @@ class Item:
                 sleep(10)
                 continue
             if response.status_code == 202:
-                check_long_running_operation( response.headers, self.auth)
+                operation_result = check_long_running_operation( response.headers, self.auth)
+                self.definition = operation_result['definition']
+                return operation_result
                 
             if response.status_code not in (200, 202, 429):
                 print(response.status_code)
@@ -88,9 +90,9 @@ class Item:
                 raise Exception(f"Error getting item definition: {response.text}")
             break
         
-        print(response.text)
-        print(response.status_code)
-        return json.loads(response.text)
+        resp_dict = json.loads(response.text)
+        self.definition = resp_dict['definition']
+        return resp_dict
     
     def update(self, display_name = None, description = None):
         """Update the item"""

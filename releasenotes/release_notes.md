@@ -1,5 +1,17 @@
 # Release Notes
 
+## 0.0.5
+
+- getting or creating an item will retrieve automatically additional properties and item definitions. Note that when retrieving a list this is disabled by default, but can be enabled by setting `with_properties=True` (It is disabled because it takes significantly more time to retrieve all properties for all items)
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+ws = fc.get_workspace_by_name("testworkspace")
+items_with_details = ws.list_items(with_properties=True)
+```
+
 ## 0.0.4
 
 ### New Features

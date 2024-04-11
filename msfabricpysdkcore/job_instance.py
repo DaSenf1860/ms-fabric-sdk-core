@@ -1,7 +1,6 @@
 import json 
 import requests
 from time import sleep
-from msfabricpysdkcore.long_running_operation import check_long_running_operation
 
 class JobInstance:
     """Class to represent a job instance in Microsoft Fabric"""

@@ -22,13 +22,14 @@ class LongRunningOperation:
                 print("Too many requests, waiting 10 seconds")
                 sleep(10)
                 continue
+            if response.status_code == 400:
+                return None
             if response.status_code not in (200, 429):
                 print(response.status_code)
                 print(response.text)
                 raise Exception(f"Error getting operation results: {response.text}")
             break
 
-        print(json.loads(response.text))
         return json.loads(response.text)
     
     def get_operation_state(self):
@@ -47,7 +48,6 @@ class LongRunningOperation:
                 raise Exception(f"Error getting operation state: {response.text}")
             break
 
-        print(json.loads(response.text))
         return json.loads(response.text)    
     
     def wait_for_completion(self):
@@ -72,10 +72,7 @@ def check_long_running_operation(headers, auth):
     if not operation_id:
         print("Operation initiated, no operation id found")
         return None
-    else:
-        print("Operation initiated, waiting for completion")
-        lro = LongRunningOperation(operation_id=operation_id, auth=auth)
-        lro.wait_for_completion()
-        print("Operation completed")
-    lro = LongRunningOperation(operation_id, auth)
-    return lro.wait_for_completion()
+    lro = LongRunningOperation(operation_id=operation_id, auth=auth)
+    lro.wait_for_completion()
+    
+    return lro.get_operation_results()
