@@ -27,6 +27,9 @@ class OneLakeShortcut:
         }
         return json.dumps(dict_, indent=2)
     
+    def __repr__(self) -> str:
+        return self.__str__()
+    
     def from_dict(short_dict, auth):
         """Create OneLakeShortCut object from dictionary"""
         return OneLakeShortcut(name=short_dict['name'],

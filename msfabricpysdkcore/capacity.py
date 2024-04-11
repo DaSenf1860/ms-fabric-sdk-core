@@ -38,6 +38,9 @@ class Capacity:
         }
         return json.dumps(dic, indent=2)
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def from_dict(dic):
         """Method to create a Capacity object from a dictionary
         

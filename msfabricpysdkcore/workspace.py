@@ -33,6 +33,9 @@ class Workspace:
         }
         return json.dumps(dict_, indent=2)
     
+    def __repr__(self) -> str:
+        return self.__str__()
+    
     def get_role_assignments(self):
         """Get role assignments for the workspace"""
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/roleAssignments"

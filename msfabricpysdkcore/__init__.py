@@ -1,1 +1,2 @@
-from .client import FabricClientCore
+from .coreapi import FabricClientCore
+from .adminapi import FabricClientAdmin

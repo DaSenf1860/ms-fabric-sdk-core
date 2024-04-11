@@ -35,6 +35,9 @@ class Item:
         }
         return json.dumps(dict_, indent=2)
     
+    def __repr__(self) -> str:
+        return self.__str__()
+    
     def from_dict(item_dict, auth):
         """Create Item object from dictionary"""
         

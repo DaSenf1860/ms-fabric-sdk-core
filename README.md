@@ -1,4 +1,4 @@
-# A Python SDK for Microsoft Fabric
+# Python SDK for Microsoft Fabric
 
 This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*.
 
@@ -19,17 +19,26 @@ Additionally it brings some extra features like:
 
 See the latest release notes [here](releasenotes/release_notes.md).
 
-Currently it supports all Core APIs and Lakehouse APIs, i.e.:
-- [Capacities](#working-with-capacities)
-- [Git](#working-with-git)
-- [Items](#working-with-items)
-- [Job Scheduler](#working-with-job-scheduler)
-- Long Running Operations
-- [OneLakeShortcuts](#working-with-one-lake-shortcuts)
-- [Workspaces](#working-with-workspaces)
-- [Lakehouse APIs](#lakehouse-apis)
+Currently it supports all Core APIs, Admin APIs and Lakehouse APIs, i.e.:
+- Core APIs
+  - [Capacities](#working-with-capacities)
+  - [Git](#working-with-git)
+  - [Items](#working-with-items)
+  - [Job Scheduler](#working-with-job-scheduler)
+  - Long Running Operations
+  - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
+  - [Workspaces](#working-with-workspaces)
+- Lakehouse APIs
+  - [Tables](#tables)
+- Admin APIs
+  - [Domains](#admin-api-for-domains)
+  - [Items](#admin-api-for-items)
+  - [Tenants](#admin-api-for-tenants)
+  - [Users](#admin-api-for-users)
+  - [Workspaces](#admin-api-for-workspaces)
 
-It is planned to support also the Admin APIs and new APIs which are not released yet.
+It is planned to support also the APIs of the user experiences and new APIs which are not released yet.
+Also we have plans to support APIs to interact with Fabric capacities on the Azure Side.
 Eventually Power BI APIs like the Scanner API will be covered as well.
 
 *Because this SDK uses the API in the background, all limitations and restrictions of the API apply to this SDK as well. This includes rate limits, permissions, etc.
@@ -351,7 +360,7 @@ item.cancel_item_job_instance(job_instance_id="job_instance_id")
 
 ```
 
-### Lakehouse APIs
+### Tables
 
 
 
@@ -381,6 +390,143 @@ fc.load_table(workspace_id = "someworkspaceid", item_id = "someitemid", table_na
               path_type= "File", relative_path="Files/folder1/titanic.csv")
 
 ```
+
+### Admin API for Workspaces
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+
+# List workspaces
+ws = fca.list_workspaces(name="testworkspace")[0]
+
+# Get workspace
+ws = fca.get_workspace(workspace_id="workspace_id")
+
+# Get workspace access details
+
+ws_access = fca.get_workspace_access_details("workspace_id")
+# or
+ws_access = ws.get_access_details()
+```
+
+### Admin API for Users
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# Get access entities
+
+user_id = 'b4fuhaidc2'
+access_entities = fca.get_access_entities(user_id, type="Notebook")
+
+```
+
+### Admin API for Tenants
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# Get tenant settings
+
+tenant_settings = fca.get_tenant_settings()
+
+# Get capacity tenant settings overrides
+
+overrides = fca.get_capacities_tenant_settings_overrides()
+
+```
+
+### Admin API for Items
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# List items
+
+item_list = fca.list_items(workspace_id="wsid")
+
+# Get item
+
+item = fca.get_item(workspace_id="wsid", item_id=item_list[0].id)
+# or
+item = ws.get_item(item_id=item_list[0].id)
+
+# Get item access details
+
+item_access = fca.get_item_access_details(workspace_id="wsid", item_id=item_list[0].id)
+#or
+item_access = ws.get_item_access_details(item_id=item_list[0].id)
+# or
+item_access = item.get_access_details()
+
+```
+
+### Admin API for Domains
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# Create domain
+domain_name = "sdktestdomains"
+domain = fca.create_domain(display_name=domain_name)
+
+# Get domain by name
+domain_clone = fca.get_domain_by_name(domain_name)
+
+# Get domain by id
+domain_clone = fca.get_domain_by_id(domain.id)
+
+# List domains
+domains = fca.list_domains()
+
+# Update domain
+domain_new_name = "sdktestdomains2"
+domain_clone = fca.update_domain(domain.id, display_name=domain_new_name)
+
+# Assign domain workspaces by Ids
+fca.assign_domain_workspaces_by_ids(domain.id, ["workspace_id_1", "workspace_id_2"])
+
+# List domain workspaces
+workspaces = fca.list_domain_workspaces(domain.id, workspace_objects=True)
+
+# Unassign domain workspaces by ids
+status_code = fca.unassign_domain_workspaces_by_ids(domain.id, ["workspace_id_1", "workspace_id_2"])
+
+# Assign domain workspaces by capacities
+status_code = fca.assign_domain_workspaces_by_capacities(domain.id, ["cap_id1", "cap_id2"])
+
+# Unassign all domain workspaces
+status_code = fca.unassign_all_domain_workspaces(domain.id)
+
+# Assign domain workspaces by principals
+principal1 = {'id': '6edbsdfbfdgdf656', 'type': 'User'}
+principal2 = {'id': '6eyxcbyyxc57', 'type': 'User'}
+
+status_code = fca.assign_domains_workspaces_by_principals(domain.id, [principal1, principal2], wait_for_completion=True)
+
+# Role assignments bulk assign
+
+principals = [principal, principal_2]
+status_code = fca.role_assignments_bulk_assign(domain.id, "Contributors", principals)
+
+# Role assignments bulk unassign
+status_code = fca.role_assignments_bulk_unassign(domain.id, "Contributors", [principal_2])
+
+# Delete domain
+status_code = fca.delete_domain(domain.id)
+```
+
 
 Note: This SDK is not an official SDK from Microsoft. It is a community project and not supported by Microsoft. Use it at your own risk.
 Also the API is still in preview and might change. This SDK is not yet feature complete and might not cover all APIs yet. Feel free to contribute to this project to make it better.

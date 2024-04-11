@@ -39,6 +39,9 @@ class JobInstance:
         }
         return json.dumps(dict_, indent=2)
     
+    def __repr__(self) -> str:
+        return self.__str__()
+    
     def from_dict(job_dict, auth):
         """Create JobInstance object from dictionary"""
         return JobInstance(id=job_dict['id'], item_id=job_dict['itemId'], workspace_id=job_dict['workspaceId'],
