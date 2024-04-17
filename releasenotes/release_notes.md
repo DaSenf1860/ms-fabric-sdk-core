@@ -1,5 +1,13 @@
 # Release Notes
 
+# Release Notes
+
+## 0.0.7
+
+### New Features
+
+- changing pypi package to allow for python >=3.10 instead of >=3.11 so that you can use it from fabric directly
+
 ## 0.0.6
 
 ### New Features
