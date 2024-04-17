@@ -50,9 +50,12 @@ class Item:
                     properties=item_dict.get('properties', None),
                     definition=item_dict.get('definition', None), description=item_dict.get('description', ""), auth=auth)
 
-    def delete(self):
+    def delete(self, type = None):
         """Delete the workspace item"""
+
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}"
+        if type:
+            url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/{type}/{self.id}"
         for _ in range(10):
             response = requests.delete(url=url, headers=self.auth.get_headers())
             if response.status_code == 429:
@@ -94,16 +97,17 @@ class Item:
         self.definition = resp_dict['definition']
         return resp_dict
     
-    def update(self, display_name = None, description = None):
+    def update(self, display_name = None, description = None, type = None):
         """Update the item"""
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}"
+        if type:
+            url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/{type}/{self.id}"
 
         payload = dict()
         if display_name:
             payload['displayName'] = display_name
         if description:
             payload['description'] = description
-
         for _ in range(10):
             response = requests.patch(url=url, headers=self.auth.get_headers(), json=payload)
             if response.status_code == 429:

@@ -19,7 +19,7 @@ Additionally it brings some extra features like:
 
 See the latest release notes [here](releasenotes/release_notes.md).
 
-Currently it supports all Core APIs, Admin APIs and Lakehouse APIs, i.e.:
+Currently it supports all Core APIs, Admin APIs, Lakehouse APIs and all other item specific CRUD APIs, i.e.:
 - Core APIs
   - [Capacities](#working-with-capacities)
   - [Git](#working-with-git)
@@ -36,8 +36,10 @@ Currently it supports all Core APIs, Admin APIs and Lakehouse APIs, i.e.:
   - [Tenants](#admin-api-for-tenants)
   - [Users](#admin-api-for-users)
   - [Workspaces](#admin-api-for-workspaces)
+- [Item Specific CRUD APIs](item_specific_apis.md), e.g.
+  - List, create, update, delete warehouses, notebooks, semantic models, kql databases,.....
 
-It is planned to support also the APIs of the user experiences and new APIs which are not released yet.
+It is planned to support also new APIs which are not released yet.
 Also we have plans to support APIs to interact with Fabric capacities on the Azure Side.
 Eventually Power BI APIs like the Scanner API will be covered as well.
 
@@ -342,6 +344,9 @@ fc.run_on_demand_item_job(workspace_id="workspace_id", item_id="item_id", job_ty
 ws.run_on_demand_item_job(item_id="item_id", job_type="RunNotebook", execution_data = None)
 # or
 item.run_on_demand_item_job(job_type="RunNotebook", execution_data = None)
+
+# Other job types are e.g.:
+jobType=Pipeline
 
 
 # Get an item job instance

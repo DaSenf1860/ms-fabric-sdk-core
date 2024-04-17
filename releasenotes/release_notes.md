@@ -1,6 +1,14 @@
 # Release Notes
 
+## 0.0.6
+
+### New Features
+
+- adding item specific CRUD APIs
+
 ## 0.0.5
+
+### New Features
 
 - getting or creating an item will retrieve automatically additional properties and item definitions. Note that when retrieving a list this is disabled by default, but can be enabled by setting `with_properties=True` (It is disabled because it takes significantly more time to retrieve all properties for all items)
 
