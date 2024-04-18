@@ -1,6 +1,10 @@
 # Release Notes
 
-# Release Notes
+## 0.0.8
+
+### New Features
+
+- adding a Synapse Spark authentication client, so that it is possible to use via a Fabric Notebook
 
 ## 0.0.7
 

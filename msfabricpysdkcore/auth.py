@@ -1,7 +1,10 @@
 import requests
 from abc import abstractmethod
 from azure.identity import AzureCliCredential
-
+try:
+    from notebookutils import mssparkutils
+except ImportError:
+    pass
 class FabricAuth():
     """FabricAuth class to interact with Entra ID"""
 
@@ -59,3 +62,16 @@ class FabricServicePrincipal(FabricAuth):
         access_token = response.json().get('access_token')
         return access_token
     
+class FabricSparkUtilsAuthentication(FabricAuth):
+    """FabricSparkUtilsAuthentication class to interact with Entra ID"""
+
+    def __init__(self):
+        mssparkutils.credentials.getToken("pbi")
+        print("Using Synapse Spark Utils for authentication")
+
+    def get_token(self):
+        """Get token from Azure AD"""
+        token = mssparkutils.credentials.getToken("pbi")
+        return token.token
+    
+

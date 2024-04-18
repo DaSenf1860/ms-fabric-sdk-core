@@ -1,7 +1,7 @@
 import os
 from time import sleep
 
-from msfabricpysdkcore.auth import FabricAuthClient, FabricServicePrincipal
+from msfabricpysdkcore.auth import FabricAuthClient, FabricServicePrincipal, FabricSparkUtilsAuthentication
 
 class FabricClient():
     """FabricClient class to interact with Fabric API"""
@@ -12,11 +12,14 @@ class FabricClient():
         self.client_id = client_id if client_id else os.getenv("FABRIC_CLIENT_ID")
         self.client_secret = client_secret if client_secret else os.getenv("FABRIC_CLIENT_SECRET")
 
+        self.scope = "https://api.fabric.microsoft.com/.default"
+
         if self.client_id is None or self.client_secret is None or self.tenant_id is None:
-            self.auth = FabricAuthClient()
+            try:
+                self.auth = FabricSparkUtilsAuthentication()
+            except:
+                self.auth = FabricAuthClient()
         else:
             self.auth = FabricServicePrincipal(tenant_id = self.tenant_id,
                                                client_id = self.client_id, 
                                                client_secret = self.client_secret)
-
-        self.scope = "https://api.fabric.microsoft.com/.default"
