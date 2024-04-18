@@ -72,6 +72,6 @@ class FabricSparkUtilsAuthentication(FabricAuth):
     def get_token(self):
         """Get token from Azure AD"""
         token = mssparkutils.credentials.getToken("pbi")
-        return token.token
+        return token
     
 

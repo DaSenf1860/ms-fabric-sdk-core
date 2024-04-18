@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "msfabricpysdkcore"
-version = "0.0.8"
+version = "0.0.9"
 dynamic = ["dependencies"]
 authors = [
   { name="Andreas Rederer"},
