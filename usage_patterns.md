@@ -70,11 +70,11 @@ from msfabricpysdkcore import FabricClientCore
 fc = FabricClientCore()
 
 list_workspaces = ["sales_forecast_dev", "sales_forecast_qa", "sales_sandbox", "finance_sandbox"]
-
+cap_target = fc.get_capacity(capacity_name="nameoftargetcapacity")
 
 for ws in list_workspaces:
     ws_ = fc.create_wor(ws)
-    ws_.delete()
+    ws_.assign_to_capacity(cap_target.id)
 
 ```
 
