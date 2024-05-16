@@ -3,9 +3,11 @@ import requests
 from time import sleep
 from msfabricpysdkcore.item import Item
 from msfabricpysdkcore.lakehouse import Lakehouse
+from msfabricpysdkcore.environment import Environment
 from msfabricpysdkcore.long_running_operation import check_long_running_operation
 from msfabricpysdkcore.otheritems import DataPipeline, Eventstream, KQLDatabase, KQLQueryset, SparkJobDefinition
 from msfabricpysdkcore.otheritems import MLExperiment, MLModel, Notebook, Report, SemanticModel, Warehouse
+from msfabricpysdkcore.spark_custom_pool import SparkCustomPool
 
 
 class Workspace:
@@ -247,6 +249,8 @@ class Workspace:
             return self.get_spark_job_definition(item_dict["id"])
         if item_dict["type"] == "Warehouse":
             return self.get_warehouse(item_dict["id"])
+        if item_dict["type"] == "Environment":
+            return self.get_environment(item_dict["id"])
 
         item_obj = Item.from_dict(item_dict, auth=self.auth)
         return item_obj
@@ -265,8 +269,18 @@ class Workspace:
         if description:
             body['description'] = description
 
-        if type in ["eventstreams", "lakehouses", "mlExperiments", "mlModels", "notebooks", "reports", "semanticModels", 
-                    "sparkJobDefinitions", "warehouses"]:
+        if type in ["dataPipelines",
+                    "environments",
+                    "eventstreams", 
+                    "lakehouses",
+                    "mlExperiments", 
+                    "mlModels", 
+                    "notebooks", 
+                    "reports", 
+                    "semanticModels", 
+                    "sparkJobDefinitions", 
+                    "warehouses"]:
+            
             url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/{type}"
             body.pop('type')
 
@@ -291,7 +305,9 @@ class Workspace:
             item = None
             i = 0
 
-            type_mapping = {"eventstreams": "Eventstream",
+            type_mapping = {"dataPipelines": "DataPipeline",
+                            "environments": "Environment",
+                            "eventstreams": "Eventstream",
                             "lakehouses": "Lakehouse", 
                             "mlExperiments": "MLExperiment",
                             "mlModels": "MLModel", 
@@ -299,7 +315,8 @@ class Workspace:
                             "reports": "Report", 
                             "semanticModels": "SemanticModel",
                             "sparkJobDefinitions": "SparkJobDefinition", 
-                            "warehouses": "Warehouse"}
+                            "warehouses": "Warehouse"
+                            }
             
             if type in type_mapping.keys():
                 type = type_mapping[type]
@@ -433,9 +450,9 @@ class Workspace:
 
         return items
     
-    def get_item_definition(self, item_id):
+    def get_item_definition(self, item_id, type = None, format = None):
         """Get the definition of an item from a workspace"""
-        return self.get_item(item_id).get_definition()
+        return self.get_item(item_id).get_definition(type=type, format=format)
     
     def update_item(self, item_id, display_name = None, description = None):
         """Update an item in a workspace"""
@@ -626,15 +643,24 @@ class Workspace:
 
         return response.status_code
     
-    def list_tables(self, item_id):
-        return self.get_item(item_id=item_id).list_tables()
+    def list_tables(self, lakehouse_id):
+        """List tables in a workspace"""
+        return self.get_lakehouse(lakehouse_id=lakehouse_id).list_tables()
     
-    def load_table(self, item_id, table_name, path_type, relative_path,
+    def load_table(self, lakehouse_id, table_name, path_type, relative_path,
                     file_extension = None, format_options = None,
                     mode = None, recursive = None, wait_for_completion = True):
-        return self.get_item(item_id).load_table(table_name, path_type, relative_path,
+        
+        return self.get_lakehouse(lakehouse_id=lakehouse_id).load_table(table_name, path_type, relative_path,
                     file_extension, format_options,
                     mode, recursive, wait_for_completion)
+    
+    def run_on_demand_table_maintenance(self, lakehouse_id, execution_data, 
+                                        job_type = "TableMaintenance", wait_for_completion = True):
+        """Run on demand table maintenance"""
+        return self.get_lakehouse(lakehouse_id=lakehouse_id).run_on_demand_table_maintenance(execution_data,
+                                                                                              job_type, 
+                                                                                              wait_for_completion)
 
     def list_dashboards(self):
         """List dashboards in a workspace"""
@@ -656,6 +682,15 @@ class Workspace:
         """List mirrored warehouses in a workspace"""
         return self.list_items(type="mirroredWarehouses")
     
+    # datapipelines
+
+    def create_data_pipeline(self, display_name, definition = None, description = None):
+        """Create a data pipeline in a workspace"""
+        return self.create_item(display_name = display_name,
+                                type = "dataPipelines",
+                                definition = definition,
+                                description = description)
+
     def list_data_pipelines(self, with_properties = False):
         """List data pipelines in a workspace"""
         return self.list_items(with_properties = with_properties, type="dataPipelines")
@@ -682,6 +717,84 @@ class Workspace:
         """Update a data pipeline in a workspace"""
         return self.get_item(item_id=data_pipeline_id).update(display_name=display_name, description=description, type="dataPipelines")
     
+    # environments
+
+    def list_environments(self, with_properties = False):
+        """List environments in a workspace"""
+        return self.list_items(type="environments", with_properties=with_properties)
+    
+    def create_environment(self, display_name, description = None):
+        """Create an environment in a workspace"""
+        return self.create_item(display_name = display_name,
+                                type = "environments",
+                                definition = None,
+                                description = description)
+    
+    def get_environment(self, environment_id = None, environment_name = None):
+        """Get an environment from a workspace"""
+        if environment_id is None and environment_name is not None:
+            return self.get_item_by_name(environment_name, "Environment")
+        elif environment_id is None:
+            raise Exception("environment_id or the environment_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/environments/{environment_id}"
+
+        item_dict = self.get_item_internal(url)
+        env = Environment.from_dict(item_dict, auth=self.auth)
+        #env.get_staging_settings()
+        #env.get_published_settings()
+        #env.get_staging_libraries()
+        #env.get_published_libraries()
+        return env
+    
+    def delete_environment(self, environment_id):
+        """Delete an environment from a workspace"""
+        return self.get_item(item_id=environment_id).delete(type="environments")
+    
+    def update_environment(self, environment_id, display_name = None, description = None):
+        """Update an environment in a workspace"""
+        return self.get_item(item_id=environment_id).update(display_name=display_name,
+                                                            description=description,
+                                                            type="environments")
+    
+    # environment spark compute
+
+    def get_published_settings(self, environment_id):
+        return self.get_environment(environment_id).get_published_settings()
+    
+    def get_staging_settings(self, environment_id):
+        return self.get_environment(environment_id).get_staging_settings()
+    
+    def update_staging_settings(self, environment_id, instance_pool, driver_cores, driver_memory, executor_cores, executor_memory,
+                                dynamic_executor_allocation, spark_properties, runtime_version):
+        return self.get_environment(environment_id).update_staging_settings(instance_pool, driver_cores, 
+                                                                            driver_memory, executor_cores, 
+                                                                            executor_memory, 
+                                                                            dynamic_executor_allocation,
+                                                                            spark_properties, runtime_version)
+
+    # environment spark libraries
+
+    def get_published_libraries(self, environment_id):
+        return self.get_environment(environment_id).get_published_libraries()
+    
+    def get_staging_libraries(self, environment_id):
+        return self.get_environment(environment_id).get_staging_libraries()
+    
+    def update_staging_library(self, environment_id):
+        return self.get_environment(environment_id).update_staging_libraries()
+    
+    def publish_environment(self, environment_id):
+        return self.get_environment(environment_id).publish_environment()
+    
+    def delete_staging_library(self, environment_id, library_to_delete):
+        return self.get_environment(environment_id).delete_staging_library(library_to_delete)
+    
+    def cancel_publish(self, environment_id):
+        return self.get_environment(environment_id).cancel_publish()
+    
+    # eventstreams
+
     def list_eventstreams(self):
         """List eventstreams in a workspace"""
         return self.list_items(type="eventstreams")
@@ -917,6 +1030,10 @@ class Workspace:
                                                             description=description,
                                                             type="notebooks")
     
+    def get_notebook_definition(self, notebook_id, format = None):
+        """Get the definition of a notebook from a workspace"""
+        return self.get_notebook(notebook_id=notebook_id).get_definition(format=format)
+
     def update_notebook_definition(self, notebook_id, definition):
         """Update the definition of a notebook in a workspace"""
         return self.get_notebook(notebook_id=notebook_id).update_definition(definition=definition)
@@ -951,6 +1068,10 @@ class Workspace:
     def delete_report(self, report_id):
         """Delete a report from a workspace"""
         return self.get_item(item_id=report_id).delete(type="reports")
+    
+    def get_report_definition(self, report_id, format = None):
+        """Get the definition of a report from a workspace"""
+        return self.get_report(report_id=report_id).get_definition(format=format)
     
     def update_report_definition(self, report_id, definition):
         """Update the definition of a report in a workspace"""
@@ -987,12 +1108,16 @@ class Workspace:
         """Delete a semantic model from a workspace"""
         return self.get_item(item_id=semantic_model_id).delete(type="semanticModels")
     
-    def update_semantic_model(self, semantic_model_id, display_name = None, description = None):
-        """Update a semantic model in a workspace"""
-        return self.get_item(item_id=semantic_model_id).update(display_name=display_name,
-                                                            description=description,
-                                                            type="semanticModels")
+    # def update_semantic_model(self, semantic_model_id, display_name = None, description = None):
+    #     """Update a semantic model in a workspace"""
+    #     return self.get_item(item_id=semantic_model_id).update(display_name=display_name,
+    #                                                         description=description,
+    #                                                         type="semanticModels")
     
+    def get_semantic_model_definition(self, semantic_model_id, format = None):
+        """Get the definition of a semantic model from a workspace"""
+        return self.get_semantic_model(semantic_model_id=semantic_model_id).get_definition(format=format)
+
     def update_semantic_model_definition(self, semantic_model_id, definition):
         """Update the definition of a semantic model in a workspace"""
         return self.get_semantic_model(semantic_model_id=semantic_model_id).update_definition(definition=definition)
@@ -1034,6 +1159,10 @@ class Workspace:
                                                             description=description,
                                                             type="sparkJobDefinitions")
 
+    def get_spark_job_definition_definition(self, spark_job_definition_id, format = None):
+        """Get the definition of a spark job definition from a workspace"""
+        return self.get_spark_job_definition(spark_job_definition_id=spark_job_definition_id).get_definition(format=format)
+
     def update_spark_job_definition_definition(self, spark_job_definition_id, definition):
         """Update the definition of a spark job definition in a workspace"""
         return self.get_spark_job_definition(spark_job_definition_id=spark_job_definition_id).update_definition(definition=definition)
@@ -1042,7 +1171,7 @@ class Workspace:
 
     def list_warehouses(self, with_properties = False):
         """List warehouses in a workspace"""
-        return self.list_items(type="warehouses")
+        return self.list_items(type="warehouses", with_properties = with_properties)
     
     def create_warehouse(self, display_name, description = None):
         """Create a warehouse in a workspace"""
@@ -1072,4 +1201,150 @@ class Workspace:
                                                             type="warehouses")
     
 
+
+    # spark workspace custom pools
+
+    def list_workspace_custom_pools(self, continuationToken = None):
+        """List spark worspace custom pools in a workspace"""
+        # GET http://api.fabric.microsoft.com/v1/workspaces/f089354e-8366-4e18-aea3-4cb4a3a50b48/spark/pools
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/spark/pools"
+        
+        if continuationToken:
+            url = f"{url}?continuationToken={continuationToken}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error listing custom spark pools: {response.status_code}, {response.text}")
+            break
+        
+        resp_dict = json.loads(response.text)
+        items = resp_dict["value"]
+        for item in items:
+            item["workspaceId"] = self.id
+        sppools = [SparkCustomPool.from_dict(item, auth=self.auth) for item in items]
+
+        if "continuationToken" in resp_dict:
+            item_list_next = self.list_workspace_custom_pools(continuationToken=resp_dict["continuationToken"])
+            sppools.extend(item_list_next)
+
+        return sppools
+    
+    def create_workspace_custom_pool(self, name, node_family, node_size, auto_scale, dynamic_executor_allocation):
+        """Create a custom pool in a workspace"""
+        
+        # POST http://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/spark/pools
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/spark/pools"
+
+        body = {
+            "name": name,
+            "nodeFamily": node_family,
+            "nodeSize": node_size,
+            "autoScale": auto_scale,
+            "dynamicExecutorAllocation": dynamic_executor_allocation
+        }
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 201, 429):
+                raise Exception(f"Error creating custom spark pool: {response.status_code}, {response.text}")
+            break
+
+        response_dict = json.loads(response.text)
+        response_dict["workspaceId"] = self.id
+        return SparkCustomPool.from_dict(response_dict, auth=self.auth)
+
+    def get_workspace_custom_pool(self, pool_id):
+        """Get a custom pool in a workspace"""
+        # GET http://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/spark/pools/{poolId}
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/spark/pools/{pool_id}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error getting custom spark pool: {response.status_code}, {response.text}")
+            break
+
+        response_dict = json.loads(response.text)
+        response_dict["workspaceId"] = self.id
+        return SparkCustomPool.from_dict(response_dict, auth=self.auth)
+    
+    def delete_workspace_custom_pool(self, pool_id):
+        """Delete a custom pool in a workspace"""
+        pool = self.get_workspace_custom_pool(pool_id)
+        return pool.delete()
+    
+    def update_workspace_custom_pool(self, pool_id, name = None , node_family = None, node_size = None,
+                                     auto_scale = None,
+                                    dynamic_executor_allocation = None):
+        """Update a custom pool in a workspace"""
+        pool = self.get_workspace_custom_pool(pool_id)
+        return pool.update(name = name,
+                           node_family = node_family,
+                           node_size = node_size,
+                           auto_scale = auto_scale,
+                           dynamic_executor_allocation = dynamic_executor_allocation)
+    
+    # spark workspace settings
+
+    def get_spark_settings(self):
+
+    # GET http://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/spark/settings
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/spark/settings"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error getting spark settings: {response.status_code}, {response.text}")
+            break
+
+        return json.loads(response.text)
+    
+
+    def update_spark_settings(self, automatic_log = None, environment = None, high_concurrency = None, pool = None):
+
+        # PATCH http://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/spark/settings
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/spark/settings"
+
+        body = {}
+
+        if automatic_log:
+            body["automaticLog"] = automatic_log
+        if environment:
+            body["environment"] = environment
+        if high_concurrency:
+            body["highConcurrency"] = high_concurrency
+        if pool:
+            body["pool"] = pool
+
+        for _ in range(10):
+            response = requests.patch(url=url, headers=self.auth.get_headers(), json=body)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error updating spark settings: {response.status_code}, {response.text}")
+            break
+
+        return json.loads(response.text)
 

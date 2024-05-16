@@ -3,6 +3,23 @@
 Each item type has its own set of APIs. The following are the APIs for each item type.
 All APIs are also available on workspace level as well.
 
+Go to:
+- ["Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports"](#dashboards-datamarts-sql-endpoints-mirrored-warehouses-paginated-reports)
+- ["Lakehouse"](#lakehouse)
+- ["Data Pipelines"](#data-pipelines)
+- ["Eventstreams"](#eventstreams)
+- ["KQL Databases"](#kql-databases)
+- ["KQL Querysets"](#kql-querysets)
+- ["ML Experiments"](#ml-experiments)
+- ["ML Models"](#ml-models)
+- ["Notebooks"](#notebooks)
+- ["Reports"](#reports)
+- ["Semantic Models"](#semantic-models)
+- ["Spark Custom Pools"](#spark-custom-pools)
+- ["Spark Job Definitions"](#spark-job-definitions)
+- ["Warehouses"](#warehouses)
+
+
 ## Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports
 
 ```python
@@ -41,16 +58,35 @@ workspace_id = workspace.id
 
 # Get Lakehouse
 lakehouse = fc.get_lakehouse(workspace_id=workspace_id, item_name="lakehouse1")
-item_id = lakehouse.id
+lakehouse_id = lakehouse.id
 date_str = datetime.now().strftime("%Y%m%d%H%M%S")
 table_name = f"table{date_str}"
 
 # Load Table
-status_code = fc.load_table(workspace_id=workspace_id, item_id=item_id, table_name=table_name, 
+status_code = fc.load_table(workspace_id=workspace_id, lakehouse_id=lakehouse_id, table_name=table_name, 
                             path_type="File", relative_path="Files/folder1/titanic.csv")
 
 # List Tables
-table_list = fc.list_tables(workspace_id=workspace_id, item_id=item_id)
+table_list = fc.list_tables(workspace_id=workspace_id, lakehouse_id=lakehouse_id)
+
+
+# Run on demand table maintenance
+execution_data = {
+    "tableName": table_name,
+    "optimizeSettings": {
+      "vOrder": True,
+      "zOrderBy": [
+        "tipAmount"
+      ]
+    },
+    "vacuumSettings": {
+      "retentionPeriod": "7:01:00:00"
+    }
+  }
+
+fc.run_on_demand_table_maintenance(workspace_id=workspace_id, lakehouse_id=lakehouse_id, 
+                                   execution_data = execution_data,
+                                   job_type = "TableMaintenance", wait_for_completion = True)
 
 # Create Lakehouse
 lakehouse = fc.create_lakehouse(workspace_id=workspace_id, display_name="lakehouse2")
@@ -82,6 +118,10 @@ workspace_id = workspace.id
 # List Data Pipelines
 
 dps = fc.list_data_pipelines(workspace_id)
+
+# Create Data Pipeline
+
+dp_new = fc.create_data_pipeline(workspace_id, display_name="pipeline_new", description="asda")
 
 # Get Data Pipeline
 dp = fc.get_data_pipeline(workspace_id, data_pipeline_name="pipeline1")
@@ -249,6 +289,9 @@ notebook = fc.get_notebook(workspace_id, notebook_name="notebook1")
 # Update Notebook
 notebook2 = fc.update_notebook(workspace_id, notebook.id, display_name="notebook2")
 
+# Get Notebook Definition
+fc.get_notebook_definition(workspace_id, notebook.id, format=None)
+
 # Update Notebook Definition
 fc.update_notebook_definition(workspace_id, notebook.id, definition=definition)
 
@@ -278,6 +321,9 @@ report = fc.create_report(workspace_id, display_name="report1", definition=defin
 
 # Get Report
 report = fc.get_report(workspace_id, report_name="report1")
+
+# Get Report Definition
+fc.get_report_definition(workspace_id, report.id, format=None)
 
 # Update Report Definition
 fc.update_report_definition(workspace_id, report.id, definition=definition)
@@ -309,6 +355,9 @@ semantic_model = fc.create_semantic_model(workspace_id, display_name="semanticmo
 # Get Semantic Model
 semantic_model = fc.get_semantic_model(workspace_id, semantic_model_name="semanticmodel1")
 
+# Get Semantic Model Definition
+fc.get_semantic_model_definition(workspace_id, semantic_model.id, format=None)
+
 # Update Semantic Model Definition
 fc.update_semantic_model_definition(workspace_id, semantic_model.id, definition=definition)
 
@@ -316,6 +365,58 @@ fc.update_semantic_model_definition(workspace_id, semantic_model.id, definition=
 fc.delete_semantic_model(workspace_id, semantic_model.id)
 
 ```
+
+## Spark Custom Pools
+
+```python	
+workspace_id = "sfgsdfgs34234"
+
+# List spark custom pools
+
+pools = fc.list_workspace_custom_pools(workspace_id=workspace_id)
+pool1 = [p for p in pools if p.name == "pool1"][0]
+
+# Get a spark custom pool
+
+pool1_clone = fc.get_workspace_custom_pool(workspace_id=workspace_id, pool_id=pool1.id)
+
+# Create a spark custom pool
+
+pool2 = fc.create_workspace_custom_pool(workspace_id=workspace_id, 
+                                name="pool2", 
+                                node_family="MemoryOptimized",
+                                node_size="Small", 
+                                auto_scale = {"enabled": True, "minNodeCount": 1, "maxNodeCount": 2},
+                                dynamic_executor_allocation = {"enabled": True, "minExecutors": 1, "maxExecutors": 1})
+
+# Update a spark custom pool
+
+pool2 = fc.update_workspace_custom_pool(workspace_id=workspace_id, pool_id=pool2.id,
+                                auto_scale = {"enabled": True, "minNodeCount": 1, "maxNodeCount": 7})
+
+
+# Delete a spark custom pool
+
+status_code = fc.delete_workspace_custom_pool(workspace_id=workspace_id, pool_id=pool2.id)
+
+```
+
+## Spark Workspace Settings
+
+```python
+
+workspace_id = "io4i34t0sfg"
+
+# Get spark settings
+
+settings = fc.get_spark_settings(workspace_id)
+
+# Update
+settings["automaticLog"]["enabled"] = not settings["automaticLog"]["enabled"]
+settings = fc.update_spark_settings(workspace_id, automatic_log=settings["automaticLog"])
+  
+```
+
 
 ## Spark Job Definitions
 
@@ -341,6 +442,9 @@ spark_job_definition = fc.get_spark_job_definition(workspace_id, spark_job_defin
 
 # Update Spark Job Definition
 spark_job_definition2 = fc.update_spark_job_definition(workspace_id, spark_job_definition.id, display_name="sparkjobdefinition2")
+
+# Get Spark Job Definition Definition
+fc.get_spark_job_definition_definition(workspace_id, spark_job_definition.id, format=None)
 
 # Update Spark Job Definition Definition
 fc.update_spark_job_definition_definition(workspace_id, spark_job_definition.id, definition=definition)
@@ -377,3 +481,4 @@ warehouse2 = fc.update_warehouse(workspace_id, warehouse.id, display_name="wh2")
 fc.delete_warehouse(workspace_id, warehouse.id)
 
 ```
+

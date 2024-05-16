@@ -73,6 +73,14 @@ class AdminWorkspace:
         Returns:
             dict: The access details of the workspace
         """
+        return self.list_workspace_access_details()
+    
+    def list_workspace_access_details(self):
+        """Get the access details of the workspace
+
+        Returns:
+            dict: The access details of the workspace
+        """
         url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{self.id}/users"
            
         for _ in range(10):
@@ -115,6 +123,17 @@ class AdminWorkspace:
         item_dict = json.loads(response.text) 
         return AdminItem.from_dict(item_dict, self.auth)
     
+    def list_item_access_details(self, item_id, type=None):
+        """Get the access details of the item
+        
+        Args:
+            item_id (str): The ID of the item
+            type (str): The type of the item
+        Returns:
+            dict: The access details of the item
+        """
+        return self.get_item(item_id, type).list_item_access_details()
+
     def get_item_access_details(self, item_id, type=None):
         """Get the access details of the item
         
@@ -124,4 +143,4 @@ class AdminWorkspace:
         Returns:
             dict: The access details of the item
         """
-        return self.get_item(item_id, type).get_item_access_details()
+        return self.list_item_access_details(item_id, type)

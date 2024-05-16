@@ -41,11 +41,6 @@ class Item:
     def from_dict(item_dict, auth):
         """Create Item object from dictionary"""
         
-        if item_dict['type'] == "Lakehouse":
-            from msfabricpysdkcore.lakehouse import Lakehouse
-            return Lakehouse(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
-                    properties=item_dict.get('properties', None),
-                    definition=item_dict.get('definition', None), description=item_dict.get('description', ""), auth=auth)
         return Item(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
                     properties=item_dict.get('properties', None),
                     definition=item_dict.get('definition', None), description=item_dict.get('description', ""), auth=auth)
@@ -71,10 +66,15 @@ class Item:
 
         return response.status_code
     
-    def get_definition(self):
+    def get_definition(self, type = None, format = None):
         """Get the definition of the item"""
         
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/getDefinition"
+        if type:
+            url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/{type}/{self.id}/getDefinition"
+
+        if format:
+            url += f"?format={format}"
 
         for _ in range(10):
             response = requests.post(url=url, headers=self.auth.get_headers())
@@ -127,9 +127,13 @@ class Item:
 
         return self
 
-    def update_definition(self, definition):
+    def update_definition(self, definition, type = None):
         """Update the item definition"""
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/updateDefinition"
+
+        if type:
+            url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/{type}/{self.id}/updateDefinition"
+            
         payload = {
             'definition': definition
         }

@@ -1,5 +1,21 @@
 # Release Notes
 
+## 0.0.10
+
+### New Features
+
+- added deployment pipeline APIs
+- added APIs for spark custom pools and workspace settings
+- added Create Data Pipeline API
+- added Long Running Operations API
+- added Lakehouse background jobs API for manual table maintenance
+- added the Label APIs as part of the Admin APIs
+- added get and update definition APIs for semantic models, notebooks, reports and spark job definitions
+
+### Revisions
+
+- some Admin APIs have changed and are called list_..._settings instead of get_..._settings. The naming in the SDK is changed accordingly although we tried to keep the old naming still vialbe for backwards compatibility with a deprecation warning. The old naming will be removed in one of the next releases.
+
 ## 0.0.9
 
 ### New Features

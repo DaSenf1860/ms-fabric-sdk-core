@@ -25,9 +25,7 @@ class LongRunningOperation:
             if response.status_code == 400:
                 return None
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error getting operation results: {response.text}")
+                raise Exception(f"Error getting operation results: {response.status_code}, {response.text}")
             break
 
         return json.loads(response.text)
@@ -43,9 +41,7 @@ class LongRunningOperation:
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error getting operation state: {response.text}")
+                raise Exception(f"Error getting operation state: {response.status_code},  {response.text}")
             break
 
         return json.loads(response.text)    

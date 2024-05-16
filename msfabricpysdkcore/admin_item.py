@@ -85,6 +85,13 @@ class AdminItem:
         
         Returns:
             dict: The access details of the item"""
+        return self.list_item_access_details(type)
+        
+    def list_item_access_details(self, type=None):
+        """Get the access details of the item
+        
+        Returns:
+            dict: The access details of the item"""
         
         url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{self.workspace_id}/items/{self.id}/users"
 

@@ -3,6 +3,7 @@ import requests
 from time import sleep
 
 from msfabricpysdkcore.item import Item
+from msfabricpysdkcore.long_running_operation import check_long_running_operation
 
 class Lakehouse(Item):
     """Class to represent a item in Microsoft Fabric"""
@@ -10,6 +11,10 @@ class Lakehouse(Item):
     def __init__(self, id, display_name, type, workspace_id, auth, properties = None, definition=None, description=""):
         super().__init__(id, display_name, type, workspace_id, auth, properties, definition, description)
 
+    def from_dict(item_dict, auth):
+        return Lakehouse(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), auth=auth)
 
     def list_tables(self, continuationToken = None):
         """List all tables in the lakehouse"""
@@ -93,3 +98,39 @@ class Lakehouse(Item):
             sleep(3)
         return False
     
+    # run on demand table maintenance
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses/{lakehouseId}/jobs/instances?jobType={jobType}
+
+    def run_on_demand_table_maintenance(self, execution_data, job_type = "TableMaintenance", wait_for_completion = True):
+        """Run on demand table maintenance"""
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/lakehouses/{self.id}/jobs/instances?jobType={job_type}"
+
+        body = {
+                "executionData": execution_data
+              }
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code == 202 and wait_for_completion:
+                print("successfully started the operation")
+                try:
+                    operation_result = check_long_running_operation( response.headers, self.auth)
+                    return operation_result
+                except Exception as e:
+                    
+                    print("Problem waiting for long running operation. Returning initial response.")
+                    print(e)
+                    return response
+                
+            if response.status_code not in (200, 202, 429):
+                print(response.status_code)
+                print(response.text)
+
+                raise Exception(f"Error at run on demand table maintenance: {response.text}")
+            break
+
+        return response

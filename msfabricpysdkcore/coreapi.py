@@ -4,6 +4,8 @@ from time import sleep
 
 from msfabricpysdkcore.capacity import Capacity
 from msfabricpysdkcore.client import FabricClient
+from msfabricpysdkcore.deployment_pipeline import DeploymentPipeline
+from msfabricpysdkcore.long_running_operation import LongRunningOperation
 from msfabricpysdkcore.workspace import Workspace
 
 class FabricClientCore(FabricClient):
@@ -311,17 +313,18 @@ class FabricClientCore(FabricClient):
                 return cap
         raise ValueError("No capacity found") 
     
-    def list_tables(self, workspace_id, item_id):
-        ws = self.get_workspace_by_id(workspace_id)
-        return ws.list_tables(item_id=item_id)
-    
-    def load_table(self, workspace_id, item_id, table_name, path_type, relative_path,
-                    file_extension = None, format_options = None,
-                    mode = None, recursive = None, wait_for_completion = True):
-        ws = self.get_workspace_by_id(workspace_id)
-        return ws.load_table(item_id, table_name, path_type, relative_path,
-                    file_extension, format_options,
-                    mode, recursive, wait_for_completion)
+
+    # long running operations
+
+    def get_operation_results(self, operation_id):
+        """Get the results of an operation"""
+        lro = LongRunningOperation(operation_id=operation_id, auth=self.auth)
+        return lro.get_operation_results()
+
+    def get_operation_state(self, operation_id):
+        """Get the state of an operation"""
+        lro = LongRunningOperation(operation_id=operation_id, auth=self.auth)
+        return lro.get_operation_state()
 
     # list things
 
@@ -347,6 +350,11 @@ class FabricClientCore(FabricClient):
     
     # dataPipelines
 
+    def create_data_pipeline(self, workspace_id, display_name, description = None):
+        """Create a data pipeline in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.create_data_pipeline(display_name = display_name, description = description)
+
     def list_data_pipelines(self, workspace_id, with_properties = False):
         """List data pipelines in a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
@@ -366,6 +374,84 @@ class FabricClientCore(FabricClient):
         """Update a data pipeline in a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.get_data_pipeline(data_pipeline_id).update(display_name=display_name, description=description)
+
+    # environments
+
+    def list_environments(self, workspace_id, with_properties = False):
+        """List environments in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.list_environments(with_properties = with_properties)
+    
+    def create_environment(self, workspace_id, display_name, description = None):
+        """Create an environment in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.create_environment(display_name = display_name, description = description)
+    
+    def get_environment(self, workspace_id, environment_id = None, environment_name = None):
+        """Get an environment from a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id = environment_id, environment_name = environment_name)
+    
+    def delete_environment(self, workspace_id, environment_id):
+        """Delete an environment from a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.delete_environment(environment_id)
+    
+    def update_environment(self, workspace_id, environment_id, display_name = None, description = None):
+        """Update an environment in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.update_environment(environment_id, display_name = display_name, description = description)
+    
+    # environmentSparkCompute
+
+    def get_published_settings(self, workspace_id, environment_id):
+        """Get published settings for an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).get_published_settings()
+    
+    def get_staging_settings(self, workspace_id, environment_id):
+        """Get staging settings for an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).get_staging_settings()
+    
+    def update_staging_settings(self, workspace_id, environment_id, instance_pool, driver_cores, driver_memory, executor_cores, executor_memory,
+                                dynamic_executor_allocation, spark_properties, runtime_version):
+        """Update staging settings for an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).update_staging_settings(instance_pool, driver_cores, driver_memory, executor_cores, executor_memory,
+                                dynamic_executor_allocation, spark_properties, runtime_version)
+    
+    # environmentSparkLibraries
+
+    def get_published_libraries(self, workspace_id, environment_id):
+        """Get published libraries for an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).get_published_libraries()
+    
+    def get_staging_libraries(self, workspace_id, environment_id):
+        """Get staging libraries for an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).get_staging_libraries()
+    
+    def update_staging_library(self, workspace_id, environment_id):
+        """Update staging libraries for an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).update_staging_libraries()
+    
+    def publish_environment(self, workspace_id, environment_id):
+        """Publish an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).publish_environment()
+    
+    def delete_staging_library(self, workspace_id, environment_id, library_to_delete):
+        """Delete a staging library from an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).delete_staging_library(library_to_delete)
+    
+    def cancel_publish(self, workspace_id, environment_id):
+        """Cancel publishing an environment"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_environment(environment_id).cancel_publish()
 
     # eventstreams
 
@@ -465,6 +551,27 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.get_lakehouse(lakehouse_id = lakehouse_id, lakehouse_name = lakehouse_name)
 
+    def list_tables(self, workspace_id, lakehouse_id):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.list_tables(lakehouse_id=lakehouse_id)
+    
+    def load_table(self, workspace_id, lakehouse_id, table_name, path_type, relative_path,
+                    file_extension = None, format_options = None,
+                    mode = None, recursive = None, wait_for_completion = True):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.load_table(lakehouse_id, table_name, path_type, relative_path,
+                    file_extension, format_options,
+                    mode, recursive, wait_for_completion)
+
+    def run_on_demand_table_maintenance(self, workspace_id, lakehouse_id, 
+                                        execution_data = None,
+                                        job_type = "TableMaintenance", wait_for_completion = True):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.run_on_demand_table_maintenance(lakehouse_id = lakehouse_id, 
+                                                  execution_data = execution_data, 
+                                                  job_type = job_type, 
+                                                  wait_for_completion= wait_for_completion)
+
     # mlExperiments
 
     def list_ml_experiments(self, workspace_id):
@@ -546,6 +653,11 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.update_notebook(notebook_id, display_name = display_name, description = description)
     
+    def get_notebook_definition(self, workspace_id, notebook_id, format = None):
+        """Get the definition of a notebook"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_notebook_definition(notebook_id, format = format)
+
     def update_notebook_definition(self, workspace_id, notebook_id, definition):
         """Update the definition of a notebook"""
         ws = self.get_workspace_by_id(workspace_id)
@@ -572,6 +684,11 @@ class FabricClientCore(FabricClient):
         """Delete a report from a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.delete_report(report_id)
+    
+    def get_report_definition(self, workspace_id, report_id, format = None):
+        """Get the definition of a report"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_report_definition(report_id, format = format)
     
     def update_report_definition(self, workspace_id, report_id, definition):
         """Update the definition of a report"""
@@ -600,11 +717,16 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.delete_semantic_model(semantic_model_id)
     
-    def update_semantic_model(self, workspace_id, semantic_model_id, display_name = None, description = None):
-        """Update a semantic model in a workspace"""
-        ws = self.get_workspace_by_id(workspace_id)
-        return ws.update_semantic_model(semantic_model_id, display_name = display_name, description = description)
+    # def update_semantic_model(self, workspace_id, semantic_model_id, display_name = None, description = None):
+    #     """Update a semantic model in a workspace"""
+    #     ws = self.get_workspace_by_id(workspace_id)
+    #     return ws.update_semantic_model(semantic_model_id, display_name = display_name, description = description)
     
+    def get_semantic_model_definition(self, workspace_id, semantic_model_id, format = None):
+        """Get the definition of a semantic model"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_semantic_model_definition(semantic_model_id, format = format)
+
     def update_semantic_model_definition(self, workspace_id, semantic_model_id, definition):
         """Update the definition of a semantic model"""
         ws = self.get_workspace_by_id(workspace_id)
@@ -637,6 +759,11 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.update_spark_job_definition(spark_job_definition_id, display_name = display_name, description = description)
     
+    def get_spark_job_definition_definition(self, workspace_id, spark_job_definition_id, format = None):
+        """Get the definition of a spark job definition"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_spark_job_definition_definition(spark_job_definition_id, format = format)
+
     def update_spark_job_definition_definition(self, workspace_id, spark_job_definition_id, definition):
         """Update the definition of a spark job definition"""
         ws = self.get_workspace_by_id(workspace_id)
@@ -668,3 +795,160 @@ class FabricClientCore(FabricClient):
         """Update a warehouse in a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.update_warehouse(warehouse_id, display_name = display_name, description = description)
+
+    # spark workspace custom pools
+
+    def list_workspace_custom_pools(self, workspace_id):
+        """List workspace custom pools"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.list_workspace_custom_pools()
+    
+    def create_workspace_custom_pool(self, workspace_id, name, node_family, node_size, auto_scale, dynamic_executor_allocation):
+        """Create a workspace custom pool"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.create_workspace_custom_pool(name = name, 
+                                               node_family = node_family,
+                                               node_size = node_size,
+                                               auto_scale = auto_scale,
+                                               dynamic_executor_allocation = dynamic_executor_allocation)
+    
+
+    def get_workspace_custom_pool(self, workspace_id, pool_id):
+        """Get a workspace custom pool"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_workspace_custom_pool(pool_id)
+    
+    def delete_workspace_custom_pool(self, workspace_id, pool_id):
+        """Delete a workspace custom pool"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.delete_workspace_custom_pool(pool_id)
+    
+    def update_workspace_custom_pool(self, workspace_id, pool_id, name = None, node_family = None, node_size = None, auto_scale = None, dynamic_executor_allocation = None):
+        """Update a workspace custom pool"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.update_workspace_custom_pool(pool_id, name = name, node_family = node_family, node_size = node_size, auto_scale = auto_scale, dynamic_executor_allocation = dynamic_executor_allocation)
+    
+    # Deployment Pipelines
+
+    def deploy_stage_content(self, deployment_pipeline_id, source_stage_id, target_stage_id, created_workspace_details = None,
+               items = None, note = None, wait_for_completion = True):
+        """Deploy stage content
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            source_stage_id (str): The ID of the source stage
+            target_stage_id (str): The ID of the target stage
+            created_workspace_details (list): A list of created workspace details
+            items (list): A list of items
+            note (str): A note
+            wait_for_completion (bool): Whether to wait for the deployment to complete
+        Returns:
+            Details about the dpeloyment"""
+
+        pipeline = DeploymentPipeline.get_pipeline(deployment_pipeline_id, auth=self.auth)
+
+        return pipeline.deploy(source_stage_id, target_stage_id, created_workspace_details = created_workspace_details,
+               items = items, note = note, wait_for_completion = wait_for_completion)
+
+    def list_deployment_pipelines(self, continuationToken = None):
+        """List deployment pipelines
+        Args:
+            continuationToken (str): The continuation token for pagination
+        Returns:
+            list: List of DeploymentPipeline objects
+        """
+        # GET https://api.fabric.microsoft.com/v1/deploymentPipelines
+
+        url = "https://api.fabric.microsoft.com/v1/deploymentPipelines"
+
+        if continuationToken:
+            url = f"{url}?continuationToken={continuationToken}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error listing deployment pipelines: {response.status_code}, {response.text}")
+            break
+
+        resp_dict = json.loads(response.text)
+        items = resp_dict["value"]
+
+        dep_pipes = [DeploymentPipeline.from_dict(i, auth=self.auth) for i in items]
+
+        if "continuationToken" in resp_dict:
+            dep_pipes_next = self.list_deployment_pipelines(continuationToken=resp_dict["continuationToken"])
+            dep_pipes.extend(dep_pipes_next)
+
+        return dep_pipes
+    
+    def get_deployment_pipeline(self, pipeline_id):
+        """Get a deployment pipeline by ID
+        Args:
+            pipeline_id (str): The ID of the deployment pipeline
+        Returns:
+            DeploymentPipeline: The deployment pipeline
+        """
+        return DeploymentPipeline.get_pipeline(pipeline_id, auth=self.auth)
+    
+    def get_deployment_pipeline_stages_items(self, pipeline_id, stage_id = None, stage_name = None):
+        """Get the items in a deployment stage
+        Args:
+            pipeline_id (str): The ID of the deployment pipeline
+            stage_id (str): The ID of the deployment stage
+            stage_name (str): The name of the deployment stage
+        Returns:
+            list: List of DeploymentStageItem objects
+        """
+        pipeline = DeploymentPipeline.get_pipeline(pipeline_id, auth=self.auth)
+        return pipeline.get_deployment_pipeline_stages_items(stage_id, stage_name)
+
+    def get_deployment_pipeline_stages(self, pipeline_id):
+        """Get the stages of a deployment pipeline
+        Args:
+            pipeline_id (str): The ID of the deployment pipeline
+        Returns:
+            list: List of DeploymentPipelineStage objects
+        """
+        pipeline = self.get_deployment_pipeline(pipeline_id)
+        return pipeline.get_stages()
+    
+    def list_deployment_pipeline_stages(self, pipeline_id):
+        """Get the stages of a deployment pipeline
+        Args:
+            pipeline_id (str): The ID of the deployment pipeline
+        Returns:
+            list: List of DeploymentPipelineStage objects
+        """
+        return self.get_deployment_pipeline_stages(pipeline_id)
+    
+
+    # Spark workspace settings
+
+    def get_spark_settings(self, workspace_id):
+        """Get spark settings for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The spark settings"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_spark_settings()
+    
+    def update_spark_settings(self, workspace_id, automatic_log = None, 
+                              environment = None, high_concurrency = None, pool = None):
+        """Update spark settings for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            automatic_log (bool): Whether to automatically log
+            environment (str): The environment
+            high_concurrency (bool): Whether to use high concurrency
+            pool (str): The pool
+        Returns:
+            dict: The updated spark settings"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.update_spark_settings(automatic_log=automatic_log, 
+                                        environment=environment, 
+                                        high_concurrency=high_concurrency, 
+                                        pool=pool)

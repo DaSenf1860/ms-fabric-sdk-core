@@ -289,8 +289,19 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The access details of the workspace
         """
+        print("DEPRECATED: Use list_workspace_access_details instead")
+        return self.list_workspace_access_details(workspace_id)
+
+    def list_workspace_access_details(self, workspace_id):
+        """Get the access details of the workspace
+        
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The access details of the workspace
+        """
         ws = self.get_workspace(workspace_id)
-        return ws.get_workspace_access_details()
+        return ws.list_workspace_access_details()
     
     def list_workspaces(self, capacity_id = None, name=None, state=None, type=None, continuationToken = None):
         """List all workspaces
@@ -429,6 +440,15 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The tenant settings
         """
+        print("DEPRECATED: Use list_tenant_settings instead")
+        return self.list_tenant_settings()
+    
+    def list_tenant_settings(self):
+        """Get the tenant settings
+        
+        Returns:
+            dict: The tenant settings
+        """
         url = "https://api.fabric.microsoft.com/v1/admin/tenantsettings"
         for _ in range(10):
             response = requests.get(url=url, headers=self.auth.get_headers())
@@ -445,7 +465,7 @@ class FabricClientAdmin(FabricClient):
         return json.loads(response.text)
     
 
-    def get_capacities_tenant_settings_overrides(self, continuationToken = None):
+    def list_capacities_tenant_settings_overrides(self, continuationToken = None):
         """Returns list of tenant setting overrides that override at the capacities
         
         Returns:
@@ -471,12 +491,35 @@ class FabricClientAdmin(FabricClient):
         overrides = resp_dict["Overrides"]
 
         if "continuationToken" in resp_dict and resp_dict["continuationToken"] is not None:
-            overrides_next = self.get_capacities_tenant_settings_overrides(continuationToken=resp_dict["continuationToken"])
+            overrides_next = self.list_capacities_tenant_settings_overrides(continuationToken=resp_dict["continuationToken"])
             overrides.extend(overrides_next)
 
         return overrides
+
+    def get_capacities_tenant_settings_overrides(self):
+        """Returns list of tenant setting overrides that override at the capacities
+        
+        Returns:
+            list: The capacities tenant settings overrides
+        """
+        print("DEPRECATED: Use list_capacities_tenant_settings_overrides instead")
+        return self.list_capacities_tenant_settings_overrides()
     
-    def get_access_entities(self, user_id, type = None, continuationToken = None):
+
+    def get_access_entities(self, user_id, type = None):
+        """Get the access entities for a user
+        
+        Args:
+            user_id (str): The ID of the user
+            type (str): The type of the access entity
+            continuationToken (str): The continuation token
+        Returns:
+            list: The list of access entities
+        """
+        print("DEPRECATED: Use list_access_entities instead")
+        return self.list_access_entities(user_id, type)
+
+    def list_access_entities(self, user_id, type = None, continuationToken = None):
         """Get the access entities for a user
         
         Args:
@@ -515,12 +558,12 @@ class FabricClientAdmin(FabricClient):
         access_entities = resp_dict["accessEntities"]
 
         if "continuationToken" in resp_dict and resp_dict["continuationToken"] is not None:
-            access_entities_next = self.get_access_entities(user_id, type, continuationToken=resp_dict["continuationToken"])
+            access_entities_next = self.list_access_entities(user_id, type, continuationToken=resp_dict["continuationToken"])
             resp_dict["accessEntities"].extend(access_entities_next)
         
         return access_entities
     
-    def get_item_access_details(self, workspace_id, item_id, type=None):
+    def list_item_access_details(self, workspace_id, item_id, type=None):
         """Get the access details of the item
         
         Args:
@@ -532,4 +575,87 @@ class FabricClientAdmin(FabricClient):
         """
         ws = self.get_workspace(workspace_id)
         item = ws.get_item(item_id, type)
-        return item.get_item_access_details(type)
+        return item.list_item_access_details(type)
+    
+    def get_item_access_details(self, workspace_id, item_id, type=None):
+        """Get the access details of the item
+        
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            type (str): The type of the item
+        Returns:
+            dict: The access details of the item
+        """
+        print("DEPRECATED: Use list_item_access_details instead")
+        return self.list_item_access_details(workspace_id, item_id, type)
+    
+    def bulk_set_labels(self, items, label_id, assignment_method = None, delegated_principal = None):
+        """Set labels in bulk"""
+        # POST https://api.fabric.microsoft.com/v1/admin/items/bulkSetLabels
+
+        url = "https://api.fabric.microsoft.com/v1/admin/items/bulkSetLabels"
+
+        if len(items) > 2000:
+            self.bulk_set_labels(items[2000:], label_id, assignment_method, delegated_principal)
+            items = items[:2000]
+
+        body = {
+            "items": items,
+            "labelId": label_id
+        }
+        if assignment_method:
+            body["assignmentMethod"] = assignment_method
+
+        if delegated_principal:
+            body["delegatedPrincipal"] = delegated_principal
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                print(response.status_code)
+                print(response.text)
+                raise Exception(f"Error setting labels: {response.text}")
+            break
+
+        response = json.loads(response.text)
+        return response
+    
+
+    def bulk_remove_labels(self, items):
+        """Remove labels in bulk
+        Args:
+            items (list): The list of item IDs
+            
+        Returns:
+            dict: The response from the API"""
+        # POST https://api.fabric.microsoft.com/v1/admin/items/bulkRemoveLabels
+
+        url = "https://api.fabric.microsoft.com/v1/admin/items/bulkRemoveLabels"
+
+        if len(items) > 2000:
+            self.bulk_remove_labels(items[2000:])
+            items = items[:2000]
+        
+        body = {
+            "items": items
+        }
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                print(response.status_code)
+                print(response.text)
+                raise Exception(f"Error removing labels: {response.text}")
+            break
+
+        response = json.loads(response.text)
+        return response

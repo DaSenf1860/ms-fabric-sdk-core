@@ -22,22 +22,24 @@ See the latest release notes [here](releasenotes/release_notes.md).
 Currently it supports all Core APIs, Admin APIs, Lakehouse APIs and all other item specific CRUD APIs, i.e.:
 - Core APIs
   - [Capacities](#working-with-capacities)
+  - [Deployment Pipelines](#deployment-pipelines)
   - [Git](#working-with-git)
   - [Items](#working-with-items)
   - [Job Scheduler](#working-with-job-scheduler)
-  - Long Running Operations
+  - [Long Running Operations](#long-running-operations)
   - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
   - [Workspaces](#working-with-workspaces)
-- Lakehouse APIs
-  - [Tables](#tables)
 - Admin APIs
   - [Domains](#admin-api-for-domains)
   - [Items](#admin-api-for-items)
+  - [Labels](#admin-api-for-labels)
   - [Tenants](#admin-api-for-tenants)
   - [Users](#admin-api-for-users)
   - [Workspaces](#admin-api-for-workspaces)
-- [Item Specific CRUD APIs](item_specific_apis.md), e.g.
+- [Item Specific APIs](item_specific_apis.md), e.g.
   - List, create, update, delete warehouses, notebooks, semantic models, kql databases,.....
+  - Lakehouse operations (Load table, list tables, run table maintenance)
+  - Spark Pool operations
 
 It is planned to support also new APIs which are not released yet.
 Also we have plans to support APIs to interact with Fabric capacities on the Azure Side.
@@ -177,6 +179,45 @@ ws.unassign_from_capacity()
 
 # List capacities
 fc.list_capacities()
+```
+
+### Deployment Pipelines
+
+```python
+
+
+# List deployment pipelines 
+
+depl_pipes = fc.list_deployment_pipelines()
+
+pipe = [pipe for pipe in depl_pipes if pipe.display_name == 'sdkpipe'][0]
+pipe_id = pipe.id
+
+# Get a deployment pipeline
+pipe = fc.get_deployment_pipeline(pipe_id)
+
+
+# Get deployment pipeline stages
+stages = fc.get_deployment_pipeline_stages(pipe_id)
+
+names = [stage.display_name for stage in stages]
+
+dev_stage = [stage for stage in stages if stage.display_name == "Development"][0]
+prod_stage = [stage for stage in stages if stage.display_name == "Production"][0]
+
+# Get deployment pipeline stages items
+items = fc.get_deployment_pipeline_stages_items(pipeline_id=pipe_id, stage_id=dev_stage.id)
+
+
+items = [item for item in dev_stage.get_items() if item["itemDisplayName"] == 'cicdlakehouse']
+item = items[0]
+item = {"sourceItemId": item["itemId"],
+        "itemType": item["itemType"]}
+items = [item]
+
+# Deploy stage content
+response = pipe.deploy(source_stage_id=dev_stage.id,target_stage_id=prod_stage.id, items=items)
+
 ```
 
 ### Working with items
@@ -365,36 +406,23 @@ item.cancel_item_job_instance(job_instance_id="job_instance_id")
 
 ```
 
-### Tables
 
-
+### Long Running Operations
 
 ```python
-# List tables in a Lakehouse
 
-from msfabricpysdkcore import FabricClientCore
+# Get the state of an operation
 
-fc = FabricClientCore()
-ws = fc.get_workspace_by_name("testworkspace")
-lakehouse = ws.get_item_by_name(item_name="lakehouse1", item_type="Lakehouse")
-table_list = lakehouse.list_tables()
-# or
-table_list = ws.list_tables(item_id = "someitemid")
-# or
-table_list = fc.list_tables(workspace_id = "someworkspaceid", item_id = "someitemid")
+operation_id = "801783df0123gsdgsq80"
 
+state = fc.get_operation_state(operation_id)
 
-# Load a file (like a csv) into a Lakehouse table
+# Get the results of an operation
 
-lakehouse.load_table(table_name="testtable", path_type= "File", relative_path="Files/folder1/titanic.csv")
-# or
-ws.load_table(item_id = "someitemid", table_name="testtable",
-              path_type= "File", relative_path="Files/folder1/titanic.csv")
-# or
-fc.load_table(workspace_id = "someworkspaceid", item_id = "someitemid", table_name="testtable",
-              path_type= "File", relative_path="Files/folder1/titanic.csv")
+results = fc.get_operation_results(operation_id)
 
 ```
+
 
 ### Admin API for Workspaces
 
@@ -412,9 +440,9 @@ ws = fca.get_workspace(workspace_id="workspace_id")
 
 # Get workspace access details
 
-ws_access = fca.get_workspace_access_details("workspace_id")
+ws_access = fca.list_workspace_access_details("workspace_id")
 # or
-ws_access = ws.get_access_details()
+ws_access = ws.list_access_details()
 ```
 
 ### Admin API for Users
@@ -427,7 +455,7 @@ fca = FabricClientAdmin()
 # Get access entities
 
 user_id = 'b4fuhaidc2'
-access_entities = fca.get_access_entities(user_id, type="Notebook")
+access_entities = fca.list_access_entities(user_id, type="Notebook")
 
 ```
 
@@ -440,11 +468,11 @@ fca = FabricClientAdmin()
 
 # Get tenant settings
 
-tenant_settings = fca.get_tenant_settings()
+tenant_settings = fca.list_tenant_settings()
 
 # Get capacity tenant settings overrides
 
-overrides = fca.get_capacities_tenant_settings_overrides()
+overrides = fca.list_capacities_tenant_settings_overrides()
 
 ```
 
@@ -467,13 +495,35 @@ item = ws.get_item(item_id=item_list[0].id)
 
 # Get item access details
 
-item_access = fca.get_item_access_details(workspace_id="wsid", item_id=item_list[0].id)
+item_access = fca.list_item_access_details(workspace_id="wsid", item_id=item_list[0].id)
 #or
-item_access = ws.get_item_access_details(item_id=item_list[0].id)
+item_access = ws.list_item_access_details(item_id=item_list[0].id)
 # or
 item_access = item.get_access_details()
 
 ```
+
+### Admin API for Labels
+
+```python
+
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+items = [{"id": "d417b843534cf0-23423523", "type": "Lakehouse"}]
+label_id = "de8912714345d2" # to be found in Microsoft Purview Compliance Center
+
+# Bulk set labels 
+
+resp = fca.bulk_set_labels(items=items, label_id=label_id)
+
+# Bulk remove labels
+
+resp = fca.bulk_remove_labels(items=items)
+
+```
+
 
 ### Admin API for Domains
 
