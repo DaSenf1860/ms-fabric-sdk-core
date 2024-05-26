@@ -26,8 +26,9 @@ class FabricAuth():
 class FabricAuthClient(FabricAuth):
     """FabricAuthClient class to interact with Entra ID"""
 
-    def __init__(self):
-        print("Using Azure CLI for authentication")
+    def __init__(self, silent = False):
+        if not silent:
+            print("Using Azure CLI for authentication")
         self.auth = AzureCliCredential()
 
     def get_token(self):
@@ -38,8 +39,9 @@ class FabricAuthClient(FabricAuth):
 class FabricServicePrincipal(FabricAuth):
     """FabricServicePrincipal class to interact with Entra ID"""
 
-    def __init__(self, tenant_id, client_id, client_secret):
-        print("Using Service Principal for authentication")
+    def __init__(self, tenant_id, client_id, client_secret, silent = False):
+        if not silent:
+            print("Using Service Principal for authentication")
 
         self.tenant_id = tenant_id
         self.client_id = client_id
@@ -65,9 +67,10 @@ class FabricServicePrincipal(FabricAuth):
 class FabricSparkUtilsAuthentication(FabricAuth):
     """FabricSparkUtilsAuthentication class to interact with Entra ID"""
 
-    def __init__(self):
+    def __init__(self, silent = False):
         mssparkutils.credentials.getToken("pbi")
-        print("Using Synapse Spark Utils for authentication")
+        if not silent:
+            print("Using Synapse Spark Utils for authentication")
 
     def get_token(self):
         """Get token from Azure AD"""

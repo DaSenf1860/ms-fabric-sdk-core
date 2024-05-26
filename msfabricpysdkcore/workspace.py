@@ -6,7 +6,7 @@ from msfabricpysdkcore.lakehouse import Lakehouse
 from msfabricpysdkcore.environment import Environment
 from msfabricpysdkcore.long_running_operation import check_long_running_operation
 from msfabricpysdkcore.otheritems import DataPipeline, Eventstream, KQLDatabase, KQLQueryset, SparkJobDefinition
-from msfabricpysdkcore.otheritems import MLExperiment, MLModel, Notebook, Report, SemanticModel, Warehouse
+from msfabricpysdkcore.otheritems import Eventhouse, MLExperiment, MLModel, Notebook, Report, SemanticModel, Warehouse
 from msfabricpysdkcore.spark_custom_pool import SparkCustomPool
 
 
@@ -140,9 +140,7 @@ class Workspace:
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error updating workspace: {response.text}")
+                raise Exception(f"Error updating workspace: {response.status_code}, {response.text}")
             break
 
         assert response.status_code == 200
@@ -229,6 +227,8 @@ class Workspace:
             return self.get_data_pipeline(item_dict["id"])
         if item_dict["type"] == "Eventstream":
             return self.get_eventstream(item_dict["id"])
+        if item_dict["type"] == "Eventhouse":
+            return self.get_eventhouse(item_dict["id"])
         if item_dict["type"] == "KQLDatabase":
             return self.get_kql_database(item_dict["id"])
         if item_dict["type"] == "KQLQueryset":
@@ -255,7 +255,7 @@ class Workspace:
         item_obj = Item.from_dict(item_dict, auth=self.auth)
         return item_obj
 
-    def create_item(self, display_name, type, definition = None, description = None):
+    def create_item(self, display_name, type, definition = None, description = None, **kwargs):
         """Create an item in a workspace"""
 
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/items"
@@ -271,7 +271,9 @@ class Workspace:
 
         if type in ["dataPipelines",
                     "environments",
-                    "eventstreams", 
+                    "eventhouses",
+                    "eventstreams",
+                    "kqlDatabases",
                     "lakehouses",
                     "mlExperiments", 
                     "mlModels", 
@@ -280,6 +282,11 @@ class Workspace:
                     "semanticModels", 
                     "sparkJobDefinitions", 
                     "warehouses"]:
+            
+            if type == "kqlDatabases":
+                if "creation_payload" not in kwargs:
+                    raise Exception("creation_payload is required for KQLDatabase")
+                body["creationPayload"] = kwargs["creation_payload"]
             
             url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/{type}"
             body.pop('type')
@@ -307,7 +314,9 @@ class Workspace:
 
             type_mapping = {"dataPipelines": "DataPipeline",
                             "environments": "Environment",
+                            "eventhouses": "Eventhouse",
                             "eventstreams": "Eventstream",
+                            "kqlDatabases": "KQLDatabase",
                             "lakehouses": "Lakehouse", 
                             "mlExperiments": "MLExperiment",
                             "mlModels": "MLModel", 
@@ -693,7 +702,7 @@ class Workspace:
 
     def list_data_pipelines(self, with_properties = False):
         """List data pipelines in a workspace"""
-        return self.list_items(with_properties = with_properties, type="dataPipelines")
+        return self.list_items(type="dataPipelines", with_properties=with_properties)
     
     def get_data_pipeline(self, data_pipeline_id = None, data_pipeline_name = None):
         """Get a data pipeline from a workspace"""
@@ -721,7 +730,7 @@ class Workspace:
 
     def list_environments(self, with_properties = False):
         """List environments in a workspace"""
-        return self.list_items(type="environments", with_properties=with_properties)
+        return self.list_items(type="environments", with_properties = with_properties)
     
     def create_environment(self, display_name, description = None):
         """Create an environment in a workspace"""
@@ -741,10 +750,6 @@ class Workspace:
 
         item_dict = self.get_item_internal(url)
         env = Environment.from_dict(item_dict, auth=self.auth)
-        #env.get_staging_settings()
-        #env.get_published_settings()
-        #env.get_staging_libraries()
-        #env.get_published_libraries()
         return env
     
     def delete_environment(self, environment_id):
@@ -765,13 +770,18 @@ class Workspace:
     def get_staging_settings(self, environment_id):
         return self.get_environment(environment_id).get_staging_settings()
     
-    def update_staging_settings(self, environment_id, instance_pool, driver_cores, driver_memory, executor_cores, executor_memory,
-                                dynamic_executor_allocation, spark_properties, runtime_version):
-        return self.get_environment(environment_id).update_staging_settings(instance_pool, driver_cores, 
-                                                                            driver_memory, executor_cores, 
-                                                                            executor_memory, 
-                                                                            dynamic_executor_allocation,
-                                                                            spark_properties, runtime_version)
+    def update_staging_settings(self, environment_id,
+                                driver_cores = None, driver_memory = None, dynamic_executor_allocation = None,
+                                executor_cores = None, executor_memory = None, instance_pool = None,
+                                runtime_version = None, spark_properties = None):
+        return self.get_environment(environment_id).update_staging_settings(driver_cores=driver_cores,
+                                                                            driver_memory=driver_memory,
+                                                                            dynamic_executor_allocation=dynamic_executor_allocation,
+                                                                            executor_cores=executor_cores,
+                                                                            executor_memory=executor_memory,
+                                                                            instance_pool=instance_pool,
+                                                                            runtime_version=runtime_version,
+                                                                            spark_properties=spark_properties)
 
     # environment spark libraries
 
@@ -781,8 +791,8 @@ class Workspace:
     def get_staging_libraries(self, environment_id):
         return self.get_environment(environment_id).get_staging_libraries()
     
-    def update_staging_library(self, environment_id):
-        return self.get_environment(environment_id).update_staging_libraries()
+    def upload_staging_library(self, environment_id, file_path):
+        return self.get_environment(environment_id).upload_staging_library(file_path)
     
     def publish_environment(self, environment_id):
         return self.get_environment(environment_id).publish_environment()
@@ -793,11 +803,45 @@ class Workspace:
     def cancel_publish(self, environment_id):
         return self.get_environment(environment_id).cancel_publish()
     
+    # eventhouses
+    def list_eventhouses(self, with_properties = False):
+        """List eventhouses in a workspace"""
+        return self.list_items(type="eventhouses", with_properties=with_properties)
+    
+    def create_eventhouse(self, display_name, description = None):
+        """Create an eventhouse in a workspace"""
+        return self.create_item(display_name = display_name,
+                                type = "eventhouses",
+                                definition = None,
+                                description = description)
+    
+    def get_eventhouse(self, eventhouse_id = None, eventhouse_name = None):
+        """Get an eventhouse from a workspace"""
+        if eventhouse_id is None and eventhouse_name is not None:
+            return self.get_item_by_name(eventhouse_name, "Eventhouse")
+        elif eventhouse_id is None:
+            raise Exception("eventhouse_id or the eventhouse_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/eventhouses/{eventhouse_id}"
+
+        item_dict = self.get_item_internal(url)
+        return Eventhouse.from_dict(item_dict, auth=self.auth)
+    
+    def delete_eventhouse(self, eventhouse_id):
+        """Delete an eventhouse from a workspace"""
+        return self.get_item(item_id=eventhouse_id).delete(type="eventhouses")
+    
+    def update_eventhouse(self, eventhouse_id, display_name = None, description = None):
+        """Update an eventhouse in a workspace"""
+        return self.get_item(item_id=eventhouse_id).update(display_name=display_name,
+                                                            description=description,
+                                                            type="eventhouses")
+
     # eventstreams
 
-    def list_eventstreams(self):
+    def list_eventstreams(self, with_properties = False):
         """List eventstreams in a workspace"""
-        return self.list_items(type="eventstreams")
+        return self.list_items(type="eventstreams", with_properties=with_properties)
     
     def create_eventstream(self, display_name, description = None):
         """Create an eventstream in a workspace"""
@@ -830,9 +874,16 @@ class Workspace:
     
     # kqlDatabases
 
-    def list_kql_databases(self):
+    def list_kql_databases(self, with_properties = False):
         """List kql databases in a workspace"""
-        return self.list_items(type="kqlDatabases")
+        return self.list_items(type="kqlDatabases", with_properties = with_properties)
+    
+    def create_kql_database(self, creation_payload, display_name, description = None, ):
+        """Create a kql database in a workspace"""
+        return self.create_item(display_name = display_name,
+                                type = "kqlDatabases",
+                                description = description,
+                                creation_payload = creation_payload)
     
     def get_kql_database(self, kql_database_id = None, kql_database_name = None):
         """Get a kql database from a workspace"""
@@ -859,9 +910,9 @@ class Workspace:
 
     # kqlQuerysets
 
-    def list_kql_querysets(self):
+    def list_kql_querysets(self, with_properties = False):
         """List kql querysets in a workspace"""
-        return self.list_items(type="kqlQuerysets")
+        return self.list_items(type="kqlQuerysets", with_properties = with_properties)
 
     def get_kql_queryset(self, kql_queryset_id = None, kql_queryset_name = None):
         """Get a kql queryset from a workspace"""
@@ -925,9 +976,9 @@ class Workspace:
     
     # mlExperiments
 
-    def list_ml_experiments(self):
+    def list_ml_experiments(self, with_properties = False):
         """List ml experiments in a workspace"""
-        return self.list_items(type="mlExperiments")
+        return self.list_items(type="mlExperiments", with_properties = with_properties)
     
     def create_ml_experiment(self, display_name, description = None):
         """Create an ml experiment in a workspace"""
@@ -960,9 +1011,9 @@ class Workspace:
     
     # mlModels
 
-    def list_ml_models(self):
+    def list_ml_models(self, with_properties = False):
         """List ml models in a workspace"""
-        return self.list_items(type="mlModels")
+        return self.list_items(type="mlModels", with_properties = with_properties)
 
     def create_ml_model(self, display_name, description = None):
         """Create an ml model in a workspace"""

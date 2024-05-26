@@ -58,10 +58,7 @@ class Item:
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error deleting item: {response.text}")
+                raise Exception(f"Error deleting item: {response.status_code}, {response.text}")
             break
 
         return response.status_code

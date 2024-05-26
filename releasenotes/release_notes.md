@@ -1,5 +1,14 @@
 # Release Notes
 
+## 0.0.11
+
+### New Features
+
+- added Eventhouse APIs (create, update, delete, get, list)
+- added Environment APIs (create, update, delete, get, list)
+- added Environment details APIs except upload_staging_library (implemented are get published settings, get staging settings, update staging settings) 
+- added KQL Database Create API
+
 ## 0.0.10
 
 ### New Features

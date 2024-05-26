@@ -7,7 +7,9 @@ Go to:
 - ["Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports"](#dashboards-datamarts-sql-endpoints-mirrored-warehouses-paginated-reports)
 - ["Lakehouse"](#lakehouse)
 - ["Data Pipelines"](#data-pipelines)
+- ["Environments"](#environments)
 - ["Eventstreams"](#eventstreams)
+- ["Eventhouses"](#eventhouses)
 - ["KQL Databases"](#kql-databases)
 - ["KQL Querysets"](#kql-querysets)
 - ["ML Experiments"](#ml-experiments)
@@ -134,6 +136,46 @@ fc.delete_data_pipeline(workspace_id, dp.id)
 
 ```
 
+## Environments
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fc = FabricClientCore()
+workspace_id = 'd8a5abe0-993984234343bc57ddbe5'
+
+# Create environment
+environment1 = fc.create_environment(workspace_id, display_name="environment1")
+
+# List environments
+environments = fc.list_environments(workspace_id)
+environment_names = [env.display_name for env in environments]
+
+# Get environment
+env = fc.get_environment(workspace_id, environment_name="environment1")
+
+# Update environment
+env2 = fc.update_environment(workspace_id, env.id, display_name="environment2")
+
+# Delete environment
+status_code = fc.delete_environment(workspace_id, env.id)
+
+
+# Get published settings
+workspace_id = 'd8asdfgabe0-9apk0kdasf6-343bc57ddbe5'
+environment_id = 'fae6d1a7dsfg89b1-f42626deb56f'
+published_settings = fc.get_published_settings(workspace_id=workspace_id, environment_id=environment_id)
+
+# Get staging settings
+staging_settings = fc.get_staging_settings(workspace_id=workspace_id, environment_id=environment_id)
+
+# Update staging settings
+driver_cores = 4
+updated_settings = fc.update_staging_settings(workspace_id=workspace_id, 
+                                              environment_id=environment_id, 
+                                              driver_cores=driver_cores)
+
+```
+
 ## Eventstreams
 
 ```python
@@ -161,6 +203,31 @@ fc.delete_eventstream(workspace_id, es.id)
 
 ```
 
+## Eventhouses
+
+```python	
+from msfabricpysdkcore import FabricClientCore
+fc = FabricClientCore()
+workspace_id = 'd8a5abeieojfsdf-ab46-343bc57ddbe5'
+
+# Create Eventhouse
+eventhouse1 = fc.create_eventhouse(workspace_id, display_name="eventhouse1")
+
+# List Eventhouses
+eventhouses = fc.list_eventhouses(workspace_id)
+eventhouse_names = [eh.display_name for eh in eventhouses]
+
+# Get Eventhouse
+eh = fc.get_eventhouse(workspace_id, eventhouse_name="eventhouse1")
+
+# Update Eventhouse
+eh2 = fc.update_eventhouse(workspace_id, eh.id, display_name="eventhouse2")
+
+# Delete Eventhouse
+status_code = fc.delete_eventhouse(workspace_id, eh.id)
+
+```
+
 ## KQL Databases
 
 ```python
@@ -168,20 +235,28 @@ from msfabricpysdkcore import FabricClientCore
 
 fc = FabricClientCore()
 
-workspace = fc.get_workspace_by_name("testitems")
-workspace_id = workspace.id
+workspace_id = 'd8a5abe89jufojafds3bc57ddbe5'
+evenhouse_id = "1482adfa290348238423428510a9197"
+
+creation_payload = {"databaseType" : "ReadWrite",
+                    "parentEventhouseItemId" : evenhouse_id}
+
+# Create KQL Database
+kqldb = fc.create_kql_database(workspace_id = workspace_id, display_name="kqldatabase12",
+                                creation_payload=creation_payload)
 
 # List KQL Databases
 kql_databases = fc.list_kql_databases(workspace_id)
+kql_database_names = [kqldb.display_name for kqldb in kql_databases]
 
 # Get KQL Database
-kqldb = fc.get_kql_database(workspace_id, kql_database_name="kqldatabase1")
+kqldb = fc.get_kql_database(workspace_id, kql_database_name="kqldatabase12")
 
 # Update KQL Database
-kqldb2 = fc.update_kql_database(workspace_id, kqldb.id, display_name="kqldb2")
+kqldb2 = fc.update_kql_database(workspace_id, kqldb.id, display_name="kqldb23")
 
 # Delete KQL Database
-fc.delete_kql_database(workspace_id, kqldb.id)
+status_code = fc.delete_kql_database(workspace_id, kqldb.id)
 
 ```
 

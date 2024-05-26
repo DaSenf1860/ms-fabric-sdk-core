@@ -11,9 +11,9 @@ from msfabricpysdkcore.workspace import Workspace
 class FabricClientCore(FabricClient):
     """FabricClientCore class to interact with Fabric Core APIs"""
 
-    def __init__(self, tenant_id = None, client_id = None, client_secret = None) -> None:
+    def __init__(self, tenant_id = None, client_id = None, client_secret = None, silent=False) -> None:
         """Initialize FabricClientCore object"""
-        super().__init__(tenant_id, client_id, client_secret)
+        super().__init__(tenant_id, client_id, client_secret, silent=silent)
 
 
     def list_workspaces(self, continuationToken = None):
@@ -414,12 +414,20 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.get_environment(environment_id).get_staging_settings()
     
-    def update_staging_settings(self, workspace_id, environment_id, instance_pool, driver_cores, driver_memory, executor_cores, executor_memory,
-                                dynamic_executor_allocation, spark_properties, runtime_version):
-        """Update staging settings for an environment"""
-        ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).update_staging_settings(instance_pool, driver_cores, driver_memory, executor_cores, executor_memory,
-                                dynamic_executor_allocation, spark_properties, runtime_version)
+    def update_staging_settings(self, workspace_id, environment_id,
+                                driver_cores = None, driver_memory = None, dynamic_executor_allocation = None,
+                                executor_cores = None, executor_memory = None, instance_pool = None,
+                                runtime_version = None, spark_properties = None):
+        
+        return self.get_environment(workspace_id, environment_id).update_staging_settings(driver_cores=driver_cores,
+                                                                            driver_memory=driver_memory,
+                                                                            dynamic_executor_allocation=dynamic_executor_allocation,
+                                                                            executor_cores=executor_cores,
+                                                                            executor_memory=executor_memory,
+                                                                            instance_pool=instance_pool,
+                                                                            runtime_version=runtime_version,
+                                                                            spark_properties=spark_properties)
+
     
     # environmentSparkLibraries
 
@@ -433,10 +441,10 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.get_environment(environment_id).get_staging_libraries()
     
-    def update_staging_library(self, workspace_id, environment_id):
+    def upload_staging_library(self, workspace_id, environment_id, file_path):
         """Update staging libraries for an environment"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).update_staging_libraries()
+        return ws.get_environment(environment_id).upload_staging_library(file_path=file_path)
     
     def publish_environment(self, workspace_id, environment_id):
         """Publish an environment"""
@@ -452,6 +460,33 @@ class FabricClientCore(FabricClient):
         """Cancel publishing an environment"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.get_environment(environment_id).cancel_publish()
+
+    # eventhouses
+
+    def list_eventhouses(self, workspace_id):
+        """List eventhouses in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.list_eventhouses()
+    
+    def create_eventhouse(self, workspace_id, display_name, description = None):
+        """Create an eventhouse in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.create_eventhouse(display_name = display_name, description = description)
+    
+    def get_eventhouse(self, workspace_id, eventhouse_id = None, eventhouse_name = None):
+        """Get an eventhouse from a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_eventhouse(eventhouse_id = eventhouse_id, eventhouse_name = eventhouse_name)
+    
+    def delete_eventhouse(self, workspace_id, eventhouse_id):
+        """Delete an eventhouse from a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.delete_eventhouse(eventhouse_id)
+    
+    def update_eventhouse(self, workspace_id, eventhouse_id, display_name = None, description = None):
+        """Update an eventhouse in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.update_eventhouse(eventhouse_id, display_name = display_name, description = description)
 
     # eventstreams
 
@@ -486,6 +521,11 @@ class FabricClientCore(FabricClient):
         """List kql databases in a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.list_kql_databases()
+    
+    def create_kql_database(self, workspace_id, creation_payload, display_name, description = None):
+        """Create a kql database in a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.create_kql_database(creation_payload = creation_payload, display_name = display_name, description = description)
    
     def get_kql_database(self, workspace_id, kql_database_id = None, kql_database_name = None):
         """Get a kql database from a workspace"""

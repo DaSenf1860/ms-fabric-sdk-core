@@ -3,6 +3,38 @@ from time import sleep
 import requests
 from msfabricpysdkcore.item import Item
 
+
+class Eventhouse(Item):
+    """Class to represent a eventhouse in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, auth, properties = None, description=""):
+        super().__init__(id = id, display_name=display_name, type=type, 
+                         workspace_id=workspace_id, auth=auth, properties=properties, 
+                         description=description)
+        
+    def from_dict(item_dict, auth):
+        if "displayName" not in item_dict:
+            item_dict["displayName"] = item_dict["display_name"]
+        if "workspaceId" not in item_dict:
+            item_dict["workspaceId"] = item_dict["workspace_id"]
+
+        return Eventhouse(id=item_dict['id'], display_name=item_dict['displayName'], 
+                          type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+                          properties=item_dict.get('properties', None),
+                          description=item_dict.get('description', ""), auth=auth)
+
+    def create_kql_database(self, display_name = None, description= None):
+        from msfabricpysdkcore.coreapi import FabricClientCore
+        """Method to create a kql database in the eventhouse"""
+        creation_payload = {"databaseType" : "ReadWrite",
+                            "parentEventhouseItemId" : self.id}
+        
+        fcc = FabricClientCore(silent=True)
+
+        return fcc.create_kql_database(workspace_id = self.workspace_id,
+                                       display_name = display_name, description = description,
+                                       creation_payload= creation_payload)
+
 class SparkJobDefinition(Item):
     """Class to represent a spark job definition in Microsoft Fabric"""
      

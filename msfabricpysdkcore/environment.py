@@ -8,23 +8,13 @@ from msfabricpysdkcore.long_running_operation import check_long_running_operatio
 class Environment(Item):
     """Class to represent a item in Microsoft Fabric"""
 
-    def __init__(self, id, display_name, type, workspace_id, auth, properties = None, definition=None, description="", 
-                 sparkcompute = None, staging_sparkcompute = None, libraries = None, staging_libraries = None):
+    def __init__(self, id, display_name, type, workspace_id, auth, properties = None, definition=None, description=""):
         super().__init__(id, display_name, type, workspace_id, auth, properties, definition, description)
-
-        self.sparkcompute = sparkcompute
-        self.staging_sparkcompute = staging_sparkcompute
-        self.libraries = libraries
-        self.staging_libraries = staging_libraries
 
     def from_dict(item_dict, auth):
         return Environment(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
-            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), 
-            sparkcompute=item_dict.get('sparkcompute', None),
-            staging_sparkcompute=item_dict.get('staging_sparkcompute', None),
-            libraries=item_dict.get('libraries', None),
-            staging_libraries=item_dict.get('staging_libraries', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""),
             auth=auth)
 
     # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/sparkcompute
@@ -39,14 +29,10 @@ class Environment(Item):
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error getting published settings: {response.text}")
+                raise Exception(f"Error getting published settings: {response.status_code}, {response.text}")
             break
 
         resp_json = json.loads(response.text)        
-        self.sparkcompute = resp_json
         return resp_json
     
     # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/sparkcompute
@@ -62,30 +48,38 @@ class Environment(Item):
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error getting staging settings: {response.text}")
+                raise Exception(f"Error getting staging settings: {response.status_code}, {response.text}")
             break
 
         resp_json = json.loads(response.text)        
-        self.staging_sparkcompute = resp_json
         return resp_json
 
-    def update_staging_settings(self, instance_pool, driver_cores, driver_memory, executor_cores, executor_memory,
-                                dynamic_executor_allocation, spark_properties, runtime_version):
+
+    def update_staging_settings(self,
+                                driver_cores = None, driver_memory = None, dynamic_executor_allocation = None,
+                                executor_cores = None, executor_memory = None, instance_pool = None,
+                                runtime_version = None, spark_properties = None):
         """Update the staging settings of the environment"""
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/environments/{self.id}/staging/sparkcompute"
-        body = {
-            "instancePool": instance_pool,
-            "driverCores": driver_cores,
-            "driverMemory": driver_memory,
-            "executorCores": executor_cores,
-            "executorMemory": executor_memory,
-            "dynamicExecutorAllocation": dynamic_executor_allocation,
-            "sparkProperties": spark_properties,
-            "runtimeVersion": runtime_version
-        }
+        body = {}
+        if driver_cores is not None:
+            body['driverCores'] = driver_cores
+        if driver_memory is not None:
+            body['driverMemory'] = driver_memory
+        if dynamic_executor_allocation is not None:
+            body['dynamicExecutorAllocation'] = dynamic_executor_allocation
+        if executor_cores is not None:
+            body['executorCores'] = executor_cores
+        if executor_memory is not None:
+            body['executorMemory'] = executor_memory
+        if instance_pool is not None:
+            body['instancePool'] = instance_pool
+        if runtime_version is not None:
+            body['runtimeVersion'] = runtime_version
+        if spark_properties is not None:
+            body['sparkProperties'] = spark_properties
+
+        
         for _ in range(10):
             response = requests.patch(url=url, headers=self.auth.get_headers(), json=body)
             if response.status_code == 429:
@@ -93,14 +87,10 @@ class Environment(Item):
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error updating staging settings: {response.text}")
+                raise Exception(f"Error updating staging settings: {response.status_code}, {response.text}")
             break
 
-        self.staging_sparkcompute = body
-        return body
+        return json.loads(response.text)
 
 #  GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/libraries
 
@@ -115,14 +105,10 @@ class Environment(Item):
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error getting published libraries: {response.text}")
+                raise Exception(f"Error getting published libraries: {response.status_code}, {response.text}")
             break
 
         resp_json = json.loads(response.text)
-        self.libraries = resp_json
         return resp_json
     
 # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries
@@ -138,19 +124,29 @@ class Environment(Item):
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error getting staging libraries: {response.text}")
+                raise Exception(f"Error getting staging libraries: {response.status_code}, {response.text}")
             break
 
         resp_json = json.loads(response.text)
-        self.staging_libraries = resp_json
         return resp_json
     
 
-    def update_staging_libraries(self):
-        raise NotImplementedError("This method is not implemented yet because the REST API is not complete")
+    def upload_staging_library(self, file_path):
+        # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries
+        raise NotImplementedError("Not implemented yet")
+        # url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/environments/{self.id}/staging/libraries"
+
+        # for _ in range(10):
+        #     response = requests.post(url=url, files={'file': file_path}, headers=self.auth.get_headers())
+        #     if response.status_code == 429:
+        #         print("Too many requests, waiting 10 seconds")
+        #         sleep(10)
+        #         continue
+        #     if response.status_code not in (200, 429):
+        #         raise Exception(f"Error uploading staging libraries: {response.status_code}, {response.text}")
+        #     break
+
+        # return json.loads(response.text)
     
 # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries?libraryToDelete={libraryToDelete}
 
@@ -165,10 +161,7 @@ class Environment(Item):
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error deleting staging libraries: {response.text}")
+                raise Exception(f"Error deleting staging libraries: {response.status_code}, {response.text}")
             break
 
         return response.text
@@ -189,10 +182,7 @@ class Environment(Item):
                 publish_info = check_long_running_operation(response.headers, self.auth)
                 return publish_info
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error publishing staging: {response.text}")
+                raise Exception(f"Error publishing staging: {response.status_code}, {response.text}")
             break
 
         resp_dict = json.loads(response.text)
@@ -212,10 +202,7 @@ class Environment(Item):
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                print(self)
-                raise Exception(f"Error canceling publishing: {response.text}")
+                raise Exception(f"Error canceling publishing: {response.status_code}, {response.text}")
             break
 
         resp_dict = json.loads(response.text)
