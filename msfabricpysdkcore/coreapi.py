@@ -81,10 +81,10 @@ class FabricClientCore(FabricClient):
             return self.get_workspace_by_name(name)
         raise ValueError("Either id or name must be provided")
         
-    def get_workspace_role_assignments(self, workspace_id):
+    def list_workspace_role_assignments(self, workspace_id):
         """Get role assignments for a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_role_assignments()
+        return ws.list_role_assignments()
     
     def create_workspace(self, display_name, capacity_id = None, description = None, exists_ok = True):
         """Create a workspace"""
@@ -129,20 +129,25 @@ class FabricClientCore(FabricClient):
         ws = self.get_workspace_by_id(workspace_id)
         return ws.add_role_assignment(role, principal)
     
-    def delete_workspace_role_assignment(self, workspace_id, principal_id):
+    def delete_workspace_role_assignment(self, workspace_id, workspace_role_assignment_id):
         """Delete a role assignment from a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.delete_role_assignment(principal_id)
+        return ws.delete_role_assignment(workspace_role_assignment_id)
     
     def update_workspace(self, workspace_id, display_name = None, description = None):
         """Update a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.update(display_name, description)
+
+    def get_workspace_role_assignment(self, workspace_id, workspace_role_assignment_id):
+        """Get a role assignment for a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_role_assignment(workspace_role_assignment_id)
     
-    def update_workspace_role_assignment(self, workspace_id, role, principal_id):
+    def update_workspace_role_assignment(self, workspace_id, role, workspace_role_assignment_id):
         """Update a role assignment for a workspace"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.update_role_assignment(role, principal_id)
+        return ws.update_role_assignment(role, workspace_role_assignment_id)
 
     def assign_to_capacity(self, workspace_id, capacity_id):
         """Assign a workspace to a capacity"""
@@ -153,6 +158,16 @@ class FabricClientCore(FabricClient):
         """Unassign a workspace from a capacity"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.unassign_from_capacity()
+    
+    def provision_identity(self, workspace_id):
+        """Provision an identity for a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.provision_identity()
+    
+    def deprovision_identity(self, workspace_id):
+        """Deprovision an identity for a workspace"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.deprovision_identity()
  
     def list_capacities(self, continuationToken = None):
         """List all capacities in the tenant"""
@@ -808,6 +823,11 @@ class FabricClientCore(FabricClient):
         """Update the definition of a spark job definition"""
         ws = self.get_workspace_by_id(workspace_id)
         return ws.update_spark_job_definition_definition(spark_job_definition_id, definition)
+    
+    def run_on_demand_spark_job_definition(self, workspace_id, spark_job_definition_id, job_type = "sparkjob"):
+        """Run an on demand spark job definition"""
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.run_on_demand_spark_job_definition(spark_job_definition_id, job_type)
     
     # warehouses
 

@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.0.12
+
+### New Features 
+- accomodated the latest core Workspaces APIs changes regarding role assignments
+- added provisioning and deprovisioning of workspace identities
+- added API for run on demand spark job definition
+
 ## 0.0.11
 
 ### New Features

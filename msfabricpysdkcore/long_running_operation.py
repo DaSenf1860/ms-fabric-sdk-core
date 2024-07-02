@@ -1,6 +1,6 @@
 import json 
 import requests
-from time import sleep
+from time import sleep, time
 
 class LongRunningOperation:
     """Class to represent a workspace in Microsoft Fabric"""
@@ -49,12 +49,17 @@ class LongRunningOperation:
     def wait_for_completion(self):
         """Wait for the operation to complete"""
         max_iter = 20
+        start_time = time()
         while self.state not in ('Succeeded', 'Failed'):
             self.state = self.get_operation_state()["status"]
+            duration = int(time() - start_time)
+            if duration > 60:
+                
+                if self.state == "Running":
+                    print(f"Operation did not complete after {duration} seconds")
+                    return "Running"
+                raise Exception(f"Operation did not complete after {duration} seconds")
             sleep(3)
-            if max_iter == 0:
-                raise Exception("Operation did not complete after 60 seconds")
-            max_iter -= 1
         return self.state
     
 

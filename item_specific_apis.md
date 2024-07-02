@@ -5,13 +5,13 @@ All APIs are also available on workspace level as well.
 
 Go to:
 - ["Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports"](#dashboards-datamarts-sql-endpoints-mirrored-warehouses-paginated-reports)
-- ["Lakehouse"](#lakehouse)
 - ["Data Pipelines"](#data-pipelines)
 - ["Environments"](#environments)
-- ["Eventstreams"](#eventstreams)
 - ["Eventhouses"](#eventhouses)
+- ["Eventstreams"](#eventstreams)
 - ["KQL Databases"](#kql-databases)
 - ["KQL Querysets"](#kql-querysets)
+- ["Lakehouse"](#lakehouse)
 - ["ML Experiments"](#ml-experiments)
 - ["ML Models"](#ml-models)
 - ["Notebooks"](#notebooks)
@@ -49,63 +49,6 @@ list_paginated_reports = fc.list_paginated_reports(workspace_id)
 
 ```
 
-## Lakehouse
-
-```python
-from msfabricpysdkcore import FabricClientCore
-
-fc = FabricClientCore()
-workspace = fc.get_workspace_by_name("testitems")
-workspace_id = workspace.id
-
-# Get Lakehouse
-lakehouse = fc.get_lakehouse(workspace_id=workspace_id, item_name="lakehouse1")
-lakehouse_id = lakehouse.id
-date_str = datetime.now().strftime("%Y%m%d%H%M%S")
-table_name = f"table{date_str}"
-
-# Load Table
-status_code = fc.load_table(workspace_id=workspace_id, lakehouse_id=lakehouse_id, table_name=table_name, 
-                            path_type="File", relative_path="Files/folder1/titanic.csv")
-
-# List Tables
-table_list = fc.list_tables(workspace_id=workspace_id, lakehouse_id=lakehouse_id)
-
-
-# Run on demand table maintenance
-execution_data = {
-    "tableName": table_name,
-    "optimizeSettings": {
-      "vOrder": True,
-      "zOrderBy": [
-        "tipAmount"
-      ]
-    },
-    "vacuumSettings": {
-      "retentionPeriod": "7:01:00:00"
-    }
-  }
-
-fc.run_on_demand_table_maintenance(workspace_id=workspace_id, lakehouse_id=lakehouse_id, 
-                                   execution_data = execution_data,
-                                   job_type = "TableMaintenance", wait_for_completion = True)
-
-# Create Lakehouse
-lakehouse = fc.create_lakehouse(workspace_id=workspace_id, display_name="lakehouse2")
-        
-# List Lakehouses
-lakehouses = fc.list_lakehouses(workspace_id)
-
-# Get Lakehouse
-lakehouse2 = fc.get_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
-        
-# Update Lakehouse
-lakehouse2 = fc.update_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id, display_name="lakehouse3")
-
-# Delete Lakehouse
-fc.delete_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
-
-```
 
 ## Data Pipelines
 
@@ -175,6 +118,30 @@ updated_settings = fc.update_staging_settings(workspace_id=workspace_id,
                                               driver_cores=driver_cores)
 
 ```
+## Eventhouses
+
+```python	
+from msfabricpysdkcore import FabricClientCore
+fc = FabricClientCore()
+workspace_id = 'd8a5abeieojfsdf-ab46-343bc57ddbe5'
+
+# Create Eventhouse
+eventhouse1 = fc.create_eventhouse(workspace_id, display_name="eventhouse1")
+
+# List Eventhouses
+eventhouses = fc.list_eventhouses(workspace_id)
+eventhouse_names = [eh.display_name for eh in eventhouses]
+
+# Get Eventhouse
+eh = fc.get_eventhouse(workspace_id, eventhouse_name="eventhouse1")
+
+# Update Eventhouse
+eh2 = fc.update_eventhouse(workspace_id, eh.id, display_name="eventhouse2")
+
+# Delete Eventhouse
+status_code = fc.delete_eventhouse(workspace_id, eh.id)
+
+```
 
 ## Eventstreams
 
@@ -200,31 +167,6 @@ es2 = fc.update_eventstream(workspace_id, es.id, display_name="es2")
 
 # Delete Eventstream
 fc.delete_eventstream(workspace_id, es.id)
-
-```
-
-## Eventhouses
-
-```python	
-from msfabricpysdkcore import FabricClientCore
-fc = FabricClientCore()
-workspace_id = 'd8a5abeieojfsdf-ab46-343bc57ddbe5'
-
-# Create Eventhouse
-eventhouse1 = fc.create_eventhouse(workspace_id, display_name="eventhouse1")
-
-# List Eventhouses
-eventhouses = fc.list_eventhouses(workspace_id)
-eventhouse_names = [eh.display_name for eh in eventhouses]
-
-# Get Eventhouse
-eh = fc.get_eventhouse(workspace_id, eventhouse_name="eventhouse1")
-
-# Update Eventhouse
-eh2 = fc.update_eventhouse(workspace_id, eh.id, display_name="eventhouse2")
-
-# Delete Eventhouse
-status_code = fc.delete_eventhouse(workspace_id, eh.id)
 
 ```
 
@@ -281,6 +223,64 @@ kqlq2 = fc.update_kql_queryset(workspace_id, kqlq.id, display_name="kqlqueryset2
 
 # Delete KQL Queryset
 fc.delete_kql_queryset(workspace_id, kqlq.id)
+
+```
+
+## Lakehouse
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+
+# Get Lakehouse
+lakehouse = fc.get_lakehouse(workspace_id=workspace_id, item_name="lakehouse1")
+lakehouse_id = lakehouse.id
+date_str = datetime.now().strftime("%Y%m%d%H%M%S")
+table_name = f"table{date_str}"
+
+# Load Table
+status_code = fc.load_table(workspace_id=workspace_id, lakehouse_id=lakehouse_id, table_name=table_name, 
+                            path_type="File", relative_path="Files/folder1/titanic.csv")
+
+# List Tables
+table_list = fc.list_tables(workspace_id=workspace_id, lakehouse_id=lakehouse_id)
+
+
+# Run on demand table maintenance
+execution_data = {
+    "tableName": table_name,
+    "optimizeSettings": {
+      "vOrder": True,
+      "zOrderBy": [
+        "tipAmount"
+      ]
+    },
+    "vacuumSettings": {
+      "retentionPeriod": "7:01:00:00"
+    }
+  }
+
+fc.run_on_demand_table_maintenance(workspace_id=workspace_id, lakehouse_id=lakehouse_id, 
+                                   execution_data = execution_data,
+                                   job_type = "TableMaintenance", wait_for_completion = True)
+
+# Create Lakehouse
+lakehouse = fc.create_lakehouse(workspace_id=workspace_id, display_name="lakehouse2")
+        
+# List Lakehouses
+lakehouses = fc.list_lakehouses(workspace_id)
+
+# Get Lakehouse
+lakehouse2 = fc.get_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
+        
+# Update Lakehouse
+lakehouse2 = fc.update_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id, display_name="lakehouse3")
+
+# Delete Lakehouse
+fc.delete_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
 
 ```
 
@@ -515,6 +515,9 @@ spark_job_definition = fc.create_spark_job_definition(workspace_id, display_name
 # Get Spark Job Definition
 spark_job_definition = fc.get_spark_job_definition(workspace_id, spark_job_definition_name="helloworld")
 
+# Run on demand spark job definition
+job_instance = fc.run_on_demand_spark_job_definition(workspace_id, spark_job_definition.id, job_type="sparkjob")
+
 # Update Spark Job Definition
 spark_job_definition2 = fc.update_spark_job_definition(workspace_id, spark_job_definition.id, display_name="sparkjobdefinition2")
 
@@ -526,6 +529,8 @@ fc.update_spark_job_definition_definition(workspace_id, spark_job_definition.id,
 
 # Delete Spark Job Definition
 fc.delete_spark_job_definition(workspace_id, spark_job_definition.id)
+
+
 
 ```
 

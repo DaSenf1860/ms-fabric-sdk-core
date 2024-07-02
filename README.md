@@ -133,26 +133,40 @@ ws.add_role_assignment(principal = {"id" : "abadfbafb",
                        role = 'Member')
 
  
- # Get workspace role assignments
-fc.get_workspace_role_assignments(workspace_id = ws.id)
+ # List workspace role assignments
+fc.list_workspace_role_assignments(workspace_id = ws.id)
 # or
-ws.get_role_assignments()
+ws.list_role_assignments()
 
+
+# Get workspace role assignment
+fc.get_workspace_role_assignment(workspace_id = ws.id, 
+                                 workspace_role_assignment_id = "dagdasf")  
+# or
+ws.get_role_assignment(workspace_role_assignment_id = "fsgdg")
 
 # Update workspace role assignment
 fc.update_workspace_role_assignment(workspace_id = ws.id, 
                                     role = "Contributor", 
-                                    principal_id = "abadfbafb")
+                                    workspace_role_assignment_id = "abadfbafb")
 # or
 ws.update_role_assignment(role = "Contributor", 
-                          principal_id = "abadfbafb")
+                          workspace_role_assignment_id = "abadfbafb")
 
 
 # Delete workspace role assignment
 fc.delete_workspace_role_assignment(workspace_id = ws.id,
-                                    principal_id = "abadfbafb")
+                                    workspace_role_assignment_id = "abadfbafb")
 # or
-ws.delete_role_assignment(principal_id = "abadfbafb")
+ws.delete_role_assignment(workspace_role_assignment_id = "abadfbafb")
+
+
+# Provision Identity
+result = fc.provision_identity(workspace_id=ws.id)
+print(result["applicationId"]))
+
+# Deprovision Identity
+fc.deprovision_identity(workspace_id=ws.id)
 
 ```
 

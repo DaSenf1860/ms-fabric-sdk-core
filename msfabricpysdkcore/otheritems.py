@@ -2,6 +2,7 @@ import json
 from time import sleep
 import requests
 from msfabricpysdkcore.item import Item
+from msfabricpysdkcore.long_running_operation import check_long_running_operation
 
 
 class Eventhouse(Item):
@@ -52,6 +53,34 @@ class SparkJobDefinition(Item):
     def update_definition(self, definition):
         return super().update_definition(definition=definition, type="sparkJobDefinitions")
     
+    def run_on_demand_spark_job_definition(self, job_type = "sparkjob"):
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sparkJobDefinitions/{sparkJobDefinitionId}/jobs/instances?jobType={jobType}
+        """Method to run a spark job definition on demand"""
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/sparkJobDefinitions/{self.id}/jobs/instances?jobType={job_type}"
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code == 202:
+                location = response.headers['Location']
+                job_instance_id = location.split('/')[-1]
+                
+                from msfabricpysdkcore import FabricClientCore
+                fc = FabricClientCore(silent=True)
+                fc.auth = self.auth
+                return fc.get_item_job_instance(workspace_id = self.workspace_id,
+                                                item_id = self.id,
+                                                job_instance_id = job_instance_id)
+            if response.status_code not in (200, 201, 202, 429):
+                raise Exception(f"Error running on demand spark job definition: {response.status_code}, {response.text}")
+            break
+        
+        return response
+
+
 class Warehouse(Item):
     """Class to represent a warehouse in Microsoft Fabric"""
      

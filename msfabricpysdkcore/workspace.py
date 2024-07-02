@@ -42,10 +42,13 @@ class Workspace:
     def __repr__(self) -> str:
         return self.__str__()
     
-    def get_role_assignments(self):
-        """Get role assignments for the workspace"""
+    def list_role_assignments(self, continuationToken = None):
+        """List role assignments for the workspace"""
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/roleAssignments"
 
+        if continuationToken:
+            url = f"{url}?continuationToken={continuationToken}"
+        
         for _ in range(10):
             response = requests.get(url=url, headers=self.auth.get_headers())
             if response.status_code == 429:
@@ -58,7 +61,14 @@ class Workspace:
                 raise Exception(f"Error getting role assignments: {response.text}")
             break
 
-        return json.loads(response.text)
+        resp_dict = json.loads(response.text)
+        role_assignments = resp_dict["value"]
+
+        if "continuationToken" in resp_dict:
+            role_assignments_next = self.list_role_assignments(continuationToken=resp_dict["continuationToken"])
+            role_assignments.extend(role_assignments_next)
+
+        return role_assignments
     
     def delete(self):
         """Delete the workspace"""
@@ -103,9 +113,9 @@ class Workspace:
         return response.status_code
     
 
-    def delete_role_assignment(self, principal_id):
+    def delete_role_assignment(self, workspace_role_assignment_id):
         """Delete a role assignment from the workspace"""
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/roleAssignments/{principal_id}"
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/roleAssignments/{workspace_role_assignment_id}"
 
         for _ in range(10):
             response = requests.delete(url=url, headers=self.auth.get_headers())
@@ -150,10 +160,29 @@ class Workspace:
             self.description = description
 
         return self
+    
+    def get_role_assignment(self, workspace_role_assignment_id):
+        # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/roleAssignments/{workspaceRoleAssignmentId}
 
-    def update_role_assignment(self, role, principal_id):
+        """Get a role assignment from the workspace"""
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/roleAssignments/{workspace_role_assignment_id}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error getting role assignments: {response.status_code}, {response.text}")
+            break
+
+        return json.loads(response.text)
+
+    def update_role_assignment(self, role, workspace_role_assignment_id):
         """Update a role assignment in the workspace"""
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/roleAssignments/{principal_id}"
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/roleAssignments/{workspace_role_assignment_id}"
         body = {
             'role': role
         }
@@ -221,6 +250,45 @@ class Workspace:
         assert response.status_code == 202
         self.capacity_id = None
         return response.status_code
+    
+    def provision_identity(self):
+        # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/provisionIdentity
+        """Provision identity for the workspace"""
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/provisionIdentity"
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code == 202:
+                return check_long_running_operation( response.headers, self.auth)
+            if response.status_code not in (200, 201, 202, 429):
+                raise Exception(f"Error provisioning identity: {response.status_code}, {response.text}")
+            break
+
+        return response
+    
+    def deprovision_identity(self):
+        # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/deprovisionIdentity
+        """Deprovision identity for the workspace"""
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.id}/deprovisionIdentity"
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code == 202:
+                return check_long_running_operation( response.headers, self.auth)
+            if response.status_code not in (200, 201, 202, 429):
+                raise Exception(f"Error deprovisioning identity: {response.status_code}, {response.text}")
+            break
+
+        return response
+
     
     def get_item_specific(self, item_dict):
         if item_dict["type"] == "DataPipeline":
@@ -1217,6 +1285,11 @@ class Workspace:
     def update_spark_job_definition_definition(self, spark_job_definition_id, definition):
         """Update the definition of a spark job definition in a workspace"""
         return self.get_spark_job_definition(spark_job_definition_id=spark_job_definition_id).update_definition(definition=definition)
+
+    def run_on_demand_spark_job_definition(self, spark_job_definition_id, job_type = "sparkjob"):
+        """Run on demand spark job definition"""
+        sjd = self.get_spark_job_definition(spark_job_definition_id=spark_job_definition_id)
+        return sjd.run_on_demand_spark_job_definition(job_type=job_type)
 
     # warehouses
 
