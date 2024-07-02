@@ -94,7 +94,7 @@ class Workspace:
                 print("Too many requests, waiting 10 seconds")
                 sleep(10)
                 continue
-            if response.status_code not in (200, 429):
+            if response.status_code not in (201, 429):
                 print(response.status_code)
                 print(response.text)
                 raise Exception(f"Error adding role assignments: {response.text}")
