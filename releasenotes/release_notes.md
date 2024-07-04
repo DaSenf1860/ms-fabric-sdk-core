@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.0.13
+
+### New Features 
+- added external data share APIs for core and admin APIs
+- added one lake data access security APIs
+
 ## 0.0.12
 
 ### New Features 

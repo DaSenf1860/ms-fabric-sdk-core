@@ -23,14 +23,17 @@ Currently it supports all Core APIs, Admin APIs, Lakehouse APIs and all other it
 - Core APIs
   - [Capacities](#working-with-capacities)
   - [Deployment Pipelines](#deployment-pipelines)
+  - [External Data Shares](#external-data-shares)
   - [Git](#working-with-git)
   - [Items](#working-with-items)
   - [Job Scheduler](#working-with-job-scheduler)
   - [Long Running Operations](#long-running-operations)
+  - [OneLakeDataAccessSecurity](#one-lake-data-access-security)
   - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
   - [Workspaces](#working-with-workspaces)
 - Admin APIs
   - [Domains](#admin-api-for-domains)
+  - [External Data Shares](#admin-api-for-external-data-shares)
   - [Items](#admin-api-for-items)
   - [Labels](#admin-api-for-labels)
   - [Tenants](#admin-api-for-tenants)
@@ -233,6 +236,43 @@ items = [item]
 response = pipe.deploy(source_stage_id=dev_stage.id,target_stage_id=prod_stage.id, items=items)
 
 ```
+
+### External Data Shares
+
+```python
+from msfabricpysdkcore.coreapi import FabricClientCore
+
+fc = FabricClientCore()
+
+workspace_id = 'yxcvyxcvyxcv'
+item_id = 'sdfsdfsdfsf'
+
+
+# Create
+
+recipient = {
+    "userPrincipalName": "lisa4@fabrikam.com"
+}
+paths=["Files/external"]
+
+data_share = fc.create_external_data_share(workspace_id, item_id, paths, recipient)
+
+# Get
+
+data_share2 = fc.get_external_data_share(workspace_id, item_id, data_share['id'])
+
+# List
+
+data_share_list = fc.list_external_data_shares_in_item(workspace_id, item_id)
+
+data_share_ids = [ds['id'] for ds in data_share_list]
+
+# Revoke
+
+response_code = fc.revoke_external_data_share(workspace_id, item_id, data_share['id'])
+
+```
+
 
 ### Working with items
 
@@ -437,6 +477,44 @@ results = fc.get_operation_results(operation_id)
 
 ```
 
+### One Lake Data Access Security
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore() 
+
+workspace_id = "d8aafgasdsdbe5"
+item_id = "503hsdfhs48364"
+
+# List 
+
+resp = fc.list_data_access_roles(workspace_id=workspace_id, item_id=item_id)
+
+roles = resp[0]
+etag = resp[1]
+
+
+# Create or Update
+
+role1 = roles[1]
+
+item_access = role1["members"]["fabricItemMembers"][0]['itemAccess']
++
+if 'ReadAll' in item_access:
+    item_access = ['Read', 'Write', 'Execute']
+else:
+    item_access.append('ReadAll')
+
+role1["members"]["fabricItemMembers"][0]['itemAccess'] = item_access
+roles[1] = role1
+
+resp = fc.create_or_update_data_access_roles(workspace_id=workspace_id, 
+                                              item_id=item_id, 
+                                              data_access_roles=roles, 
+                                              etag_match={"If-Match":etag})
+
+```
 
 ### Admin API for Workspaces
 
@@ -594,6 +672,29 @@ status_code = fca.role_assignments_bulk_unassign(domain.id, "Contributors", [pri
 
 # Delete domain
 status_code = fca.delete_domain(domain.id)
+```
+
+### Admin API for External Data Shares
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# List external data shares
+
+data_shares = fca.list_external_data_shares()
+ws = fca.list_workspaces(name="testworkspace")[0]
+
+data_shares = [d for d in data_shares if d['workspaceId'] == ws.id]
+
+# Revoke external data share
+
+fca.revoke_external_data_share(external_data_share_id = data_shares[0]['id'], 
+                                item_id = data_shares[0]['itemId'], 
+                                workspace_id = data_shares[0]['workspaceId'])
+
+
 ```
 
 

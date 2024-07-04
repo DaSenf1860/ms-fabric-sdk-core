@@ -1472,3 +1472,45 @@ class Workspace:
 
         return json.loads(response.text)
 
+    # External Data Shares
+
+    # create
+
+    def create_external_data_share(self, item_id, paths, recipient):
+        item = self.get_item(item_id=item_id)
+        return item.create_external_data_share(paths = paths, recipient = recipient)
+
+    # get
+
+    def get_external_data_share(self, item_id, external_data_share_id):
+        item = self.get_item(item_id=item_id)
+        return item.get_external_data_share(external_data_share_id=external_data_share_id)
+
+
+    # list
+
+    def list_external_data_shares_in_item(self, item_id):
+        item = self.get_item(item_id=item_id)
+        return item.list_external_data_shares_in_item()
+
+    # revoke
+
+    def revoke_external_data_share(self, item_id, external_data_share_id):
+        item = self.get_item(item_id=item_id)
+        return item.revoke_external_data_share(external_data_share_id=external_data_share_id)
+    
+
+    # One Lake Data Access Security
+
+    # create and update
+
+    def create_or_update_data_access_roles(self, item_id, data_access_roles, dryrun = False, etag_match = None):
+        item =  self.get_item(item_id=item_id).create_or_update_data_access_roles(data_access_roles = data_access_roles,
+                                                                                  dryrun = dryrun, etag_match = etag_match)
+        return item
+    
+    # list 
+
+    def list_data_access_roles(self, item_id):
+        item = self.get_item(item_id=item_id)
+        return item.list_data_access_roles()

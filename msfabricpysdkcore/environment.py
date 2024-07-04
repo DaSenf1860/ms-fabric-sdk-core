@@ -135,16 +135,17 @@ class Environment(Item):
         # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries
         raise NotImplementedError("Not implemented yet")
         # url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/environments/{self.id}/staging/libraries"
-
-        # for _ in range(10):
-        #     response = requests.post(url=url, files={'file': file_path}, headers=self.auth.get_headers())
-        #     if response.status_code == 429:
-        #         print("Too many requests, waiting 10 seconds")
-        #         sleep(10)
-        #         continue
-        #     if response.status_code not in (200, 429):
-        #         raise Exception(f"Error uploading staging libraries: {response.status_code}, {response.text}")
-        #     break
+        # with open(file_path, 'rb') as f:
+        #     files = {"upload_file.whl": f}
+        #     for _ in range(10):
+        #         response = requests.post(url=url, files=files, headers=self.auth.get_headers())
+        #         if response.status_code == 429:
+        #             print("Too many requests, waiting 10 seconds")
+        #             sleep(10)
+        #             continue
+        #         if response.status_code not in (200, 429):
+        #             raise Exception(f"Error uploading staging libraries: {response.status_code}, {response.text}")
+        #         break
 
         # return json.loads(response.text)
     

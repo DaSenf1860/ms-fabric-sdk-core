@@ -6,7 +6,6 @@ from msfabricpysdkcore.onelakeshortcut import OneLakeShortcut
 from msfabricpysdkcore.job_instance import JobInstance
 from msfabricpysdkcore.long_running_operation import check_long_running_operation
 
-
 class Item:
     """Class to represent a item in Microsoft Fabric"""
 
@@ -247,10 +246,7 @@ class Item:
                 sleep(10)
                 continue
             if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-
-                raise Exception(f"Error getting job instance: {response.text}")
+                raise Exception(f"Error getting job instance: {response.status_code}, {response.text}")
             break
 
         job_dict = json.loads(response.text)
@@ -269,3 +265,148 @@ class Item:
                     file_extension = None, format_options = None,
                     mode = None, recursive = None, wait_for_completion = True):
         raise NotImplementedError("Load table only works on Lakehouse Items")
+    
+    def create_external_data_share(self, paths, recipient):
+        # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/externalDataShares
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/externalDataShares"
+
+        body = {
+            'paths': paths,
+            'recipient': recipient
+        }
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (201, 429):
+                raise Exception(f"Error creating external data share: {response.status_code}, {response.text}")
+            break
+        return json.loads(response.text)
+    
+    def get_external_data_share(self, external_data_share_id):
+        # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/externalDataShares/{externalDataShareId}
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/externalDataShares/{external_data_share_id}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error getting external data share: {response.status_code}, {response.text}")
+            break
+        return json.loads(response.text)
+    
+    def list_external_data_shares_in_item(self, continuationToken = None):
+        # GET GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/externalDataShares?continuationToken={continuationToken}
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/externalDataShares"
+
+        if continuationToken:
+            url += f"?continuationToken={continuationToken}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error listing external data shares: {response.status_code}, {response.text}")
+            break
+        
+        resp = json.loads(response.text)
+        external_data_shares = resp['value']
+
+        if 'continuationToken' in resp:
+            external_data_shares_new = self.list_external_data_shares_in_item(continuationToken=resp['continuationToken'])
+            external_data_shares.extend(external_data_shares_new)
+
+        return external_data_shares
+    
+    def revoke_external_data_share(self, external_data_share_id):
+        # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/externalDataShares/{externalDataShareId}/revoke
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/externalDataShares/{external_data_share_id}/revoke"
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error revoking external data share: {response.status_code}, {response.text}")
+            break
+
+        return response.status_code
+
+
+    # One Lake data access security
+
+    def list_data_access_roles(self, continuationToken = None):
+        # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/dataAccessRoles
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/dataAccessRoles"
+
+        if continuationToken:
+            url += f"?continuationToken={continuationToken}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error revoking external data share: {response.status_code}, {response.text}")
+            break
+
+        resp_dict = json.loads(response.text)
+        data_access_roles = resp_dict['value']
+        etag = response.headers.get('ETag', None)
+
+        if 'continuationToken' in resp_dict and resp_dict['continuationToken']:
+            data_access_roles_new, etag = self.list_data_access_roles(continuationToken=resp_dict['continuationToken'])
+            data_access_roles.extend(data_access_roles_new)
+
+        return data_access_roles, etag
+    
+    def create_or_update_data_access_roles(self, data_access_roles, dryrun = False, etag_match = None):
+        # PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/dataAccessRoles
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/items/{self.id}/dataAccessRoles"
+
+        if dryrun:
+            url += "?dryrun=true"
+
+        if etag_match:
+            if 'If-Match' in etag_match:
+                headers = self.auth.get_headers()
+                headers['If-Match'] = etag_match['If-Match']
+            elif 'If-None-Match' in etag_match:
+                headers = self.auth.get_headers()
+                headers['If-None-Match'] = etag_match['If-None-Match']
+            else:
+                raise Exception("Etag match should include If-Match or If-None-Match")
+        else:
+            headers = self.auth.get_headers()
+
+        body = {"value" : data_access_roles}
+        
+        for _ in range(10):
+            response = requests.put(url=url, headers=headers, json=body)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error creating or updating data access roles: {response.status_code}, {response.text}")
+            break
+
+        return response

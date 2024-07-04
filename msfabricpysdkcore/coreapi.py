@@ -1012,3 +1012,48 @@ class FabricClientCore(FabricClient):
                                         environment=environment, 
                                         high_concurrency=high_concurrency, 
                                         pool=pool)
+    
+
+    # External Data Shares
+
+    # create
+
+    def create_external_data_share(self, workspace_id, item_id, paths, recipient):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.create_external_data_share(item_id=item_id, paths = paths, recipient = recipient)
+
+    # get
+
+    def get_external_data_share(self, workspace_id, item_id, external_data_share_id):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.get_external_data_share(item_id=item_id, external_data_share_id=external_data_share_id)
+
+    # list
+
+    def list_external_data_shares_in_item(self, workspace_id, item_id):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.list_external_data_shares_in_item(item_id=item_id)
+
+    # revoke
+
+    def revoke_external_data_share(self, workspace_id, item_id, external_data_share_id):
+        ws = self.get_workspace_by_id(workspace_id)
+        return ws.revoke_external_data_share(item_id=item_id, external_data_share_id=external_data_share_id)
+    
+
+    # One Lake Data Access Security
+
+    # create and update
+
+    def create_or_update_data_access_roles(self, workspace_id, item_id, data_access_roles, dryrun = False, etag_match = None):
+        ws = self.get_workspace_by_id(workspace_id)
+        item =  ws.get_item(item_id=item_id).create_or_update_data_access_roles(data_access_roles = data_access_roles,
+                                                                                  dryrun = dryrun, etag_match = etag_match)
+        return item
+    
+    # list 
+
+    def list_data_access_roles(self, workspace_id, item_id):
+        ws = self.get_workspace_by_id(workspace_id)
+        item = ws.get_item(item_id=item_id)
+        return item.list_data_access_roles()

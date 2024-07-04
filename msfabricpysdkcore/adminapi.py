@@ -659,3 +659,51 @@ class FabricClientAdmin(FabricClient):
 
         response = json.loads(response.text)
         return response
+    
+    def list_external_data_shares(self, continuationToken = None):
+        # GET https://api.fabric.microsoft.com/v1/admin/items/externalDataShares
+        """List external data shares
+        
+        Returns:
+            list: The list of external data shares
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/items/externalDataShares"
+
+        if continuationToken:
+            url = f"{url}?continuationToken={continuationToken}"
+
+        for _ in range(10):
+            response = requests.get(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error listing external data shares: {response.status_code}, {response.text}")
+            break
+
+        response = json.loads(response.text)
+        list_data_shares = response["value"]
+
+        if "continuationToken" in response and response["continuationToken"] is not None:
+            list_data_shares_next = self.list_external_data_shares(continuationToken=response["continuationToken"])
+            list_data_shares.extend(list_data_shares_next)
+        return list_data_shares
+    
+    def revoke_external_data_share(self, external_data_share_id, item_id, workspace_id):
+        # POST https://api.fabric.microsoft.com/v1/admin/workspaces/{workspaceId}/items/{itemId}/externalDataShares/{externalDataShareId}/revoke
+        """Revoke an external data share"""
+        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}/revoke"
+
+        for _ in range(10):
+            response = requests.post(url=url, headers=self.auth.get_headers())
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error revoking external data share: {response.status_code}, {response.text}")
+            break
+
+        return response.status_code
+
