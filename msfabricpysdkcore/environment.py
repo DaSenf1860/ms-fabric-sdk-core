@@ -133,21 +133,23 @@ class Environment(Item):
 
     def upload_staging_library(self, file_path):
         # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries
-        raise NotImplementedError("Not implemented yet")
-        # url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/environments/{self.id}/staging/libraries"
-        # with open(file_path, 'rb') as f:
-        #     files = {"upload_file.whl": f}
-        #     for _ in range(10):
-        #         response = requests.post(url=url, files=files, headers=self.auth.get_headers())
-        #         if response.status_code == 429:
-        #             print("Too many requests, waiting 10 seconds")
-        #             sleep(10)
-        #             continue
-        #         if response.status_code not in (200, 429):
-        #             raise Exception(f"Error uploading staging libraries: {response.status_code}, {response.text}")
-        #         break
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{self.workspace_id}/environments/{self.id}/staging/libraries"
+        headers = self.auth.get_headers()
+        headers.pop('Content-Type', None)
 
-        # return json.loads(response.text)
+        for _ in range(10):
+            with open(file_path, 'rb') as f:
+                files = {"file": f}
+                response = requests.post(url=url, files=files, headers=headers)
+            if response.status_code == 429:
+                print("Too many requests, waiting 10 seconds")
+                sleep(10)
+                continue
+            if response.status_code not in (200, 429):
+                raise Exception(f"Error uploading staging library: {response.status_code}, {response.text}")
+            break
+
+        return response
     
 # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries?libraryToDelete={libraryToDelete}
 
@@ -165,7 +167,7 @@ class Environment(Item):
                 raise Exception(f"Error deleting staging libraries: {response.status_code}, {response.text}")
             break
 
-        return response.text
+        return response
     
 # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/publish
 

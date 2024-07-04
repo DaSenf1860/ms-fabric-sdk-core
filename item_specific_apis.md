@@ -84,7 +84,7 @@ fc.delete_data_pipeline(workspace_id, dp.id)
 ```python
 from msfabricpysdkcore import FabricClientCore
 fc = FabricClientCore()
-workspace_id = 'd8a5abe0-993984234343bc57ddbe5'
+workspace_id = 'd8asd'
 
 # Create environment
 environment1 = fc.create_environment(workspace_id, display_name="environment1")
@@ -104,8 +104,8 @@ status_code = fc.delete_environment(workspace_id, env.id)
 
 
 # Get published settings
-workspace_id = 'd8asdfgabe0-9apk0kdasf6-343bc57ddbe5'
-environment_id = 'fae6d1a7dsfg89b1-f42626deb56f'
+workspace_id = 'asdf5'
+environment_id = 'asdf6f'
 published_settings = fc.get_published_settings(workspace_id=workspace_id, environment_id=environment_id)
 
 # Get staging settings
@@ -117,7 +117,34 @@ updated_settings = fc.update_staging_settings(workspace_id=workspace_id,
                                               environment_id=environment_id, 
                                               driver_cores=driver_cores)
 
+
+# Environment libraries
+
+
+workspace_id = 'affdg'
+environment_id = 'bfdgfg'
+
+# Get published libraries
+resp = fc.get_published_libraries(workspace_id, environment_id)
+
+# Upload staging library
+resp = fc.upload_staging_library(workspace_id, environment_id, file_path='dummy.whl')
+
+# Get staging libraries
+resp = fc.get_staging_libraries(workspace_id, environment_id)
+
+# Publish environment
+resp = fc.publish_environment(workspace_id, environment_id)
+
+# Cancel publish
+resp = fc.cancel_publish(workspace_id, environment_id)
+
+# Delete staging library
+resp = fc.delete_staging_library(workspace_id, environment_id, 'dummy.whl')
+
 ```
+
+
 ## Eventhouses
 
 ```python	

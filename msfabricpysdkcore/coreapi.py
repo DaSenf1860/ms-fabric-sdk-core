@@ -449,32 +449,32 @@ class FabricClientCore(FabricClient):
     def get_published_libraries(self, workspace_id, environment_id):
         """Get published libraries for an environment"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).get_published_libraries()
+        return ws.get_published_libraries(environment_id)
     
     def get_staging_libraries(self, workspace_id, environment_id):
         """Get staging libraries for an environment"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).get_staging_libraries()
+        return ws.get_staging_libraries(environment_id)
     
     def upload_staging_library(self, workspace_id, environment_id, file_path):
         """Update staging libraries for an environment"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).upload_staging_library(file_path=file_path)
+        return ws.upload_staging_library(environment_id, file_path)
     
     def publish_environment(self, workspace_id, environment_id):
         """Publish an environment"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).publish_environment()
+        return ws.publish_environment(environment_id)
     
     def delete_staging_library(self, workspace_id, environment_id, library_to_delete):
         """Delete a staging library from an environment"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).delete_staging_library(library_to_delete)
+        return ws.delete_staging_library(environment_id, library_to_delete)
     
     def cancel_publish(self, workspace_id, environment_id):
         """Cancel publishing an environment"""
         ws = self.get_workspace_by_id(workspace_id)
-        return ws.get_environment(environment_id).cancel_publish()
+        return ws.cancel_publish(environment_id)
 
     # eventhouses
 

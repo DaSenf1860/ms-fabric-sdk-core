@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.0.14
+
+### New Features
+- added APIs for environment spark libraries
+
 ## 0.0.13
 
 ### New Features 
