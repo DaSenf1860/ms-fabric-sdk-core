@@ -1,13 +1,10 @@
 import json
-from time import sleep
-
-import requests
-from msfabricpysdkcore.long_running_operation import check_long_running_operation
+from msfabricpysdkcore.adminapi import FabricClientAdmin
 
 class Domain:
     """Class to represent a domain in Microsoft Fabric"""
 
-    def __init__(self, id, display_name, description, parent_domain_id, contributors_scope, auth):
+    def __init__(self, id, display_name, description, parent_domain_id, contributors_scope, core_client: FabricClientAdmin):
         """Constructor for the Domain class
         
         Args:
@@ -25,7 +22,7 @@ class Domain:
         self.parent_domain_id = parent_domain_id
         self.contributors_scope = contributors_scope
 
-        self.auth = auth
+        self.core_client = core_client
 
     def __str__(self):
         """Method to return a string representation of the Domain object
@@ -45,7 +42,7 @@ class Domain:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def from_dict(dic, auth):
+    def from_dict(dic, core_client):
         """Method to create a Domain object from a dictionary
         
         Args:
@@ -62,9 +59,9 @@ class Domain:
             dic["contributors_scope"] = dic["contributorsScope"]
         return Domain(id=dic['id'], display_name=dic['display_name'],
                       description=dic['description'], parent_domain_id=dic['parent_domain_id'], 
-                      contributors_scope=dic['contributors_scope'], auth=auth)
+                      contributors_scope=dic['contributors_scope'], core_client=core_client)
 
-    def list_domain_workspaces(self, workspace_objects = False, continuationToken = None):
+    def list_domain_workspaces(self, workspace_objects = False):
         """Method to list the workspaces in the domain
         
         Args:
@@ -72,37 +69,7 @@ class Domain:
         Returns:
             list: The list of workspaces in the domain
         """
-        if workspace_objects:
-            from msfabricpysdkcore import FabricClientCore
-            fc = FabricClientCore()
-                    
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/workspaces"
-        if continuationToken:
-            url = f"{url}?continuationToken={continuationToken}"
-
-        for _ in range(10):
-            response = requests.get(url=url, headers=self.auth.get_headers())
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error listing workspaces: {response.text}")
-            break
-
-        resp_dict = json.loads(response.text)
-        workspaces = resp_dict["value"]
-
-        if workspace_objects:
-            workspaces = [fc.get_workspace_by_id(workspace["id"]) for workspace in workspaces]
-
-        if "continuationToken" in resp_dict:
-            workspaces_next = self.list_domain_workspaces(continuationToken=resp_dict["continuationToken"])
-            workspaces.extend(workspaces_next)
-
-        return workspaces
+        return self.core_client.list_domain_workspaces(self.id, workspace_objects)
     
     def delete(self):
         """Method to delete the domain
@@ -110,21 +77,7 @@ class Domain:
         Returns:
             int: The status code of the response
         """
-        # DELETE https://api.fabric.microsoft.com/v1/admin/domains/{domainId}
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}"
-        for _ in range(10):
-            response = requests.delete(url=url, headers=self.auth.get_headers())
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error deleting domain: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.delete_domain(self.id)
     
 
     # PATCH https://api.fabric.microsoft.com/v1/admin/domains/{domainId}
@@ -139,38 +92,12 @@ class Domain:
         Returns:
              Domain: The Domain object created from the dictionary
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}"
-        body = {}
-        if description:
-            body["description"] = description
-        else:
-            body["description"] = self.description
 
-        if display_name:
-            body["displayName"] = display_name
-        else:
-            body["displayName"] = self.display_name
-
-        if contributors_scope:
-            body["contributorsScope"] = contributors_scope
-        else:
-            body["contributorsScope"] = self.contributors_scope
-
-        for _ in range(10):
-            response = requests.patch(url=url, headers=self.auth.get_headers(), json=body)
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error updating domain: {response.text}")
-            break
-
-        self.description = body["description"]
-        self.display_name = body["displayName"]
-        self.contributors_scope = body["contributorsScope"]
+        resp_dict = self.core_client.update_domain(self.id, description, display_name, contributors_scope)
+        assert "id" in resp_dict
+        self.description = description
+        self.display_name = display_name
+        self.contributors_scope = contributors_scope
 
         return self
     
@@ -183,27 +110,7 @@ class Domain:
             int: The status code of the response
         """
         # POST https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/assignWorkspacesByCapacities
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/assignWorkspacesByCapacities"
-
-        body = {
-            "capacitiesIds": capacities_ids
-        }
-
-        for _ in range(10):
-            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code == 202 and wait_for_completion:
-                check_long_running_operation(response.headers, self.auth)
-            if response.status_code not in (202, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error assigning workspaces by capacities: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.assign_domain_workspaces_by_capacities(self.id, capacities_ids, wait_for_completion)
 
 
     def assign_workspaces_by_ids(self, workspaces_ids):
@@ -215,24 +122,7 @@ class Domain:
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/assignWorkspaces"
-        body = {
-            "workspacesIds": workspaces_ids
-        }
-
-        for _ in range(10):
-            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error assigning workspaces by ids: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.assign_domain_workspaces_by_ids(self.id, workspaces_ids)
     
 
     def assign_workspaces_by_principals(self, principals, wait_for_completion=True):
@@ -243,29 +133,8 @@ class Domain:
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/assignWorkspacesByPrincipals"
-        body = {
-            "principals": principals
-        }
-
-        for _ in range(10):
-            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code == 202 and wait_for_completion:
-                check_long_running_operation(response.headers, self.auth)
-            if response.status_code not in (202, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error assigning workspaces by principals: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.assign_domains_workspaces_by_principals(self.id, principals, wait_for_completion)
     
-    # POST https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/roleAssignments/bulkAssign
-
     def role_assignments_bulk_assign(self, type, principals):
         """Method to bulk assign role assignments
         
@@ -275,26 +144,7 @@ class Domain:
         Returns:
             int: The status code of the response
         """
-        
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/roleAssignments/bulkAssign"
-        body = {
-            "type": type,
-            "principals": principals
-        }
-
-        for _ in range(10):
-            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error bulk assigning role assignments: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.role_assignments_bulk_assign(self.id, type, principals)
     
 
     def role_assignments_bulk_unassign(self, type, principals):
@@ -307,25 +157,7 @@ class Domain:
             int: The status code of the response
         """
         
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/roleAssignments/bulkUnassign"
-        body = {
-            "type": type,
-            "principals": principals
-        }
-
-        for _ in range(10):
-            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error bulk unassigning role assignments: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.role_assignments_bulk_unassign(self.id, type, principals)
     
 
     def unassign_all_workspaces(self):
@@ -334,21 +166,7 @@ class Domain:
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/unassignAllWorkspaces"
-
-        for _ in range(10):
-            response = requests.post(url=url, headers=self.auth.get_headers())
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error unassigning all workspaces: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.unassign_all_domain_workspaces(self.id)
     
     def unassign_workspaces_by_ids(self, workspace_ids):
         """Method to unassign workspaces from the domain
@@ -358,21 +176,4 @@ class Domain:
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{self.id}/unassignWorkspaces"
-        body = {
-            "workspacesIds": workspace_ids
-        }
-
-        for _ in range(10):
-            response = requests.post(url=url, headers=self.auth.get_headers(), json=body)
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error unassigning workspaces by ids: {response.text}")
-            break
-
-        return response.status_code
+        return self.core_client.unassign_domain_workspaces_by_ids(self.id, workspace_ids)

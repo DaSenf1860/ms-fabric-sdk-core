@@ -9,7 +9,7 @@ They are designed to automate your Fabric processes.
 
 This SDK helps to interact with the Fabric APIs in a more Pythonic way.
 Additionally it brings some extra features like:
-- Authentication is handled for you (currently Azure CLI Authentication and Service Principal Authentication are supported, as well as Synapse Spark Authentication in Fabric Notebooks)
+- Authentication is handled for you (currently Azure CLI Authentication, Authentication from a Microsoft Fabric notebook and Service Principal Authentication are supported)
 - Waiting for completion of long running operations
 - Retry logic when hitting the API rate limits
 - Referencing objects by name instead of ID
@@ -70,6 +70,7 @@ from msfabricpysdkcore import FabricClientCore
 # Create a client
 
 # Either login with the Azure CLI first and initiate the client directly
+# This also works directly in a Microsoft Fabric notebook
 fc = FabricClientCore()
 
 # Or use a service principal (note that not all APIs are supported with service principal)
@@ -215,7 +216,7 @@ pipe = fc.get_deployment_pipeline(pipe_id)
 
 
 # Get deployment pipeline stages
-stages = fc.get_deployment_pipeline_stages(pipe_id)
+stages = fc.list_deployment_pipeline_stages(pipe_id)
 
 names = [stage.display_name for stage in stages]
 
@@ -223,7 +224,7 @@ dev_stage = [stage for stage in stages if stage.display_name == "Development"][0
 prod_stage = [stage for stage in stages if stage.display_name == "Production"][0]
 
 # Get deployment pipeline stages items
-items = fc.get_deployment_pipeline_stages_items(pipeline_id=pipe_id, stage_id=dev_stage.id)
+items = fc.list_deployment_pipeline_stages_items(pipeline_id=pipe_id, stage_id=dev_stage.id)
 
 
 items = [item for item in dev_stage.get_items() if item["itemDisplayName"] == 'cicdlakehouse']
@@ -297,11 +298,11 @@ item_list = ws.list_items()
 
 
 # Update an item
-fc.update_item(workspace_id="workspace_id", item_id="item_id" display_name="new_item_name", description = None)
+fc.update_item(workspace_id="workspace_id", item_id="item_id" display_name="new_item_name", description = None, return_item=True)
 # or
-ws.update_item(item_id="item_id", display_name="new_item_name", description = None)
+ws.update_item(item_id="item_id", display_name="new_item_name", description = None, return_item=True)
 # or
-item.update(display_name="new_item_name", description = None)
+item.update(display_name="new_item_name", description = None, return_item=True)
 
 
 # Delete an item
@@ -639,7 +640,7 @@ domains = fca.list_domains()
 
 # Update domain
 domain_new_name = "sdktestdomains2"
-domain_clone = fca.update_domain(domain.id, display_name=domain_new_name)
+domain_clone = fca.update_domain(domain.id, display_name=domain_new_name, return_item=True)
 
 # Assign domain workspaces by Ids
 fca.assign_domain_workspaces_by_ids(domain.id, ["workspace_id_1", "workspace_id_2"])

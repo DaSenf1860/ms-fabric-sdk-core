@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.1.1
+
+### Refactoring
+Massive refactoring to simplify the code and make it more maintainable. The main changes are:
+- All APIs are called from the client classes. 
+- The API calls are handled by a single function
+This leads to an improvement of performance of the application by reducing the number of API calls.
+Each function normally is doing a single API call.
+
+
 ## 0.0.14
 
 ### New Features

@@ -72,7 +72,7 @@ dp_new = fc.create_data_pipeline(workspace_id, display_name="pipeline_new", desc
 dp = fc.get_data_pipeline(workspace_id, data_pipeline_name="pipeline1")
 
 # Update Data Pipeline
-dp2 = fc.update_data_pipeline(workspace_id, dp.id, display_name="pipeline2")
+dp2 = fc.update_data_pipeline(workspace_id, dp.id, display_name="pipeline2", return_item=True)
 
 # Delete Data Pipeline
 fc.delete_data_pipeline(workspace_id, dp.id)
@@ -97,7 +97,7 @@ environment_names = [env.display_name for env in environments]
 env = fc.get_environment(workspace_id, environment_name="environment1")
 
 # Update environment
-env2 = fc.update_environment(workspace_id, env.id, display_name="environment2")
+env2 = fc.update_environment(workspace_id, env.id, display_name="environment2", return_item=True)
 
 # Delete environment
 status_code = fc.delete_environment(workspace_id, env.id)
@@ -163,7 +163,7 @@ eventhouse_names = [eh.display_name for eh in eventhouses]
 eh = fc.get_eventhouse(workspace_id, eventhouse_name="eventhouse1")
 
 # Update Eventhouse
-eh2 = fc.update_eventhouse(workspace_id, eh.id, display_name="eventhouse2")
+eh2 = fc.update_eventhouse(workspace_id, eh.id, display_name="eventhouse2", return_item=True)
 
 # Delete Eventhouse
 status_code = fc.delete_eventhouse(workspace_id, eh.id)
@@ -190,7 +190,7 @@ es = fc.create_eventstream(workspace_id, display_name="es1")
 es = fc.get_eventstream(workspace_id, eventstream_name="es1")
 
 # Update Eventstream
-es2 = fc.update_eventstream(workspace_id, es.id, display_name="es2")
+es2 = fc.update_eventstream(workspace_id, es.id, display_name="es2", return_item=True)
 
 # Delete Eventstream
 fc.delete_eventstream(workspace_id, es.id)
@@ -222,7 +222,7 @@ kql_database_names = [kqldb.display_name for kqldb in kql_databases]
 kqldb = fc.get_kql_database(workspace_id, kql_database_name="kqldatabase12")
 
 # Update KQL Database
-kqldb2 = fc.update_kql_database(workspace_id, kqldb.id, display_name="kqldb23")
+kqldb2 = fc.update_kql_database(workspace_id, kqldb.id, display_name="kqldb23", return_item=True)
 
 # Delete KQL Database
 status_code = fc.delete_kql_database(workspace_id, kqldb.id)
@@ -246,7 +246,7 @@ kql_querysets = fc.list_kql_querysets(workspace_id)
 kqlq = fc.get_kql_queryset(workspace_id, kql_queryset_name="kqlqueryset1")
 
 # Update KQL Queryset
-kqlq2 = fc.update_kql_queryset(workspace_id, kqlq.id, display_name="kqlqueryset2")
+kqlq2 = fc.update_kql_queryset(workspace_id, kqlq.id, display_name="kqlqueryset2", return_item=True)
 
 # Delete KQL Queryset
 fc.delete_kql_queryset(workspace_id, kqlq.id)
@@ -304,7 +304,7 @@ lakehouses = fc.list_lakehouses(workspace_id)
 lakehouse2 = fc.get_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
         
 # Update Lakehouse
-lakehouse2 = fc.update_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id, display_name="lakehouse3")
+lakehouse2 = fc.update_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id, display_name="lakehouse3", return_item=True)
 
 # Delete Lakehouse
 fc.delete_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
@@ -332,7 +332,7 @@ mle = fc.create_ml_experiment(workspace_id, display_name="mlexperiment1")
 mle = fc.get_ml_experiment(workspace_id, ml_experiment_name="mlexperiment1")
 
 # Update ML Experiment
-mle2 = fc.update_ml_experiment(workspace_id, mle.id, display_name="mlexperiment2")
+mle2 = fc.update_ml_experiment(workspace_id, mle.id, display_name="mlexperiment2", return_item=True)
 
 # Delete ML Experiment
 fc.delete_ml_experiment(workspace_id, mle.id)
@@ -359,7 +359,7 @@ ml_model = fc.create_ml_model(workspace_id, display_name="mlmodel1")
 ml_model = fc.get_ml_model(workspace_id, ml_model_name="mlmodel1")
 
 # Update ML Model
-ml_model2 = fc.update_ml_model(workspace_id, ml_model_id=ml_model.id, display_name="mlmodel2")
+ml_model2 = fc.update_ml_model(workspace_id, ml_model_id=ml_model.id, display_name="mlmodel2", return_item=True)
 
 # Delete ML Model
 fc.delete_ml_model(workspace_id, ml_model.id)
@@ -389,7 +389,7 @@ notebook = fc.create_notebook(workspace_id, definition = definition, display_nam
 notebook = fc.get_notebook(workspace_id, notebook_name="notebook1")
 
 # Update Notebook
-notebook2 = fc.update_notebook(workspace_id, notebook.id, display_name="notebook2")
+notebook2 = fc.update_notebook(workspace_id, notebook.id, display_name="notebook2", return_item=True)
 
 # Get Notebook Definition
 fc.get_notebook_definition(workspace_id, notebook.id, format=None)
@@ -494,7 +494,7 @@ pool2 = fc.create_workspace_custom_pool(workspace_id=workspace_id,
 # Update a spark custom pool
 
 pool2 = fc.update_workspace_custom_pool(workspace_id=workspace_id, pool_id=pool2.id,
-                                auto_scale = {"enabled": True, "minNodeCount": 1, "maxNodeCount": 7})
+                                auto_scale = {"enabled": True, "minNodeCount": 1, "maxNodeCount": 7}, return_item=True)
 
 
 # Delete a spark custom pool
@@ -546,7 +546,7 @@ spark_job_definition = fc.get_spark_job_definition(workspace_id, spark_job_defin
 job_instance = fc.run_on_demand_spark_job_definition(workspace_id, spark_job_definition.id, job_type="sparkjob")
 
 # Update Spark Job Definition
-spark_job_definition2 = fc.update_spark_job_definition(workspace_id, spark_job_definition.id, display_name="sparkjobdefinition2")
+spark_job_definition2 = fc.update_spark_job_definition(workspace_id, spark_job_definition.id, display_name="sparkjobdefinition2", return_item=True)
 
 # Get Spark Job Definition Definition
 fc.get_spark_job_definition_definition(workspace_id, spark_job_definition.id, format=None)
@@ -582,7 +582,7 @@ warehouse = fc.create_warehouse(workspace_id, display_name="wh1")
 warehouse = fc.get_warehouse(workspace_id, warehouse_name="wh1")
 
 # Update Warehouse
-warehouse2 = fc.update_warehouse(workspace_id, warehouse.id, display_name="wh2")
+warehouse2 = fc.update_warehouse(workspace_id, warehouse.id, display_name="wh2", return_item=True)
 
 # Delete Warehouse
 fc.delete_warehouse(workspace_id, warehouse.id)
