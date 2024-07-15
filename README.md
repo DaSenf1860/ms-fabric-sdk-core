@@ -1,6 +1,7 @@
 # Python SDK for Microsoft Fabric
 
 This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*.
+It supports all REST APIs of Fabric (as of July 15, 2024)
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
