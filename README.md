@@ -86,7 +86,12 @@ fc = FabricClientCore(tenant_id = "tenant_id",
 
 
 ```
+### Getting a token
+```python
+# Getting a token
 
+token = fc.auth.get_token()
+```
 ### Working with workspaces
     
 ```python
