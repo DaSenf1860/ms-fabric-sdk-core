@@ -729,7 +729,7 @@ resp = fac.check_name_availability(subscription_id, "westeurope", capacity_name_
 # Create or update capacity
 resp = fac.create_or_update_capacity(subscription_id, resource_group_name, capacity_name_new, 
                                     location="westeurope",
-                                    properties_administration={"members": ['admin@MngEnvMCAP065039.onmicrosoft.com']},
+                                    properties_administration={"members": ['hfds@afasf.com']},
                                     sku = "F2")
 
 # Get capacity
