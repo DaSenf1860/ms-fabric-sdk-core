@@ -74,7 +74,7 @@ class AdminItem:
             description = item_dict.get('description', None),
             last_updated_date = item_dict['lastUpdatedDate'],
             capacity_id = item_dict['capacityId'],
-            creator_principal = item_dict['creatorPrincipal'],
+            creator_principal = item_dict.get('creatorPrincipal', None),
             admin_client = admin_client
         )
             

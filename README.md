@@ -1,11 +1,11 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*.
-It supports all REST APIs of Fabric (as of July 15, 2024)
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of July 23, 2024).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
 The Microsoft Fabric REST APIs are documented [here](https://docs.microsoft.com/en-us/rest/api/fabric/).
+The Azure Resoure Management APIs for Fabric are documented [here](https://learn.microsoft.com/en-us/rest/api/microsoftfabric/fabric-capacities?view=rest-microsoftfabric-2023-11-01).
 They are designed to automate your Fabric processes.
 
 This SDK helps to interact with the Fabric APIs in a more Pythonic way.
@@ -20,7 +20,7 @@ Additionally it brings some extra features like:
 
 See the latest release notes [here](releasenotes/release_notes.md).
 
-Currently it supports all Core APIs, Admin APIs, Lakehouse APIs and all other item specific CRUD APIs, i.e.:
+Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and Azure Resource Management APIs for Fabric capacities, i.e.:
 - Core APIs
   - [Capacities](#working-with-capacities)
   - [Deployment Pipelines](#deployment-pipelines)
@@ -44,6 +44,7 @@ Currently it supports all Core APIs, Admin APIs, Lakehouse APIs and all other it
   - List, create, update, delete warehouses, notebooks, semantic models, kql databases,.....
   - Lakehouse operations (Load table, list tables, run table maintenance)
   - Spark Pool operations
+- [Azure Resource Management APIs for Fabric capacities](#azure-resource-management-apis-for-fabric-capacities)
 
 It is planned to support also new APIs which are not released yet.
 Also we have plans to support APIs to interact with Fabric capacities on the Azure Side.
@@ -90,7 +91,7 @@ fc = FabricClientCore(tenant_id = "tenant_id",
 ```python
 # Getting a token
 
-token = fc.auth.get_token()
+token = fc.get_token()
 ```
 ### Working with workspaces
     
@@ -707,3 +708,57 @@ fca.revoke_external_data_share(external_data_share_id = data_shares[0]['id'],
 
 Note: This SDK is not an official SDK from Microsoft. It is a community project and not supported by Microsoft. Use it at your own risk.
 Also the API is still in preview and might change. This SDK is not yet feature complete and might not cover all APIs yet. Feel free to contribute to this project to make it better.
+
+
+### Azure Resource Management APIs for Fabric capacities
+
+```python
+from msfabricpysdkcore import FabricAzureClient
+
+fac = FabricAzureClient()
+
+subscription_id = "fsdgdfgds"
+resource_group_name = "fabricdemo"
+capacity_name = "rgsdfgsdfgsd"
+capacity_name_new = "dsfgsdfgsdfg" + datetime.now().strftime("%Y%m%d%H%M%S")
+
+# Check name availability
+
+resp = fac.check_name_availability(subscription_id, "westeurope", capacity_name_new)
+
+# Create or update capacity
+resp = fac.create_or_update_capacity(subscription_id, resource_group_name, capacity_name_new, 
+                                    location="westeurope",
+                                    properties_administration={"members": ['admin@MngEnvMCAP065039.onmicrosoft.com']},
+                                    sku = "F2")
+
+# Get capacity
+resp = fac.get_capacity(subscription_id, resource_group_name, capacity_name_new)
+sku = resp.sku['name']
+
+# Delete capacity
+resp = fac.delete_capacity(subscription_id, resource_group_name, capacity_name_new)
+
+# List capacities by resource group
+resp = fac.list_by_resource_group(subscription_id, resource_group_name)
+cap_names = [cap["name"] for cap in resp]
+
+# List capacities by subscription
+resp = fac.list_by_subscription(subscription_id)
+cap_names = [cap["name"] for cap in resp]
+
+# List SKUs
+resp = fac.list_skus(subscription_id)
+
+# List SKUs for capacity
+resp = fac.list_skus_for_capacity(subscription_id, resource_group_name, capacity_name)
+
+# Resume capacity
+resp = fac.resume_capacity(subscription_id, resource_group_name, capacity_name)
+
+# Suspend capacity
+resp = fac.suspend_capacity(subscription_id, resource_group_name, capacity_name)
+
+# Update capacity
+resp = fac.update_capacity(subscription_id, resource_group_name, capacity_name, sku="F4")
+```

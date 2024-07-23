@@ -9,26 +9,29 @@ from msfabricpysdkcore.auth import FabricAuthClient, FabricServicePrincipal, Fab
 class FabricClient():
     """FabricClient class to interact with Fabric API"""
 
-    def __init__(self, tenant_id = None, client_id = None, client_secret = None, silent=False) -> None:
+    def __init__(self, scope, tenant_id = None, client_id = None, client_secret = None, silent=False) -> None:
         """Initialize FabricClient object"""
         self.tenant_id = tenant_id if tenant_id else os.getenv("FABRIC_TENANT_ID")
         self.client_id = client_id if client_id else os.getenv("FABRIC_CLIENT_ID")
         self.client_secret = client_secret if client_secret else os.getenv("FABRIC_CLIENT_SECRET")
-
-        self.scope = "https://api.fabric.microsoft.com/.default"
+        self.scope = scope
+        #self.scope = "https://api.fabric.microsoft.com/.default"
 
         if self.client_id is None or self.client_secret is None or self.tenant_id is None:
             try:
-                self.auth = FabricSparkUtilsAuthentication(silent=silent)
+                self.auth = FabricSparkUtilsAuthentication(self.scope, silent=silent)
             except:
-                self.auth = FabricAuthClient(silent=silent)
+                self.auth = FabricAuthClient(self.scope, silent=silent)
         else:
-            self.auth = FabricServicePrincipal(tenant_id = self.tenant_id,
+            self.auth = FabricServicePrincipal(scope= self.scope,
+                                               tenant_id = self.tenant_id,
                                                client_id = self.client_id, 
                                                client_secret = self.client_secret,
                                                silent=silent)
             
-
+    def get_token(self):
+        """Get token from Entra"""
+        return self.auth.get_token()
 
     def calling_routine(self, url, operation, body = None, headers=None, file_path = None, response_codes = [200], error_message = "Error",
                         continue_on_error_code = False, return_format = "value_json", paging = False,

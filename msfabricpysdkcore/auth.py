@@ -8,6 +8,9 @@ except ImportError:
 class FabricAuth():
     """FabricAuth class to interact with Entra ID"""
 
+    def __init__(self, scope):
+        self.scope = scope
+
     @abstractmethod
     def get_token(self):
         """Get token from Azure AD"""
@@ -26,28 +29,29 @@ class FabricAuth():
 class FabricAuthClient(FabricAuth):
     """FabricAuthClient class to interact with Entra ID"""
 
-    def __init__(self, silent = False):
+    def __init__(self, scope, silent = False):
+        super().__init__(scope)
         if not silent:
             print("Using Azure CLI for authentication")
         self.auth = AzureCliCredential()
 
     def get_token(self):
         """Get token from Azure AD"""
-        token = self.auth.get_token("https://api.fabric.microsoft.com/.default")
+        token = self.auth.get_token(self.scope)
         return token.token
 
 class FabricServicePrincipal(FabricAuth):
     """FabricServicePrincipal class to interact with Entra ID"""
 
-    def __init__(self, tenant_id, client_id, client_secret, silent = False):
+    def __init__(self, tenant_id, client_id, client_secret, scope, silent = False):
+        super().__init__(scope)
+
         if not silent:
             print("Using Service Principal for authentication")
 
         self.tenant_id = tenant_id
         self.client_id = client_id
         self.client_secret = client_secret
-
-        self.scope = "https://api.fabric.microsoft.com/.default"
 
     
     def get_token(self):
@@ -67,7 +71,7 @@ class FabricServicePrincipal(FabricAuth):
 class FabricSparkUtilsAuthentication(FabricAuth):
     """FabricSparkUtilsAuthentication class to interact with Entra ID"""
 
-    def __init__(self, silent = False):
+    def __init__(self, scope, silent = False):
         mssparkutils.credentials.getToken("pbi")
         if not silent:
             print("Using Synapse Spark Utils for authentication")

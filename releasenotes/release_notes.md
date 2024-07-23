@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.1.2
+
+### New Features
+- added Azure Resource Manager APIs for Fabric capacities
+
 ## 0.1.1
 
 ### Refactoring

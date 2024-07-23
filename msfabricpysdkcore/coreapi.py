@@ -8,7 +8,10 @@ class FabricClientCore(FabricClient):
 
     def __init__(self, tenant_id = None, client_id = None, client_secret = None, silent=False) -> None:
         """Initialize FabricClientCore object"""
-        super().__init__(tenant_id, client_id, client_secret, silent=silent)
+        super().__init__(scope="https://api.fabric.microsoft.com/.default", 
+                         tenant_id=tenant_id,
+                         client_id=client_id,
+                         client_secret=client_secret,  silent=silent)
 
     def long_running_operation(self, response_headers):
         """Check the status of a long running operation"""
