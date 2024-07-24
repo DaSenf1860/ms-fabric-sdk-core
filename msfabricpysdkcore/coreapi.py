@@ -115,7 +115,7 @@ class FabricClientCore(FabricClient):
         return DeploymentPipeline.from_dict(result_json, self)
     
     def get_deployment_pipeline_stages_items(self, pipeline_id, stage_id = None, stage_name = None):
-        warn("DEPRECATED: Use list_deployment_pipeline_stages_items instead", DeprecationWarning, stacklevel=2)
+        warn("DEPRECATED: get_deployment_pipeline_stages_items. get_deployment_pipeline_stages_items. Use list_deployment_pipeline_stages_items instead", DeprecationWarning, stacklevel=2)
         return self.list_deployment_pipeline_stages_items(pipeline_id, stage_id, stage_name)
 
     def list_deployment_pipeline_stages_items(self, deployment_pipeline_id, stage_id = None, stage_name = None):
@@ -152,7 +152,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: List of DeploymentPipelineStage objects
         """
-        warn("DEPRECATED: Use list_deployment_pipeline_stages instead", DeprecationWarning, stacklevel=2)
+        warn("DEPRECATED: get_deployment_pipeline_stages. Use list_deployment_pipeline_stages instead", DeprecationWarning, stacklevel=2)
         return self.list_deployment_pipeline_stages(pipeline_id)
 
     def list_deployment_pipeline_stages(self, deployment_pipeline_id):
