@@ -45,6 +45,7 @@ Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and
   - Lakehouse operations (Load table, list tables, run table maintenance)
   - Spark Pool operations
 - [Azure Resource Management APIs for Fabric capacities](#azure-resource-management-apis-for-fabric-capacities)
+- [Logging](#logging)
 
 It is planned to support also new APIs which are not released yet.
 Also we have plans to support APIs to interact with Fabric capacities on the Azure Side.
@@ -762,3 +763,18 @@ resp = fac.suspend_capacity(subscription_id, resource_group_name, capacity_name)
 # Update capacity
 resp = fac.update_capacity(subscription_id, resource_group_name, capacity_name, sku="F4")
 ```
+
+### Logging
+
+The SDK uses the Python logging module, following the logging settings of your application. You can set up logging in 
+your project like this:
+
+```python
+import logging
+from msfabricpysdkcore import FabricClientCore
+
+logging.basicConfig(level=logging.DEBUG)
+fc = FabricClientCore() # The client will now log
+```
+
+You can also set the environment variable `FABRIC_SDK_DEBUG` to `1` to enable debug logging.

@@ -1,4 +1,5 @@
 import json
+from warnings import warn
 
 from msfabricpysdkcore.coreapi import FabricClientCore
 
@@ -46,7 +47,7 @@ class DeploymentPipeline:
 
 
     def get_stages(self):
-        print("DEPRECATED: Use list_stages() instead")
+        warn("DEPRECATED: Use list_stages() instead", DeprecationWarning, stacklevel=2)
         return self.list_stages(self)
     
     def list_stages(self):
@@ -54,12 +55,13 @@ class DeploymentPipeline:
 
 
     def get_deployment_pipeline_stages_items(self, stage_id = None, stage_name = None):
-        print("DEPRECATED: Use list_deployment_pipeline_stages_items() instead")
+        warn("DEPRECATED: Use list_deployment_pipeline_stages_items() instead", DeprecationWarning, stacklevel=2)
         return self.list_deployment_pipeline_stages_items(stage_id=stage_id, stage_name=stage_name)
 
 
     def list_deployment_pipeline_stages_items(self, stage_id = None, stage_name = None):
         return self.core_client.list_deployment_pipeline_stages_items(deployment_pipeline_id=self.id, stage_id=stage_id, stage_name=stage_name)
+
 
 class Deployment_Pipeline_Stage():
 
@@ -120,7 +122,7 @@ class Deployment_Pipeline_Stage():
         return self.__str__()
     
     def get_items(self):
-        print("DEPRECATED: Use list_items() instead")
+        warn("DEPRECATED: Use list_items() instead", DeprecationWarning, stacklevel=2)
         return self.list_items()
     
     def list_items(self):

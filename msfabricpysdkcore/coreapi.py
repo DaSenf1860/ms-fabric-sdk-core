@@ -1,17 +1,22 @@
 import json
 from time import sleep
+from warnings import warn
 
 from msfabricpysdkcore.client import FabricClient
+from msfabricpysdkcore.util import logger
+
 
 class FabricClientCore(FabricClient):
     """FabricClientCore class to interact with Fabric Core APIs"""
 
-    def __init__(self, tenant_id = None, client_id = None, client_secret = None, silent=False) -> None:
+    def __init__(self, tenant_id = None, client_id = None, client_secret = None, silent=None) -> None:
         """Initialize FabricClientCore object"""
         super().__init__(scope="https://api.fabric.microsoft.com/.default", 
                          tenant_id=tenant_id,
                          client_id=client_id,
-                         client_secret=client_secret,  silent=silent)
+                         client_secret=client_secret)
+        if silent is not None:
+            warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
 
     def long_running_operation(self, response_headers):
         """Check the status of a long running operation"""
@@ -110,7 +115,7 @@ class FabricClientCore(FabricClient):
         return DeploymentPipeline.from_dict(result_json, self)
     
     def get_deployment_pipeline_stages_items(self, pipeline_id, stage_id = None, stage_name = None):
-        print("DEPRECATED: Use list_deployment_pipeline_stages_items instead")
+        warn("DEPRECATED: Use list_deployment_pipeline_stages_items instead", DeprecationWarning, stacklevel=2)
         return self.list_deployment_pipeline_stages_items(pipeline_id, stage_id, stage_name)
 
     def list_deployment_pipeline_stages_items(self, deployment_pipeline_id, stage_id = None, stage_name = None):
@@ -139,7 +144,7 @@ class FabricClientCore(FabricClient):
                                      error_message="Error getting deployment pipeline stage items", return_format="value_json", paging=True)
 
         return items
-    
+
     def get_deployment_pipeline_stages(self, pipeline_id):
         """Get the stages of a deployment pipeline
         Args:
@@ -147,9 +152,9 @@ class FabricClientCore(FabricClient):
         Returns:
             list: List of DeploymentPipelineStage objects
         """
-        print("DEPRECATED: Use list_deployment_pipeline_stages instead")
+        warn("DEPRECATED: Use list_deployment_pipeline_stages instead", DeprecationWarning, stacklevel=2)
         return self.list_deployment_pipeline_stages(pipeline_id)
-    
+
     def list_deployment_pipeline_stages(self, deployment_pipeline_id):
         """Get the stages of a deployment pipeline
         Args:
@@ -528,7 +533,7 @@ class FabricClientCore(FabricClient):
 
 
         if item_dict is None or "no_operation_result" in item_dict:
-            print("Item not returned by API, trying to get it by name")
+            self._logger.debug("Item not returned by API, trying to get it by name")
             item = None
             i = 0
 
@@ -553,11 +558,11 @@ class FabricClientCore(FabricClient):
                 item = self.get_item_by_name(workspace_id, display_name, type)
                 if item is not None:
                     return item
-                print("Item not found, waiting 5 seconds")
+                self._logger.debug("Item not found, waiting 5 seconds")
                 sleep(5)
                 i += 1
 
-            print("Item not found after 1 minute, returning None")
+            self._logger.info("Item not found after 1 minute, returning None")
             return None
                 
         return self.get_item_specific(workspace_id, item_dict)
@@ -709,9 +714,13 @@ class FabricClientCore(FabricClient):
                                          response_codes=[200, 429], error_message="Error updating item",
                                          return_format="json")
         if return_item == "Default":
-            print("""Warning: Updating an item currently will make invoke an additional API call to get the item object.
-                  This default behaviour will change in newer versions of the SDK.
-                  To keep this behaviour, set return_item=True in the function call.""")
+            warn(
+                message="Updating an item currently will make invoke an additional API call to get the item object. "
+                        "The default behaviour of returning the item object will change in newer versions of the SDK. "
+                        "To keep this behaviour, set return_item=True in the function call.",
+                category=FutureWarning,
+                stacklevel=2
+            )
         if return_item:
             return self.get_item_specific(workspace_id, resp_dict)
         return resp_dict
@@ -2013,16 +2022,18 @@ class FabricClientCore(FabricClient):
         response = self.calling_routine(url, operation="POST", body=body, response_codes=[202, 429],
                                         error_message="Error loading table", return_format="response",
                                         wait_for_completion=False)
-        
+
         if wait_for_completion:
             success = self.check_if_table_is_created(workspace_id = workspace_id,
                                                      lakehouse_id = lakehouse_id,
                                                      table_name = table_name)
-            
-        if not success:
-            print("Warning: Table not created after 3 minutes")
         else:
-            print("Table created")
+            success = None
+
+        if not success:
+            self._logger.warning("Table not created after 3 minutes")
+        else:
+            self._logger.info("Table created")
         return response.status_code
 
     # mlExperiments
@@ -2561,9 +2572,13 @@ class FabricClientCore(FabricClient):
                                              error_message="Error updating workspace custom pool", return_format="json")
 
         if return_item == "Default":
-            print("""Warning: Updating an item currently will make invoke an additional API call to get the item object.
-                  This default behaviour will change in newer versions of the SDK.
-                  To keep this behaviour, set return_item=True in the function call.""")
+            warn(
+                message="Warning: Updating an item currently will make invoke an additional API call to get the item "
+                        "object. This default behaviour will change in newer versions of the SDK. To keep this "
+                        "behaviour, set return_item=True in the function call.",
+                category=FutureWarning,
+                stacklevel=2
+            )
         if return_item:
             return self.get_workspace_custom_pool(workspace_id, pool_id)
         return response_json

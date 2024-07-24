@@ -1,14 +1,18 @@
+from warnings import warn
+
 from msfabricpysdkcore.client import FabricClient
 
 
 class FabricAzureClient(FabricClient):
 
-    def __init__(self, tenant_id=None, client_id=None, client_secret=None, silent=False) -> None:
+    def __init__(self, tenant_id=None, client_id=None, client_secret=None, silent=None) -> None:
         super().__init__(scope = "https://management.azure.com/",
                          tenant_id = tenant_id,
                          client_id = client_id,
-                         client_secret = client_secret,
-                         silent = silent)
+                         client_secret = client_secret,)
+
+        if silent is not None:
+            warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
 
 
     def check_name_availability(self, subscription_id, location, name, type = "Microsoft.Fabric/capacities"):

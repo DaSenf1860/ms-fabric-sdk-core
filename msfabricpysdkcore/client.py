@@ -1,16 +1,24 @@
+import logging
 from abc import abstractmethod
 import os
+from warnings import warn
 from time import sleep
 import requests
 import json
 
 from msfabricpysdkcore.auth import FabricAuthClient, FabricServicePrincipal, FabricSparkUtilsAuthentication
+from msfabricpysdkcore.util import logger
 
 class FabricClient():
     """FabricClient class to interact with Fabric API"""
 
-    def __init__(self, scope, tenant_id = None, client_id = None, client_secret = None, silent=False) -> None:
+    _logger: logging.Logger
+
+    def __init__(self, scope, tenant_id = None, client_id = None, client_secret = None, silent=None) -> None:
         """Initialize FabricClient object"""
+
+        self._logger = logger.getChild(__name__)
+
         self.tenant_id = tenant_id if tenant_id else os.getenv("FABRIC_TENANT_ID")
         self.client_id = client_id if client_id else os.getenv("FABRIC_CLIENT_ID")
         self.client_secret = client_secret if client_secret else os.getenv("FABRIC_CLIENT_SECRET")
@@ -19,15 +27,18 @@ class FabricClient():
 
         if self.client_id is None or self.client_secret is None or self.tenant_id is None:
             try:
-                self.auth = FabricSparkUtilsAuthentication(self.scope, silent=silent)
+                self.auth = FabricSparkUtilsAuthentication(self.scope)
             except:
-                self.auth = FabricAuthClient(self.scope, silent=silent)
+                self.auth = FabricAuthClient(self.scope)
         else:
             self.auth = FabricServicePrincipal(scope= self.scope,
                                                tenant_id = self.tenant_id,
                                                client_id = self.client_id, 
-                                               client_secret = self.client_secret,
-                                               silent=silent)
+                                               client_secret = self.client_secret)
+
+        if silent is not None:
+            warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
+
             
     def get_token(self):
         """Get token from Entra"""
@@ -91,7 +102,7 @@ class FabricClient():
             else:
                 raise ValueError("Invalid operation")
             if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
+                self._logger.info("Too many requests, waiting 10 seconds")
                 sleep(10)
                 continue
             elif response.status_code == 202:
