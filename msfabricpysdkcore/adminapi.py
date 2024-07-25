@@ -2,6 +2,7 @@ import requests
 import json
 import os
 from time import sleep
+from warnings import warn
 
 from msfabricpysdkcore.client import FabricClient
 
@@ -17,7 +18,7 @@ class FabricClientAdmin(FabricClient):
     def long_running_operation(self, response_headers):
         """Check the status of a long running operation"""
         from msfabricpysdkcore.coreapi import FabricClientCore
-        fc = FabricClientCore(tenant_id=self.tenant_id, client_id=self.client_id, client_secret=self.client_secret, silent=True)
+        fc = FabricClientCore(tenant_id=self.tenant_id, client_id=self.client_id, client_secret=self.client_secret)
 
         return fc.long_running_operation(response_headers)
 
@@ -171,7 +172,7 @@ class FabricClientAdmin(FabricClient):
 
         if workspace_objects:
             from msfabricpysdkcore import FabricClientCore
-            fc = FabricClientCore(tenant_id=self.tenant_id, client_id=self.client_id, client_secret=self.client_secret, silent=True)
+            fc = FabricClientCore(tenant_id=self.tenant_id, client_id=self.client_id, client_secret=self.client_secret)
             workspaces = [fc.get_workspace_by_id(workspace["id"]) for workspace in workspaces]
 
         return workspaces
@@ -300,9 +301,13 @@ class FabricClientAdmin(FabricClient):
                                              return_format="json")
   
         if return_item == "Default":
-            print("""Warning: Updating a domain currently will make invoke an additional API call to get the domain object.
-                  This default behaviour will change in newer versions of the SDK.
-                  To keep this behaviour, set return_item=True in the function call.""")
+            warn(
+                message="Updating a domain currently will make invoke an additional API call to get the domain "
+                        "object. This default behaviour will change in newer versions of the SDK. To keep this "
+                        "behaviour, set return_item=True in the function call.",
+                category=FutureWarning,
+                stacklevel=2
+            )
         if return_item:
             return self.get_domain_by_id(domain_id)
         return response_json

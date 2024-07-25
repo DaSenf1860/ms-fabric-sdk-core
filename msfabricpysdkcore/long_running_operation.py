@@ -1,15 +1,22 @@
+import logging
 from time import sleep, time
 from msfabricpysdkcore.coreapi import FabricClientCore
+from msfabricpysdkcore.util import logger
+
 
 class LongRunningOperation:
     """Class to represent a workspace in Microsoft Fabric"""
 
+    _logger: logging.Logger
+
     def __init__(self, operation_id, core_client: FabricClientCore) -> None:
+        """Initialize the LongRunningOperation object"""
+
+        self._logger = logger.getChild(__name__)
         self.operation_id = operation_id
         self.core_client = core_client
 
         self.state = self.get_operation_state()["status"]
-
 
     def get_operation_results(self):
         return self.core_client.get_operation_results(operation_id=self.operation_id)
@@ -26,22 +33,22 @@ class LongRunningOperation:
             if duration > 60:
                 
                 if self.state == "Running":
-                    print(f"Operation did not complete after {duration} seconds")
+                    self._logger.info(f"Operation did not complete after {duration} seconds")
                     return "Running"
-                raise Exception(f"Operation did not complete after {duration} seconds")
+                raise TimeoutError(f"Operation did not complete after {duration} seconds")
             sleep(3)
         return self.state
     
 
 def check_long_running_operation(headers, core_client):
-    """Check the status of a long running operation"""
+    """Check the status of a long-running operation"""
     location = headers.get('Location', None)
     operation_id = headers.get('x-ms-operation-id', None)
     if location:
         operation_id = location.split("/")[-1]
     
     if not operation_id:
-        print("Operation initiated, no operation id found")
+        self._logger.info("Operation initiated, no operation id found")
         return None
     lro = LongRunningOperation(operation_id=operation_id, core_client=core_client)
     lro.wait_for_completion()
