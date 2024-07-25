@@ -1,6 +1,10 @@
+from warnings import warn
+
 import requests
 from abc import abstractmethod
 from azure.identity import AzureCliCredential
+from msfabricpysdkcore.util import logger
+import logging
 try:
     from notebookutils import mssparkutils
 except ImportError:
@@ -8,7 +12,11 @@ except ImportError:
 class FabricAuth():
     """FabricAuth class to interact with Entra ID"""
 
+    _logger: logging.Logger
+
     def __init__(self, scope):
+        """Initialize FabricAuth object"""
+        self._logger = logger.getChild(__name__)
         self.scope = scope
 
     @abstractmethod
@@ -29,11 +37,13 @@ class FabricAuth():
 class FabricAuthClient(FabricAuth):
     """FabricAuthClient class to interact with Entra ID"""
 
-    def __init__(self, scope, silent = False):
+    def __init__(self, scope, silent = None):
         super().__init__(scope)
-        if not silent:
-            print("Using Azure CLI for authentication")
+        self._logger.info("Using Azure CLI for authentication")
         self.auth = AzureCliCredential()
+
+        if silent is not None:
+            warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
 
     def get_token(self):
         """Get token from Azure AD"""
@@ -43,15 +53,17 @@ class FabricAuthClient(FabricAuth):
 class FabricServicePrincipal(FabricAuth):
     """FabricServicePrincipal class to interact with Entra ID"""
 
-    def __init__(self, tenant_id, client_id, client_secret, scope, silent = False):
+    def __init__(self, tenant_id, client_id, client_secret, scope, silent = None):
         super().__init__(scope)
 
-        if not silent:
-            print("Using Service Principal for authentication")
+        self._logger.info("Using Service Principal for authentication")
 
         self.tenant_id = tenant_id
         self.client_id = client_id
         self.client_secret = client_secret
+
+        if silent is not None:
+            warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
 
     
     def get_token(self):
@@ -71,10 +83,14 @@ class FabricServicePrincipal(FabricAuth):
 class FabricSparkUtilsAuthentication(FabricAuth):
     """FabricSparkUtilsAuthentication class to interact with Entra ID"""
 
-    def __init__(self, scope, silent = False):
+    def __init__(self, scope, silent=None):
+        # super().__init__(scope)
+
         mssparkutils.credentials.getToken("pbi")
-        if not silent:
-            print("Using Synapse Spark Utils for authentication")
+        self._logger.info("Using Synapse Spark Utils for authentication")
+
+        if silent is not None:
+            warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
 
     def get_token(self):
         """Get token from Azure AD"""
