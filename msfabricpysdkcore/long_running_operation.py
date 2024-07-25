@@ -47,8 +47,10 @@ def check_long_running_operation(headers, core_client):
     if location:
         operation_id = location.split("/")[-1]
     
+    logger_ = logger.getChild(__name__)
+
     if not operation_id:
-        self._logger.info("Operation initiated, no operation id found")
+        logger_.info("Operation initiated, no operation id found")
         return None
     lro = LongRunningOperation(operation_id=operation_id, core_client=core_client)
     lro.wait_for_completion()

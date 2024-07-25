@@ -84,7 +84,7 @@ class FabricSparkUtilsAuthentication(FabricAuth):
     """FabricSparkUtilsAuthentication class to interact with Entra ID"""
 
     def __init__(self, scope, silent=None):
-        super().__init__(scope)
+        # super().__init__(scope)
 
         mssparkutils.credentials.getToken("pbi")
         self._logger.info("Using Synapse Spark Utils for authentication")

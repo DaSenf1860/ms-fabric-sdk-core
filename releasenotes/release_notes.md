@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.1.3
+
+- adding logging logics
+
 ## 0.1.2
 
 ### New Features
