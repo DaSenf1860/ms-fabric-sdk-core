@@ -3,6 +3,7 @@ from warnings import warn
 import requests
 from abc import abstractmethod
 from azure.identity import AzureCliCredential
+import msal
 from msfabricpysdkcore.util import logger
 import logging
 try:
@@ -98,3 +99,30 @@ class FabricSparkUtilsAuthentication(FabricAuth):
         return token
     
 
+class MSALConfidentialClientApplicationAuthentication(FabricAuth):
+
+    def __init__(self, tenant_id, client_id, client_secret, username, password, scope):
+        super().__init__(scope)
+
+        self._logger.info("Using Microsoft Authentication Library (MSAL) ConfidentialClientApplication for authentication")
+                
+        self.username = username
+        self.password = password
+        self.scopes = [scope]
+
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+
+        self.app = msal.ConfidentialClientApplication(
+            client_id=client_id,
+            client_credential=client_secret,
+            authority=authority,
+        )
+
+    def get_token(self):
+        result = self.app.acquire_token_for_client(scopes=self.scopes)
+        result = self.app.acquire_token_by_username_password(
+            username=self.username,
+            password=self.password,
+            scopes=self.scopes,
+        )
+        return result["access_token"]

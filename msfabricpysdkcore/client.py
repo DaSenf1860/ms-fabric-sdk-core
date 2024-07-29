@@ -6,7 +6,7 @@ from time import sleep
 import requests
 import json
 
-from msfabricpysdkcore.auth import FabricAuthClient, FabricServicePrincipal, FabricSparkUtilsAuthentication
+from msfabricpysdkcore.auth import FabricAuthClient, FabricServicePrincipal, FabricSparkUtilsAuthentication, MSALConfidentialClientApplicationAuthentication
 from msfabricpysdkcore.util import logger
 
 class FabricClient():
@@ -14,7 +14,7 @@ class FabricClient():
 
     _logger: logging.Logger
 
-    def __init__(self, scope, tenant_id = None, client_id = None, client_secret = None, silent=None) -> None:
+    def __init__(self, scope, tenant_id = None, client_id = None, client_secret = None, username = None, password = None, silent=None) -> None:
         """Initialize FabricClient object"""
 
         self._logger = logger.getChild(__name__)
@@ -22,8 +22,9 @@ class FabricClient():
         self.tenant_id = tenant_id if tenant_id else os.getenv("FABRIC_TENANT_ID")
         self.client_id = client_id if client_id else os.getenv("FABRIC_CLIENT_ID")
         self.client_secret = client_secret if client_secret else os.getenv("FABRIC_CLIENT_SECRET")
+        self.username = username if username else os.getenv("FABRIC_USERNAME")
+        self.password = password if password else os.getenv("FABRIC_PASSWORD")
         self.scope = scope
-        #self.scope = "https://api.fabric.microsoft.com/.default"
 
         if self.client_id is None or self.client_secret is None or self.tenant_id is None:
             try:
@@ -31,10 +32,18 @@ class FabricClient():
             except:
                 self.auth = FabricAuthClient(self.scope)
         else:
-            self.auth = FabricServicePrincipal(scope= self.scope,
-                                               tenant_id = self.tenant_id,
-                                               client_id = self.client_id, 
-                                               client_secret = self.client_secret)
+            if username and password:
+                self.auth = MSALConfidentialClientApplicationAuthentication(tenant_id = self.tenant_id,
+                                                                            client_id = self.client_id,
+                                                                            client_secret = self.client_secret,
+                                                                            username = self.username,
+                                                                            password = self.password,
+                                                                            scope = self.scope)
+            else:
+                self.auth = FabricServicePrincipal(scope= self.scope,
+                                                   tenant_id = self.tenant_id,
+                                                   client_id = self.client_id, 
+                                                   client_secret = self.client_secret)
 
         if silent is not None:
             warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
