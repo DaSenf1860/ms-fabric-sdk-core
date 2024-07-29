@@ -5,11 +5,14 @@ from msfabricpysdkcore.client import FabricClient
 
 class FabricAzureClient(FabricClient):
 
-    def __init__(self, tenant_id=None, client_id=None, client_secret=None, silent=None) -> None:
+    def __init__(self, tenant_id=None, client_id=None, client_secret=None, 
+                 username = None, password = None, silent=None) -> None:
         super().__init__(scope = "https://management.azure.com/.default",
                          tenant_id = tenant_id,
                          client_id = client_id,
-                         client_secret = client_secret,)
+                         client_secret = client_secret,
+                         username = username,
+                         password = password)
 
         if silent is not None:
             warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)

@@ -10,7 +10,11 @@ They are designed to automate your Fabric processes.
 
 This SDK helps to interact with the Fabric APIs in a more Pythonic way.
 Additionally it brings some extra features like:
-- Authentication is handled for you (currently Azure CLI Authentication, Authentication from a Microsoft Fabric notebook and Service Principal Authentication are supported)
+- Authentication is handled for you, the following is supported:
+  - Azure CLI Authentication
+  - Authentication from a Microsoft Fabric notebook
+  - Service Principal Authentication
+  - MSALConfidentialClientApplicationAuthentication
 - Waiting for completion of long running operations
 - Retry logic when hitting the API rate limits
 - Referencing objects by name instead of ID
