@@ -1,5 +1,47 @@
 # Release Notes
 
+## 0.1.4
+
+### Bug Fixes
+- now you can use a Service Principal to work against the Azure Resoure Management APIs
+
+## 0.1.3
+
+- adding logging logics
+
+## 0.1.2
+
+### New Features
+- added Azure Resource Manager APIs for Fabric capacities
+
+## 0.1.1
+
+### Refactoring
+Massive refactoring to simplify the code and make it more maintainable. The main changes are:
+- All APIs are called from the client classes. 
+- The API calls are handled by a single function
+This leads to an improvement of performance of the application by reducing the number of API calls.
+Each function normally is doing a single API call.
+
+
+## 0.0.14
+
+### New Features
+- added APIs for environment spark libraries
+
+## 0.0.13
+
+### New Features 
+- added external data share APIs for core and admin APIs
+- added one lake data access security APIs
+
+## 0.0.12
+
+### New Features 
+- accomodated the latest core Workspaces APIs changes regarding role assignments
+- added provisioning and deprovisioning of workspace identities
+- added API for run on demand spark job definition
+
 ## 0.0.11
 
 ### New Features

@@ -7,6 +7,9 @@ Here are some examples to make use of the SDK for specific tasks:
 - [Bulk workspace creation and capacity assignment](#bulk-workspace-creation-and-capacity-assignment)
 - [Bulk delete all items in a workspace](#bulk-delete-all-items-in-a-workspace)
 - [Return all workspaces assigned to a specific capacity](#return-all-workspaces-assigned-to-a-specific-capacity)
+- [Do a "landing zone"- deployment](#do-a-landing-zone--deployment)
+- [Bulk set labels for all items in a workspace](#bulk-set-labels-for-all-items-in-a-workspace)
+- [Bulk suspend capacities](#bulk-suspend-capacities)
 
 
 
@@ -107,4 +110,79 @@ all_ws = fcc.list_workspaces()
 cap_ws = [ws for ws in all_ws if ws.capacity_id == cap.id]
 print(cap_ws)
     
+```
+
+## Do a "landing zone"- deployment
+```python
+## Creating a new capacity, create a new domain, create new workspaces, assign the new capacity to these workspaces, assign the workspaces to the domain, assign users to the workspaces, create a skeleton of workspace items in those workspaces
+
+from msfabricpysdkcore import FabricAzureClient, FabricClientCore, FabricClientAdmin
+from datetime import datetime
+
+fac = FabricAzureClient()
+fcc = FabricClientCore()
+fca = FabricClientAdmin()
+
+
+subscription_id = "casdfaa8"
+resource_group_name = "fabricdemo"
+capacity_name = "asdfasdf"
+capacity_name_new = "asdfasfd" + datetime.now().strftime("%Y%m%d%H%M%S")
+
+
+resp = fac.create_or_update_capacity(subscription_id, resource_group_name, capacity_name_new, 
+                                    location="westeurope",
+                                    properties_administration={"members": ['asdfads@dasfasdf.com']},
+                                    sku = "F2")
+
+capacity = fcc.get_capacity(capacity_name = capacity_name_new)
+
+ws_created = fcc.create_workspace(display_name="workspace" + datetime.now().strftime("%Y%m%d%H%M%S"),
+                                  description="test workspace")
+result_status_code = fcc.assign_to_capacity(workspace_id=ws_created.id, 
+                                            capacity_id=capacity.id)
+
+
+domain = fca.create_domain(display_name="domain" + datetime.now().strftime("%Y%m%d%H%M%S"))
+
+status_code = fca.assign_domain_workspaces_by_ids(domain.id, [ws_created.id])
+#....
+```
+
+## Bulk set labels for all items in a workspace
+
+```python
+from msfabricpysdkcore import FabricClientCore, FabricClientAdmin
+
+fcc = FabricClientCore()
+fca = FabricClientAdmin()
+
+ws = fcc.get_workspace_by_name("testitems")
+items = fcc.list_items(ws.id)
+items_ = [{"id": item.id, "type": item.type} for item in items]
+label_id = "de8271asdf4345d2" # to be found in Microsoft Purview Compliance Center
+
+# Bulk set labels 
+resp = fca.bulk_set_labels(items=items_, label_id=label_id)
+```
+
+## Bulk suspend capacities
+
+```python
+from msfabricpysdkcore import FabricAzureClient
+
+fac = FabricAzureClient()
+subscription_id = "ca------------asd"
+
+caps = fac.list_by_subscription(subscription_id)
+for cap in caps:
+    if cap["properties"]["state"] == "Paused":
+        continue
+    try:
+        resource_id = cap["id"].split("/")
+        resource_group_name = resource_id[4]
+        subscription_id = resource_id[2]
+        fac.suspend_capacity(subscription_id, resource_group_name, cap["name"])
+    except Exception as e:
+        print(e)
 ```

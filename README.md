@@ -1,15 +1,16 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*.
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of July 23, 2024).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
 The Microsoft Fabric REST APIs are documented [here](https://docs.microsoft.com/en-us/rest/api/fabric/).
+The Azure Resoure Management APIs for Fabric are documented [here](https://learn.microsoft.com/en-us/rest/api/microsoftfabric/fabric-capacities?view=rest-microsoftfabric-2023-11-01).
 They are designed to automate your Fabric processes.
 
 This SDK helps to interact with the Fabric APIs in a more Pythonic way.
 Additionally it brings some extra features like:
-- Authentication is handled for you (currently Azure CLI Authentication and Service Principal Authentication are supported, as well as Synapse Spark Authentication in Fabric Notebooks)
+- Authentication is handled for you (currently Azure CLI Authentication, Authentication from a Microsoft Fabric notebook and Service Principal Authentication are supported)
 - Waiting for completion of long running operations
 - Retry logic when hitting the API rate limits
 - Referencing objects by name instead of ID
@@ -19,18 +20,21 @@ Additionally it brings some extra features like:
 
 See the latest release notes [here](releasenotes/release_notes.md).
 
-Currently it supports all Core APIs, Admin APIs, Lakehouse APIs and all other item specific CRUD APIs, i.e.:
+Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and Azure Resource Management APIs for Fabric capacities, i.e.:
 - Core APIs
   - [Capacities](#working-with-capacities)
   - [Deployment Pipelines](#deployment-pipelines)
+  - [External Data Shares](#external-data-shares)
   - [Git](#working-with-git)
   - [Items](#working-with-items)
   - [Job Scheduler](#working-with-job-scheduler)
   - [Long Running Operations](#long-running-operations)
+  - [OneLakeDataAccessSecurity](#one-lake-data-access-security)
   - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
   - [Workspaces](#working-with-workspaces)
 - Admin APIs
   - [Domains](#admin-api-for-domains)
+  - [External Data Shares](#admin-api-for-external-data-shares)
   - [Items](#admin-api-for-items)
   - [Labels](#admin-api-for-labels)
   - [Tenants](#admin-api-for-tenants)
@@ -40,6 +44,8 @@ Currently it supports all Core APIs, Admin APIs, Lakehouse APIs and all other it
   - List, create, update, delete warehouses, notebooks, semantic models, kql databases,.....
   - Lakehouse operations (Load table, list tables, run table maintenance)
   - Spark Pool operations
+- [Azure Resource Management APIs for Fabric capacities](#azure-resource-management-apis-for-fabric-capacities)
+- [Logging](#logging)
 
 It is planned to support also new APIs which are not released yet.
 Also we have plans to support APIs to interact with Fabric capacities on the Azure Side.
@@ -67,6 +73,7 @@ from msfabricpysdkcore import FabricClientCore
 # Create a client
 
 # Either login with the Azure CLI first and initiate the client directly
+# This also works directly in a Microsoft Fabric notebook
 fc = FabricClientCore()
 
 # Or use a service principal (note that not all APIs are supported with service principal)
@@ -81,7 +88,12 @@ fc = FabricClientCore(tenant_id = "tenant_id",
 
 
 ```
+### Getting a token
+```python
+# Getting a token
 
+token = fc.get_token()
+```
 ### Working with workspaces
     
 ```python
@@ -133,26 +145,40 @@ ws.add_role_assignment(principal = {"id" : "abadfbafb",
                        role = 'Member')
 
  
- # Get workspace role assignments
-fc.get_workspace_role_assignments(workspace_id = ws.id)
+ # List workspace role assignments
+fc.list_workspace_role_assignments(workspace_id = ws.id)
 # or
-ws.get_role_assignments()
+ws.list_role_assignments()
 
+
+# Get workspace role assignment
+fc.get_workspace_role_assignment(workspace_id = ws.id, 
+                                 workspace_role_assignment_id = "dagdasf")  
+# or
+ws.get_role_assignment(workspace_role_assignment_id = "fsgdg")
 
 # Update workspace role assignment
 fc.update_workspace_role_assignment(workspace_id = ws.id, 
                                     role = "Contributor", 
-                                    principal_id = "abadfbafb")
+                                    workspace_role_assignment_id = "abadfbafb")
 # or
 ws.update_role_assignment(role = "Contributor", 
-                          principal_id = "abadfbafb")
+                          workspace_role_assignment_id = "abadfbafb")
 
 
 # Delete workspace role assignment
 fc.delete_workspace_role_assignment(workspace_id = ws.id,
-                                    principal_id = "abadfbafb")
+                                    workspace_role_assignment_id = "abadfbafb")
 # or
-ws.delete_role_assignment(principal_id = "abadfbafb")
+ws.delete_role_assignment(workspace_role_assignment_id = "abadfbafb")
+
+
+# Provision Identity
+result = fc.provision_identity(workspace_id=ws.id)
+print(result["applicationId"]))
+
+# Deprovision Identity
+fc.deprovision_identity(workspace_id=ws.id)
 
 ```
 
@@ -198,7 +224,7 @@ pipe = fc.get_deployment_pipeline(pipe_id)
 
 
 # Get deployment pipeline stages
-stages = fc.get_deployment_pipeline_stages(pipe_id)
+stages = fc.list_deployment_pipeline_stages(pipe_id)
 
 names = [stage.display_name for stage in stages]
 
@@ -206,7 +232,7 @@ dev_stage = [stage for stage in stages if stage.display_name == "Development"][0
 prod_stage = [stage for stage in stages if stage.display_name == "Production"][0]
 
 # Get deployment pipeline stages items
-items = fc.get_deployment_pipeline_stages_items(pipeline_id=pipe_id, stage_id=dev_stage.id)
+items = fc.list_deployment_pipeline_stages_items(pipeline_id=pipe_id, stage_id=dev_stage.id)
 
 
 items = [item for item in dev_stage.get_items() if item["itemDisplayName"] == 'cicdlakehouse']
@@ -219,6 +245,43 @@ items = [item]
 response = pipe.deploy(source_stage_id=dev_stage.id,target_stage_id=prod_stage.id, items=items)
 
 ```
+
+### External Data Shares
+
+```python
+from msfabricpysdkcore.coreapi import FabricClientCore
+
+fc = FabricClientCore()
+
+workspace_id = 'yxcvyxcvyxcv'
+item_id = 'sdfsdfsdfsf'
+
+
+# Create
+
+recipient = {
+    "userPrincipalName": "lisa4@fabrikam.com"
+}
+paths=["Files/external"]
+
+data_share = fc.create_external_data_share(workspace_id, item_id, paths, recipient)
+
+# Get
+
+data_share2 = fc.get_external_data_share(workspace_id, item_id, data_share['id'])
+
+# List
+
+data_share_list = fc.list_external_data_shares_in_item(workspace_id, item_id)
+
+data_share_ids = [ds['id'] for ds in data_share_list]
+
+# Revoke
+
+response_code = fc.revoke_external_data_share(workspace_id, item_id, data_share['id'])
+
+```
+
 
 ### Working with items
 
@@ -243,11 +306,11 @@ item_list = ws.list_items()
 
 
 # Update an item
-fc.update_item(workspace_id="workspace_id", item_id="item_id" display_name="new_item_name", description = None)
+fc.update_item(workspace_id="workspace_id", item_id="item_id" display_name="new_item_name", description = None, return_item=True)
 # or
-ws.update_item(item_id="item_id", display_name="new_item_name", description = None)
+ws.update_item(item_id="item_id", display_name="new_item_name", description = None, return_item=True)
 # or
-item.update(display_name="new_item_name", description = None)
+item.update(display_name="new_item_name", description = None, return_item=True)
 
 
 # Delete an item
@@ -423,6 +486,44 @@ results = fc.get_operation_results(operation_id)
 
 ```
 
+### One Lake Data Access Security
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore() 
+
+workspace_id = "d8aafgasdsdbe5"
+item_id = "503hsdfhs48364"
+
+# List 
+
+resp = fc.list_data_access_roles(workspace_id=workspace_id, item_id=item_id)
+
+roles = resp[0]
+etag = resp[1]
+
+
+# Create or Update
+
+role1 = roles[1]
+
+item_access = role1["members"]["fabricItemMembers"][0]['itemAccess']
++
+if 'ReadAll' in item_access:
+    item_access = ['Read', 'Write', 'Execute']
+else:
+    item_access.append('ReadAll')
+
+role1["members"]["fabricItemMembers"][0]['itemAccess'] = item_access
+roles[1] = role1
+
+resp = fc.create_or_update_data_access_roles(workspace_id=workspace_id, 
+                                              item_id=item_id, 
+                                              data_access_roles=roles, 
+                                              etag_match={"If-Match":etag})
+
+```
 
 ### Admin API for Workspaces
 
@@ -547,7 +648,7 @@ domains = fca.list_domains()
 
 # Update domain
 domain_new_name = "sdktestdomains2"
-domain_clone = fca.update_domain(domain.id, display_name=domain_new_name)
+domain_clone = fca.update_domain(domain.id, display_name=domain_new_name, return_item=True)
 
 # Assign domain workspaces by Ids
 fca.assign_domain_workspaces_by_ids(domain.id, ["workspace_id_1", "workspace_id_2"])
@@ -582,6 +683,98 @@ status_code = fca.role_assignments_bulk_unassign(domain.id, "Contributors", [pri
 status_code = fca.delete_domain(domain.id)
 ```
 
+### Admin API for External Data Shares
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# List external data shares
+
+data_shares = fca.list_external_data_shares()
+ws = fca.list_workspaces(name="testworkspace")[0]
+
+data_shares = [d for d in data_shares if d['workspaceId'] == ws.id]
+
+# Revoke external data share
+
+fca.revoke_external_data_share(external_data_share_id = data_shares[0]['id'], 
+                                item_id = data_shares[0]['itemId'], 
+                                workspace_id = data_shares[0]['workspaceId'])
+
+
+```
+
 
 Note: This SDK is not an official SDK from Microsoft. It is a community project and not supported by Microsoft. Use it at your own risk.
 Also the API is still in preview and might change. This SDK is not yet feature complete and might not cover all APIs yet. Feel free to contribute to this project to make it better.
+
+
+### Azure Resource Management APIs for Fabric capacities
+
+```python
+from msfabricpysdkcore import FabricAzureClient
+
+fac = FabricAzureClient()
+
+subscription_id = "fsdgdfgds"
+resource_group_name = "fabricdemo"
+capacity_name = "rgsdfgsdfgsd"
+capacity_name_new = "dsfgsdfgsdfg" + datetime.now().strftime("%Y%m%d%H%M%S")
+
+# Check name availability
+
+resp = fac.check_name_availability(subscription_id, "westeurope", capacity_name_new)
+
+# Create or update capacity
+resp = fac.create_or_update_capacity(subscription_id, resource_group_name, capacity_name_new, 
+                                    location="westeurope",
+                                    properties_administration={"members": ['hfds@afasf.com']},
+                                    sku = "F2")
+
+# Get capacity
+resp = fac.get_capacity(subscription_id, resource_group_name, capacity_name_new)
+sku = resp.sku['name']
+
+# Delete capacity
+resp = fac.delete_capacity(subscription_id, resource_group_name, capacity_name_new)
+
+# List capacities by resource group
+resp = fac.list_by_resource_group(subscription_id, resource_group_name)
+cap_names = [cap["name"] for cap in resp]
+
+# List capacities by subscription
+resp = fac.list_by_subscription(subscription_id)
+cap_names = [cap["name"] for cap in resp]
+
+# List SKUs
+resp = fac.list_skus(subscription_id)
+
+# List SKUs for capacity
+resp = fac.list_skus_for_capacity(subscription_id, resource_group_name, capacity_name)
+
+# Resume capacity
+resp = fac.resume_capacity(subscription_id, resource_group_name, capacity_name)
+
+# Suspend capacity
+resp = fac.suspend_capacity(subscription_id, resource_group_name, capacity_name)
+
+# Update capacity
+resp = fac.update_capacity(subscription_id, resource_group_name, capacity_name, sku="F4")
+```
+
+### Logging
+
+The SDK uses the Python logging module, following the logging settings of your application. You can set up logging in 
+your project like this:
+
+```python
+import logging
+from msfabricpysdkcore import FabricClientCore
+
+logging.basicConfig(level=logging.DEBUG)
+fc = FabricClientCore() # The client will now log
+```
+
+You can also set the environment variable `FABRIC_SDK_DEBUG` to `1` to enable debug logging.

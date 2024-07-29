@@ -1,15 +1,14 @@
 import json
 from time import sleep
 
-import requests
-
 from msfabricpysdkcore.admin_item import AdminItem 
+from msfabricpysdkcore.adminapi import FabricClientAdmin
 
 
 class AdminWorkspace:
     """Class to represent a workspace in Microsoft Fabric"""
 
-    def __init__(self, id, type, name, state, capacity_id, auth) -> None:
+    def __init__(self, id, type, name, state, capacity_id, admin_client:FabricClientAdmin) -> None:
         """Constructor for the Workspace class
 
         Args:
@@ -18,7 +17,7 @@ class AdminWorkspace:
             name (str): The name of the workspace
             state (str): The state of the workspace
             capacity_id (str): The ID of the capacity
-            auth (Auth): The Auth object
+            admin_client (FabricClientAdmin): The FabricClientAdmin object
         Returns:
             Workspace: The Workspace object
         """
@@ -27,7 +26,7 @@ class AdminWorkspace:
         self.name = name
         self.state = state
         self.capacity_id = capacity_id
-        self.auth = auth
+        self.admin_client = admin_client
 
 
     def __str__(self) -> str:
@@ -49,12 +48,12 @@ class AdminWorkspace:
     def __repr__(self) -> str:
         return self.__str__()
     
-    def from_dict(item_dict, auth):
+    def from_dict(item_dict, admin_client):
         """Create Workspace object from dictionary
 
         Args:
             item_dict (dict): The dictionary representing the workspace
-            auth (Auth): The Auth object
+            admin_client (FabricClientAdmin): The FabricClientAdmin object
         Returns:
             Workspace: The Workspace object
         """
@@ -64,39 +63,19 @@ class AdminWorkspace:
             name=item_dict['name'],
             state=item_dict['state'],
             capacity_id=item_dict['capacityId'],
-            auth=auth
+            admin_client=admin_client
         )
-    
-    def get_workspace_access_details(self):
-        """Get the access details of the workspace
-
-        Returns:
-            dict: The access details of the workspace
-        """
-        return self.list_workspace_access_details()
-    
+        
     def list_workspace_access_details(self):
         """Get the access details of the workspace
 
         Returns:
             dict: The access details of the workspace
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{self.id}/users"
-           
-        for _ in range(10):
-            response = requests.get(url=url, headers=self.auth.get_headers())
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error getting workspace: {response.text}")
-            break
+        return self.admin_client.list_workspace_access_details(self.id)
+    
+    # Items
 
-        return json.loads(response.text)
-        
     def get_item(self, item_id, type = None):
         """Get an item from the workspace
         
@@ -106,22 +85,7 @@ class AdminWorkspace:
         Returns:
             AdminItem: The item object
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{self.id}/items/{item_id}"
-        if type:
-            url += f"?type={type}"
-        for _ in range(10):
-            response = requests.get(url=url, headers=self.auth.get_headers())
-            if response.status_code == 429:
-                print("Too many requests, waiting 10 seconds")
-                sleep(10)
-                continue
-            if response.status_code not in (200, 429):
-                print(response.status_code)
-                print(response.text)
-                raise Exception(f"Error getting item: {response.text}")
-            break
-        item_dict = json.loads(response.text) 
-        return AdminItem.from_dict(item_dict, self.auth)
+        return self.admin_client.get_item(self.id, item_id, type)
     
     def list_item_access_details(self, item_id, type=None):
         """Get the access details of the item
@@ -132,15 +96,4 @@ class AdminWorkspace:
         Returns:
             dict: The access details of the item
         """
-        return self.get_item(item_id, type).list_item_access_details()
-
-    def get_item_access_details(self, item_id, type=None):
-        """Get the access details of the item
-        
-        Args:
-            item_id (str): The ID of the item
-            type (str): The type of the item
-        Returns:
-            dict: The access details of the item
-        """
-        return self.list_item_access_details(item_id, type)
+        return self.admin_client.list_item_access_details(self.id, item_id, type)
