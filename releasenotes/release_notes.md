@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.1.4
+
+### Bug Fixes
+- now you can use a Service Principal to work against the Azure Resoure Management APIs
+
 ## 0.1.3
 
 - adding logging logics
