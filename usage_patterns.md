@@ -10,6 +10,7 @@ Here are some examples to make use of the SDK for specific tasks:
 - [Do a "landing zone"- deployment](#do-a-landing-zone--deployment)
 - [Bulk set labels for all items in a workspace](#bulk-set-labels-for-all-items-in-a-workspace)
 - [Bulk suspend capacities](#bulk-suspend-capacities)
+- [Use username and password authentication via az-cli](#use-username-and-password-authentication)
 
 
 
@@ -185,4 +186,36 @@ for cap in caps:
         fac.suspend_capacity(subscription_id, resource_group_name, cap["name"])
     except Exception as e:
         print(e)
+```
+
+## Use username and password authentication
+.env File
+```
+FABRIC_USERNAME=yourmail@yourcompany.com
+FABRIC_PASSWORD=...
+```
+
+Additional requirement: azure-cli
+```
+pip install azure-cli
+```
+
+Use Azure CLI login in Python:
+```python
+import os
+from msfabricpysdkcore import FabricClientCore
+
+def prepare_authentication():
+    # get username and password from environment variables
+    username = os.environ.get('FABRIC_USERNAME')
+    password = os.environ.get('FABRIC_PASSWORD')
+
+    cmd = f"az login --allow-no-subscriptions --username {username} --password {password}"
+    # execute python in command line
+    os.system(cmd)
+
+
+prepare_authentication()
+
+fc = FabricClientCore()
 ```
