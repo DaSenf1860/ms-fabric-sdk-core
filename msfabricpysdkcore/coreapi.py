@@ -663,7 +663,7 @@ class FabricClientCore(FabricClient):
                                 error_message="Error listing items", return_format="value_json", paging=True)
         
         if with_properties:
-            items = self.get_item_object_w_properties(items)
+            items = self.get_item_object_w_properties(workspace_id=workspace_id, item_list=items)
         else:
             items = [Item.from_dict(item, core_client=self) for item in items]
 

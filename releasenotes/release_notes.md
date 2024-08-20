@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.1.6
+
+### Bug Fixes
+- fixed a bug that the list_items functions with the parameter "with_properties = True" didn´t work correctly
+
 ## 0.1.5
 
 - added MSALConfidentialClientApplicationAuthentication
