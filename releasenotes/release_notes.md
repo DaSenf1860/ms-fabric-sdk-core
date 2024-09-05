@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.1.7
+
+### Bug Fixes
+- fixed a bug that the authentication in a Fabric notebook didn´t work correctly
+
 ## 0.1.6
 
 ### Bug Fixes
