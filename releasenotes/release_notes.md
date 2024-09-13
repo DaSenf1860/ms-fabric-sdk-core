@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.1.8
+
+### Bug Fixes
+- added listing of one lake shortcuts
+
 ## 0.1.7
 
 ### Bug Fixes

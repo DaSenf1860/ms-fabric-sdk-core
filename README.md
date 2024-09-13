@@ -439,6 +439,21 @@ ws.delete_shortcut(item_id="item_id",
 item.delete_shortcut(path="path",
                    name="name")
 
+# List shortcuts of an item
+
+fc.list_shortcuts(workspace_id="workspace_id",
+                  item_id="item_id",
+                  # optional parent_path="Tables"
+                  )
+
+# or
+ws.list_shortcuts(item_id="item_id",
+                  # optional parent_path="Tables"
+                  )
+
+# or
+item.list_shortcuts(parent_path="Tables")
+
 ```
 
 

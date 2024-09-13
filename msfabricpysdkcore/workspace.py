@@ -226,6 +226,8 @@ class Workspace:
     def get_shortcut(self, item_id, path, name):
         return self.core_client.get_shortcut(self.id, item_id, path=path, name=name)
     
+    def list_shortcuts(self, item_id, parent_path = None):
+        return self.core_client.list_shortcuts(self.id, item_id, parent_path=parent_path)
 
     def cancel_item_job_instance(self, item_id, job_instance_id):
         return self.core_client.cancel_item_job_instance(workspace_id=self.id, item_id=item_id,

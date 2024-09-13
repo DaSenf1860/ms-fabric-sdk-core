@@ -91,6 +91,8 @@ class Item:
         return self.core_client.get_shortcut(workspace_id=self.workspace_id, item_id=self.id,
                                                 path=path, name=name)
     
+    def list_shortcuts(self, parent_path = None):
+        return self.core_client.list_shortcuts(workspace_id=self.workspace_id, item_id=self.id, parent_path=parent_path)
 
     # Job Scheduler
 

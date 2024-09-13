@@ -961,6 +961,30 @@ class FabricClientCore(FabricClient):
 
         return response.status_code
     
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/shortcuts
+
+    def list_shortcuts(self, workspace_id, item_id, parent_path = None):
+        """List the shortcuts in the item
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            parent_path (str): The starting path from which to retrieve the shortcuts
+        Returns:
+            list: The list of shortcuts
+        """
+        from msfabricpysdkcore.onelakeshortcut import OneLakeShortcut
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts"
+        if parent_path:
+            url += f"?parentPath={parent_path}"
+
+        shortcuts = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error listing shortcuts", return_format="value_json", paging=True)
+
+        for shortcut in shortcuts:
+            shortcut['workspaceId'] = workspace_id
+            shortcut['itemId'] = item_id
+        return [OneLakeShortcut.from_dict(shortcut, core_client=self) for shortcut in shortcuts]
+    
     ### Workspaces
 
     def add_workspace_role_assignment(self, workspace_id, role, principal):
@@ -1126,6 +1150,8 @@ class FabricClientCore(FabricClient):
         for ws in ws_list:
             if ws.display_name == name:
                 return ws
+            
+        raise Exception(f"Workspace with name {name} not found")
             
     def get_workspace_role_assignment(self, workspace_id, workspace_role_assignment_id):
         """Get a role assignment for a workspace
