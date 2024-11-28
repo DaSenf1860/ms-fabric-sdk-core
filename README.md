@@ -27,11 +27,14 @@ See the latest release notes [here](releasenotes/release_notes.md).
 Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and Azure Resource Management APIs for Fabric capacities, i.e.:
 - Core APIs
   - [Capacities](#working-with-capacities)
+  - [Connections](#connections)
   - [Deployment Pipelines](#deployment-pipelines)
   - [External Data Shares](#external-data-shares)
+  - [Gateways](#gateways)
   - [Git](#working-with-git)
   - [Items](#working-with-items)
   - [Job Scheduler](#working-with-job-scheduler)
+  - [Managed Private Endpoints](#managed-private-endpoints)
   - [Long Running Operations](#long-running-operations)
   - [OneLakeDataAccessSecurity](#one-lake-data-access-security)
   - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
@@ -210,6 +213,86 @@ ws.unassign_from_capacity()
 # List capacities
 fc.list_capacities()
 ```
+### Connections
+
+```python
+
+# Add connection role assignment
+principal = {"id" : "755f273c-98f8-408c-a886-691794938bd8",
+            "type" : "ServicePrincipal"}
+
+add_role_assi = fc.add_connection_role_assignment(connection_id="id", principal=principal, role='User')
+
+# Create Connection 
+display_name = "ContosoCloudConnection" + datetime_str
+
+cr = {"connectivityType": "ShareableCloud",
+    "displayName": display_name,
+    "connectionDetails": {
+        'type': "SQL",
+        'creationMethod': 'SQL',
+        "parameters": [
+            {
+                "dataType": "Text",
+                "name": "server",
+                "value": "server_name.database.windows.net"
+            },
+            {
+                "dataType": "Text",
+                "name": "database",
+                "value": "database_name"
+            }
+            ]},
+    'privacyLevel': 'Organizational',
+    'credentialDetails': {'credentials':{'credentialType': 'Basic', 
+                                        'userName': 'supercoolusername', 
+                                        'password': 'StrongPassword123!'},
+                            'singleSignOnType': 'None',
+                            'connectionEncryption': 'NotEncrypted',
+                            'skipTestConnection': False}
+}
+    
+connection = fc.create_connection(connection_request=cr)
+
+# Delete connection
+status_code = fc.delete_connection(connection_id="id")
+
+# Delete connection role assignment
+status_code = fc.delete_connection_role_assignment(connection_id="id",
+                                                    connection_role_assignment_id="role_assi_id")
+
+# Get Connection
+connection2 = fc.get_connection(connection_name="display_name")
+
+# Get connection role assignment
+role_assi = fc.get_connection_role_assignment(connection_id="id",
+                                              connection_role_assignment_id="role_assi_id")
+
+# List connection role assignments
+role_assis = fc.list_connection_role_assignments(connection_id="id")
+
+# List Connections
+connections = fc.list_connections()
+
+# List supported connection types
+supported_methods = fc.list_supported_connection_types(gateway_id='gw_id', 
+                                                       show_all_creation_methods=True)
+
+# Update connection
+cr = {
+"connectivityType": "ShareableCloud",
+"displayName": f"sqlserver{datetime_str}"
+}
+
+updated_connection = fc.update_connection(connection_id="id", connection_request=cr)
+
+# Update connection role assignment
+role_assi = fc.update_connection_role_assignment(connection_id="id",
+                                      connection_role_assignment_id="role_assi_id",
+                                      role='UserWithReshare')
+
+
+```
 
 ### Deployment Pipelines
 
@@ -302,11 +385,17 @@ item = fc.get_item(workspace_id="workspace_id", item_id="item_id")
 # or
 item = ws.get_item(item_id="item_id") 
 
+# Get item definition
+response = fc.get_item_definition(workspace_id="123123", item_id="123123", type = "Notebook")
 
 # List items
 item_list = fc.list_items(workspace_id="workspace_id")
 # or
 item_list = ws.list_items()
+
+# List item connections
+connections = fc.list_item_connections(workspace_id = '6a3',
+                                       item_id = '1bcc876')
 
 
 # Update an item
@@ -316,6 +405,9 @@ ws.update_item(item_id="item_id", display_name="new_item_name", description = No
 # or
 item.update(display_name="new_item_name", description = None, return_item=True)
 
+# Update item definition
+response = fc.update_item_definition(workspace_id="dasf",
+                                     item_id="fsdsd", definition=definition)
 
 # Delete an item
 fc.delete_item(workspace_id="workspace_id", item_id="item_id")
@@ -323,6 +415,70 @@ fc.delete_item(workspace_id="workspace_id", item_id="item_id")
 ws.delete_item(item_id="item_id")
 # or
 item.delete()
+
+```
+
+### Gateways
+  
+```python
+
+# Add gateway role assignment
+principal = {"id" : "75dsbd8",
+        "type" : "ServicePrincipal"}
+new_ras = fc.add_gateway_role_assignment(gateway_id="gw['id']", principal=principal, role='ConnectionCreator')
+
+# Create a gateway
+display_name = 'fabricvnet-123123' + datetime_str
+gwr =  {'displayName': display_name,
+        'capacityId': '33saf79',
+        'virtualNetworkAzureResource': {'virtualNetworkName': 'fabricvnet',
+        'subnetName': 'default3',
+        'resourceGroupName': 'fabricdemo',
+        'subscriptionId': 'cfgf8'},
+        'inactivityMinutesBeforeSleep': 30,
+        'numberOfMemberGateways': 2,
+        'type': 'VirtualNetwork'}
+
+gw = fc.create_gateway(gateway_request=gwr)
+
+# Delete gateway
+resp_code = fc.delete_gateway(gateway_id= "gateway_id")
+
+# Delete gateway role assignment
+resp_code = fc.delete_gateway_role_assignment(gateway_id=gw['id'], gateway_role_assignment_id=new_ras['id'])
+
+# Get gateway
+gw_ = fc.get_gateway(gateway_id=gw["id"])
+
+# Get gateway role assignment
+new_ras_ = fc.get_gateway_role_assignment(gateway_id=gw['id'], gateway_role_assignment_id=new_ras['id'])
+
+# List gateway members
+gw_members = fc.list_gateway_members(gateway_id="gw_id")
+
+# List gateway role assignments
+ras = fc.list_gateway_role_assignments(gateway_id=gw['id'])
+
+# list gateways
+gateways = fc.list_gateways()
+
+# Update gateway
+gwr = {
+    "type": "OnPremises",
+    "displayName": "new_name",
+    "loadBalancingSetting": "Failover",
+    "allowCloudConnectionRefresh": False,
+    "allowCustomConnectors": False
+    }
+
+gw_ = fc.update_gateway(gateway_id="gateway_id", gateway_request="gwr")
+
+# Update gateway member
+gw_member = fc.update_gateway_member(gateway_id = "gw_id", gateway_member_id = "gateway_member_id", 
+                                     display_name="display_name_member", enabled=True)
+
+# Update gateway role assignment
+new_ras = fc.update_gateway_role_assignment(gateway_id= gw['id'], gateway_role_assignment_id=new_ras['id'], role='Admin')
 
 ```
 
@@ -364,6 +520,11 @@ fc.git_get_status(workspace_id="workspaceid")
 # or
 ws.git_get_status()
 
+# Get my credentials
+git_credentials = fc.get_my_git_credentials(workspace_id="123123")
+
+# Update my credentials
+fc.update_my_git_credentials(workspace_id = "1232", git_credentials={"source": "Automatic"})
 
 # Update from git
 fc.update_from_git(workspace_id="workspaceid", remote_commit_hash="commit_hash", 
@@ -469,7 +630,7 @@ ws.run_on_demand_item_job(item_id="item_id", job_type="RunNotebook", execution_d
 item.run_on_demand_item_job(job_type="RunNotebook", execution_data = None)
 
 # Other job types are e.g.:
-jobType=Pipeline
+jobType="Pipeline"
 
 
 # Get an item job instance
@@ -485,6 +646,34 @@ fc.cancel_item_job_instance(workspace_id="workspace_id", item_id="item_id", job_
 ws.cancel_item_job_instance(item_id="item_id", job_instance_id="job_instance_id")
 # or 
 item.cancel_item_job_instance(job_instance_id="job_instance_id")
+
+# List item job instances
+job_instances = fc.list_item_job_instances(workspace_id="workspace_id",
+                                           item_id="item_id")
+
+# Create item schedule
+configuration = {'type': 'Daily',
+                  'startDateTime': '2024-11-21T00:00:00',
+                  'endDateTime': '2028-11-08T23:59:00',
+                  'localTimeZoneId': 'Romance Standard Time',
+                  'times': ['15:39']}
+
+schedule = fc.create_item_schedule(workspace_id="1232", item_id="1232", job_type="sparkjob", configuration=configuration, enabled=True)
+
+# Delete item schedule
+fc.delete_item_schedule(workspace_id="1232", item_id="1232", schedule_id="schedule_id", job_type="sparkjob")
+
+# Get item schedule
+schedule_check = fc.get_item_schedule(workspace_id="1232", item_id="1232", 
+                                      schedule_id="schedule_id", job_type="sparkjob")
+
+# Update item schedule
+schedule_new = fc.update_item_schedule(workspace_id="1232", item_id="1232",
+                                       schedule_id="schedule_id", job_type="sparkjob", configuration=configuration, enabled=False)
+
+# List item schedules
+list_schedules = fc.list_item_schedules(workspace_id="1232", item_id="1232", job_type="sparkjob")
+
 
 ```
 
@@ -503,6 +692,32 @@ state = fc.get_operation_state(operation_id)
 
 results = fc.get_operation_results(operation_id)
 
+```
+
+### Managed Private Endpoints
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+
+# Create a workspace managed private endpoint
+mpe = fc.create_workspace_managed_private_endpoint(workspace_id='535fb',
+                                                   name = 'testmpe',
+                                                   target_private_link_resource_id = '/subscriptions/c78/resourceGroups/fabricdemo/providers/Microsoft.Storage/storageAccounts/pu39',
+                                                   target_subresource_type = 'dfs',
+                                                   request_message = 'testmessage')
+
+# Delete workspace managed private endpoint
+status_code = fc.delete_workspace_managed_private_endpoint(workspace_id='53b',
+                                                           managed_private_endpoint_id="mpeid")
+
+# Get workspace managed private endpoint
+mpe2 = fc.get_workspace_managed_private_endpoint(workspace_id='5355fb', 
+                                                 managed_private_endpoint_id="mpeid")
+
+# List workspace managed private endpoints
+mpes = fc.list_workspace_managed_private_endpoints(workspace_id='53b')
 ```
 
 ### One Lake Data Access Security
@@ -551,18 +766,22 @@ from msfabricpysdkcore import FabricClientAdmin
 
 fca = FabricClientAdmin()
 
+# Get workspace
+ws = fca.get_workspace(workspace_id="workspace_id")
+
+# List git connectsions
+git_connections = fca.discover_git_connections()
+
+# List workspace access details
+ws_access = fca.list_workspace_access_details("workspace_id")
 
 # List workspaces
 ws = fca.list_workspaces(name="testworkspace")[0]
 
-# Get workspace
-ws = fca.get_workspace(workspace_id="workspace_id")
-
-# Get workspace access details
-
-ws_access = fca.list_workspace_access_details("workspace_id")
-# or
-ws_access = ws.list_access_details()
+# Restore workspace
+fca.restore_workspace(workspace_id = "213123",
+                      new_workspace_admin_principal={"id": "081adiaj3", "type":"User"},
+                      new_workspace_name = "Contoso Workspace")
 ```
 
 ### Admin API for Users

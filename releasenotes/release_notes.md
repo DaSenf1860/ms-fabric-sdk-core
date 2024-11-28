@@ -1,5 +1,24 @@
 # Release Notes
 
+## 0.2.1
+
+### New Features
+- admin APIs: discover/list git connections for all workspaces
+- core-git APIs: get/update my credentials
+- core-item APIs: list item connections
+- kql dashboard CRUD APIs
+- paginated reports: update
+- semantic model: update
+- managed private endpoints: create/delete/get/list
+- job scheduler: item schedules, list instances
+- gateway APIs: create/update/delete/get/list + members + role assignemtns 
+- connection API: create/update/delete/get/list + role assignemtns
+- kqlquerysets API: create/update/delete/get/list 
+- mirrored database API: create/update/delete/get/list + start/stop/status mirroring 
+
+### Changed Behaviour
+- Update of items or definitions don´t return the updated items by default. You can get the updated items by setting the parameter `return_item=True` in the update function.
+
 ## 0.1.8
 
 ### Bug Fixes

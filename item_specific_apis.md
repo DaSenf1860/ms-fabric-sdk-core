@@ -4,22 +4,24 @@ Each item type has its own set of APIs. The following are the APIs for each item
 All APIs are also available on workspace level as well.
 
 Go to:
-- ["Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports"](#dashboards-datamarts-sql-endpoints-mirrored-warehouses-paginated-reports)
-- ["Data Pipelines"](#data-pipelines)
-- ["Environments"](#environments)
-- ["Eventhouses"](#eventhouses)
-- ["Eventstreams"](#eventstreams)
-- ["KQL Databases"](#kql-databases)
-- ["KQL Querysets"](#kql-querysets)
-- ["Lakehouse"](#lakehouse)
-- ["ML Experiments"](#ml-experiments)
-- ["ML Models"](#ml-models)
-- ["Notebooks"](#notebooks)
-- ["Reports"](#reports)
-- ["Semantic Models"](#semantic-models)
-- ["Spark Custom Pools"](#spark-custom-pools)
-- ["Spark Job Definitions"](#spark-job-definitions)
-- ["Warehouses"](#warehouses)
+- [Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports](#dashboards-datamarts-sql-endpoints-mirrored-warehouses-paginated-reports)
+- [Data Pipelines](#data-pipelines)
+- [Environments](#environments)
+- [Eventhouses](#eventhouses)
+- [Eventstreams](#eventstreams)
+- [KQL Dashboards](#kql-dashboards)
+- [KQL Databases](#kql-databases)
+- [KQL Querysets](#kql-querysets)
+- [Lakehouse](#lakehouse)
+- [Mirrored Database](#mirrored-database)
+- [ML Experiments](#ml-experiments)
+- [ML Models](#ml-models)
+- [Notebooks](#notebooks)
+- [Reports](#reports)
+- [Semantic Models](#semantic-models)
+- [Spark Custom Pools](#spark-custom-pools)
+- [Spark Job Definitions](#spark-job-definitions)
+- [Warehouses](#warehouses)
 
 
 ## Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports
@@ -46,6 +48,10 @@ list_mirrored_warehouses = fc.list_mirrored_warehouses(workspace_id)
 
 # List paginated reports
 list_paginated_reports = fc.list_paginated_reports(workspace_id)
+
+# Update paginated report
+fc.update_paginated_report(workspace_id="1232", paginated_report_id="12312",
+                           display_name = "newname", description = "newdescription", return_item=False)
 
 ```
 
@@ -197,6 +203,36 @@ fc.delete_eventstream(workspace_id, es.id)
 
 ```
 
+## KQL Dashboards
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+# Create KQL Dashboard
+kql_dash = fc.create_kql_dashboard(display_name="kql_dash_name", workspace_id="workspace_id")
+
+# Delete KQL Dashboard
+resp_code = fc.delete_kql_dashboard(workspace_id="w123", kql_dashboard_id="123123")
+
+# Get KQL Dashboard
+kql_dash2 = fc.get_kql_dashboard(workspace_id="w123", kql_dashboard_name="kql_dash_name")
+kql_dash2 = fc.get_kql_dashboard(workspace_id="w123", kql_dashboard_id="123123")
+
+# Get KQL Dashboard Definition
+definition_orig = fc.get_kql_dashboard_definition(workspace_id="w123", kql_dashboard_id="dsfsf")
+
+# Update KQL Dashboard
+kql_dash3 = fc.update_kql_dashboard(workspace_id="w123", kql_dashboard_id="123123",
+                                    display_name="new_name", return_item=True)
+
+# Update KQL Dashboard Definition
+definition = fc.update_kql_dashboard_definition(workspace_id="w123", kql_dashboard_id="2323", definition=definition_orig)
+
+# List KQL Dashboards
+kql_dashs = fc.list_kql_dashboards(workspace_id="w123")
+
+```
+
 ## KQL Databases
 
 ```python
@@ -236,20 +272,31 @@ from msfabricpysdkcore import FabricClientCore
 
 fc = FabricClientCore()
 
-workspace = fc.get_workspace_by_name("testitems")
-workspace_id = workspace.id
+kqlq_w_content = fc.get_kql_queryset(workspace_id, kql_queryset_name=kql_queryset_name)
+definition = fc.get_kql_queryset_definition(workspace_id, kqlq_w_content.id)
+definition = definition["definition"]
 
-# List KQL Querysets
-kql_querysets = fc.list_kql_querysets(workspace_id)
-
-# Get KQL Queryset
-kqlq = fc.get_kql_queryset(workspace_id, kql_queryset_name="kqlqueryset1")
-
-# Update KQL Queryset
-kqlq2 = fc.update_kql_queryset(workspace_id, kqlq.id, display_name="kqlqueryset2", return_item=True)
+# Create KQL Queryset
+kqlq = fc.create_kql_queryset(workspace_id="workspace_id", definition=definition, display_name="kql_queryset_new")
 
 # Delete KQL Queryset
-fc.delete_kql_queryset(workspace_id, kqlq.id)
+status_code = fc.delete_kql_queryset(workspace_id="workspace_id", kql_queryset_id="kqlq.id")
+
+# Get KQL Queryset
+kqlq = fc.get_kql_queryset(workspace_id="workspace_id", kql_queryset_id="kqlq.id")
+kqlq_w_content = fc.get_kql_queryset(workspace_id="workspace_id", kql_queryset_name="kql_queryset_name")
+
+# Get KQL Queryset Definition
+definition = fc.get_kql_queryset_definition(workspace_id="workspace_id", kql_queryset_id="kqlq.id")
+
+# List KQL Querysets
+kqlqs = fc.list_kql_querysets(workspace_id="workspace_id")
+
+# Update KQL Queryset
+kqlq2 = fc.update_kql_queryset(workspace_id="workspace_id", kql_queryset_id="kqlq.id", display_name="new_name", return_item=True)
+
+# Update KQL Queryset Definition
+fc.update_kql_queryset_definition(workspace_id="workspace_id", kql_queryset_id="kqlq.id", definition=definition)
 
 ```
 
@@ -308,6 +355,50 @@ lakehouse2 = fc.update_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehou
 
 # Delete Lakehouse
 fc.delete_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
+
+```
+## Mirrored Database
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+
+mirrored_db_w_content = fc.get_mirrored_database(workspace_id="workspace_id", mirrored_database_name="dbdemo")
+
+# Get Mirroring Status
+status = fc.get_mirroring_status(workspace_id="workspace_id", mirrored_database_id="mirrored_db_w_content.id")
+
+# Get tables mirroring status
+table_status = fc.get_tables_mirroring_status(workspace_id="workspace_id", mirrored_database_id="mirrored_db_w_content.id")
+
+# Start Mirroring
+fc.start_mirroring(workspace_id="workspace_id", mirrored_database_id="mirrored_db_w_content.id")
+
+# Stop Mirroring
+fc.stop_mirroring(workspace_id="workspace_id", mirrored_database_id="mirrored_db_w_content.id")
+
+# Create Mirrored Database
+mirrored_db = fc.create_mirrored_database(workspace_id="workspace_id", display_name="mirrored_db_name")
+
+# Delete Mirrored Database
+status_code = fc.delete_mirrored_database(workspace_id="workspace_id", mirrored_database_id="mirrored_db_check.id")
+
+# Get Mirrored Database
+mirrored_db_check = fc.get_mirrored_database(workspace_id="workspace_id", mirrored_database_id="mirrored_db.id")
+
+# Get mirrored database definition
+definition = fc.get_mirrored_database_definition(workspace_id="workspace_id", mirrored_database_id="mirrored_db_w_content.id")
+
+# List Mirrored Databases
+mirrored_dbs = fc.list_mirrored_databases(workspace_id="workspace_id")
+
+# Update Mirrored Database
+mirrored_db_2 = fc.update_mirrored_database(workspace_id="workspace_id", mirrored_database_id="mirrored_db_check.id",
+                                            display_name="new_name", return_item=True)
+
+# Update Mirrored Database Definition
+fc.update_mirrored_database_definition(workspace_id="workspace_id", mirrored_database_id="mirrored_db_check.id", definition=definition)
 
 ```
 
@@ -447,24 +538,28 @@ workspace = fc.get_workspace_by_name("testitems")
 workspace_id = workspace.id
 
 # List Semantic Models
-semantic_models = fc.list_semantic_models(workspace_id)
+semantic_models = fc.list_semantic_models(workspace_id="1232")
 
 # Create Semantic Model
-semantic_model_w_content = fc.get_semantic_model(workspace_id, semantic_model_name="Table")
+semantic_model_w_content = fc.get_semantic_model(workspace_id="1232", semantic_model_name="Table")
 definition = semantic_model_w_content.definition
-semantic_model = fc.create_semantic_model(workspace_id, display_name="semanticmodel1", definition=definition)
+semantic_model = fc.create_semantic_model(workspace_id="1232", display_name="semanticmodel1", definition=definition)
 
 # Get Semantic Model
-semantic_model = fc.get_semantic_model(workspace_id, semantic_model_name="semanticmodel1")
+semantic_model = fc.get_semantic_model(workspace_id="1232", semantic_model_name="semanticmodel1")
+semantic_model = fc.get_semantic_model(workspace_id="1232", semantic_model_id="semantic_model.id")
 
 # Get Semantic Model Definition
-fc.get_semantic_model_definition(workspace_id, semantic_model.id, format=None)
+definition = fc.get_semantic_model_definition(workspace_id="1232", semantic_model_id="semantic_model.id", format=None)
+
+# Update Semantic Model
+fc.update_semantic_model(workspace_id="1232", semantic_model_id="semantic_model.id", display_name="new_name", return_item=True)
 
 # Update Semantic Model Definition
-fc.update_semantic_model_definition(workspace_id, semantic_model.id, definition=definition)
+fc.update_semantic_model_definition(workspace_id="1232", semantic_model_id="semantic_model.id", definition=definition)
 
 # Delete Semantic Model
-fc.delete_semantic_model(workspace_id, semantic_model.id)
+fc.delete_semantic_model(workspace_id="1232", semantic_model_id="semantic_model.id")
 
 ```
 

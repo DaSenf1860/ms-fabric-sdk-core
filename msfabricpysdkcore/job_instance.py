@@ -52,3 +52,4 @@ class JobInstance:
         return self.core_client.cancel_item_job_instance(workspace_id=self.workspace_id,
                                                          item_id=self.item_id,
                                                          job_instance_id=self.id)
+    

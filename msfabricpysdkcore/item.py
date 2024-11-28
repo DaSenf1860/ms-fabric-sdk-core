@@ -52,8 +52,11 @@ class Item:
         self.definition = resp_dict['definition']
         return resp_dict
 
+    def list_connections(self):
+        """List connections of an item in a workspace"""
+        return self.core_client.list_item_connections(workspace_id=self.workspace_id, item_id=self.id)
 
-    def update(self, display_name = None, description = None, type = None, return_item="Default"):
+    def update(self, display_name = None, description = None, type = None, return_item=False):
         """Update the item"""
 
         resp_dict = self.core_client.update_item(workspace_id=self.workspace_id, item_id=self.id,
@@ -100,15 +103,49 @@ class Item:
         """Cancel a job instance ofjob the item"""
         return self.core_client.cancel_item_job_instance(workspace_id=self.workspace_id, item_id=self.id,
                                                          job_instance_id=job_instance_id)
-        
+    
+    def create_item_schedule(self, job_type, configuration, enabled):
+        """Create a schedule for the job instance"""
+        return self.core_client.create_item_schedule(workspace_id=self.workspace_id,
+                                                     item_id=self.id,
+                                                     job_type=job_type,
+                                                     configuration=configuration,
+                                                     enabled=enabled)
+    
     def get_item_job_instance(self, job_instance_id):
         """Get the job instance of the item"""
         return self.core_client.get_item_job_instance(workspace_id=self.workspace_id, item_id=self.id,
                                                       job_instance_id=job_instance_id)
+    def get_item_schedule(self, job_type, schedule_id):
+        """Get the schedule for the job instance"""
+        return self.core_client.get_item_schedule(workspace_id=self.workspace_id,
+                                                 item_id=self.id,
+                                                 job_type=job_type,
+                                                 schedule_id=schedule_id)
+    
+    def list_item_job_instances(self):
+        """List all job instances for the job instance"""
+        return self.core_client.list_item_job_instances(workspace_id=self.workspace_id,
+                                                        item_id=self.id)                                      
+    
+    def list_item_schedules(self, job_type):
+        """List all schedules for the job instance"""
+        return self.core_client.list_item_schedules(workspace_id=self.workspace_id,
+                                                  item_id=self.id,
+                                                  job_type=job_type)
 
     def run_on_demand_item_job(self, job_type, execution_data = None):
         return self.core_client.run_on_demand_item_job(workspace_id=self.workspace_id, item_id=self.id,
                                                        job_type=job_type, execution_data=execution_data)
+    
+    def update_item_schedule(self, job_type, schedule_id, configuration, enabled):
+        """Update the schedule for the job instance"""
+        return self.core_client.update_item_schedule(workspace_id=self.workspace_id,
+                                                     item_id=self.id,
+                                                     job_type=job_type,
+                                                     schedule_id=schedule_id,
+                                                     configuration=configuration,
+                                                     enabled=enabled)
 
     
     # External Data Shares

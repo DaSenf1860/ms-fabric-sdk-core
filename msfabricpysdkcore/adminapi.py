@@ -279,7 +279,7 @@ class FabricClientAdmin(FabricClient):
 
         return response.status_code
     
-    def update_domain(self, domain_id, description = None, display_name = None, contributors_scope = None, return_item = "Default"):
+    def update_domain(self, domain_id, description = None, display_name = None, contributors_scope = None, return_item = False):
         """Method to update a domain
         
         Args:
@@ -301,15 +301,7 @@ class FabricClientAdmin(FabricClient):
         response_json = self.calling_routine(url = url, operation = "PATCH", body = body,
                                              response_codes = [200, 429], error_message = "Error updating domain",
                                              return_format="json")
-  
-        if return_item == "Default":
-            warn(
-                message="Updating a domain currently will make invoke an additional API call to get the domain "
-                        "object. This default behaviour will change in newer versions of the SDK. To keep this "
-                        "behaviour, set return_item=True in the function call.",
-                category=FutureWarning,
-                stacklevel=2
-            )
+
         if return_item:
             return self.get_domain_by_id(domain_id)
         return response_json
@@ -581,6 +573,19 @@ class FabricClientAdmin(FabricClient):
     
         workspace = AdminWorkspace.from_dict(response_json, self)
         return workspace
+    
+    # GET https://api.fabric.microsoft.com/v1/admin/workspaces/discoverGitConnections
+    def discover_git_connections(self):
+        """Discover Git connections
+        
+        Returns:
+            dict: The Git connections
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/workspaces/discoverGitConnections"
+
+        response_json = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
+                                             error_message = "Error discovering Git connections", return_format="value_json", paging=True)
+        return response_json
 
     def list_workspace_access_details(self, workspace_id):
         """Get the access details of the workspace
@@ -639,3 +644,24 @@ class FabricClientAdmin(FabricClient):
         workspaces = [AdminWorkspace.from_dict(i, self) for i in workspaces]
 
         return workspaces
+    
+    def restore_workspace(self, workspace_id, new_workspace_admin_principal, new_workspace_name = None):
+        """Restore a workspace
+        
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            response: The response from the API
+        """
+
+        restore_request = {
+            "newWorkspaceAdminPrincipal": new_workspace_admin_principal,
+            "newWorkspaceName": new_workspace_name
+        }
+        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/restore"
+
+        response_json = self.calling_routine(url = url, operation = "POST", body = restore_request,
+                                             response_codes = [200, 429], error_message = "Error restoring workspace",
+                                             return_format="response")
+
+        return response_json

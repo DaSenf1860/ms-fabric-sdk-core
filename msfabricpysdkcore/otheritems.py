@@ -40,9 +40,7 @@ class SparkJobDefinition(Item):
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
     
     def get_definition(self, format=None):
-        resp_dict = self.core_client.get_spark_job_definition_definition(self.workspace_id, self.id, format=format)
-        self.definition = resp_dict['definition']
-        return resp_dict
+        return super().get_definition(type="sparkJobDefinitions", format=format)
     
     def update_definition(self, definition):
         return self.core_client.update_spark_job_definition_definition(self.workspace_id, self.id, definition)
@@ -61,6 +59,25 @@ class Warehouse(Item):
         return Warehouse(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+class KQLDashboard(Item):
+    """Class to represent a kql dashboard in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return KQLDashboard(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self, format=None):
+        """Method to get the definition of the kql dashboard"""
+        return super().get_definition(type="kqlDashboards", format=format)
+
+    def update_definition(self, definition):
+        """Method to update the definition of the kql dashboard"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="kqlDashboards")
 
 class KQLDatabase(Item):
     """Class to represent a kql database in Microsoft Fabric"""
@@ -83,6 +100,15 @@ class KQLQueryset(Item):
         return KQLQueryset(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self, format=None):
+        """Method to get the definition of the kql queryset"""
+        return super().get_definition(type="kqlQuerysets", format=format)
+    
+    def update_definition(self, definition, update_metadata=None):
+        """Method to update the definition of the kql queryset"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="kqlQuerysets",
+                                                       update_metadata=update_metadata)
 
 class Eventstream(Item):
     """Class to represent a eventstream in Microsoft Fabric"""
@@ -94,7 +120,41 @@ class Eventstream(Item):
         return Eventstream(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+class MirroredDatabase(Item):
+    """Class to represent a mirrored database in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
     
+    def from_dict(item_dict, core_client):
+        return MirroredDatabase(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self): 
+        """Method to get the definition of the mirrored database"""
+        return super().get_definition(type="mirroredDatabases")
+    
+    def update_definition(self, definition):
+        """Method to update the definition of the mirrored database"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="mirroredDatabases")
+
+    def get_mirrored_database_definition(self, mirrored_database_id):
+        return self.core_client.get_mirrored_database_definition(workspace_id=self.id,
+                                                                 mirrored_database_id=mirrored_database_id)
+    def get_mirroring_status(self):
+        return self.core_client.get_mirroring_status(workspace_id=self.workspace_id, mirrored_database_id=self.id)
+
+    def get_tables_mirroring_status(self):
+        return self.core_client.get_tables_mirroring_status(workspace_id=self.workspace_id, mirrored_database_id=self.id)
+
+    def start_mirroring(self):
+        return self.core_client.start_mirroring(workspace_id=self.workspace_id, mirrored_database_id=self.id)
+
+    def stop_mirroring(self):
+        return self.core_client.stop_mirroring(workspace_id=self.workspace_id, mirrored_database_id=self.id)
+
 class MLExperiment(Item):
     """Class to represent a ml experiment in Microsoft Fabric"""
      
@@ -130,9 +190,7 @@ class Notebook(Item):
     
     def get_definition(self, format=None):
         """Method to get the definition of the notebook"""
-        definition = self.core_client.get_item_definition(self.workspace_id, self.id, type="notebooks", format=format)
-        self.definition = definition
-        return definition
+        return super().get_definition(type="notebooks", format=format)
     
     def update_definition(self, definition):
         """Method to update the definition of the notebook"""
@@ -151,8 +209,7 @@ class Report(Item):
     
     def get_definition(self, type=None, format=None):
         """Method to get the definition of the report"""
-        self.definition = self.core_client.get_item_definition(self.workspace_id, self.id, type="reports", format=format)
-        return self.definition
+        return super().get_definition(type="reports", format=format)
     
     def update_definition(self, definition):
         """Method to update the definition of the report"""
@@ -171,8 +228,7 @@ class SemanticModel(Item):
     
     def get_definition(self, format=None):
         """Method to get the definition of the semantic model"""
-        self.definition = self.core_client.get_item_definition(self.workspace_id, self.id, type="semanticModels", format=format)
-        return self.definition
+        return super().get_definition(type="semanticModels", format=format)
     
     def update_definition(self, definition):
         """Method to update the definition of the semantic model"""

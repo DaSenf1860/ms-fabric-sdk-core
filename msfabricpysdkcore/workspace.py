@@ -201,11 +201,15 @@ class Workspace:
         return self.core_client.list_items(workspace_id=self.id, with_properties=with_properties,
                                            type=type)
     
+    def list_item_connections(self, item_id):
+        """List connections of an item in a workspace"""
+        return self.core_client.list_item_connections(workspace_id=self.id, item_id=item_id)
+
     def get_item_definition(self, item_id, type = None, format = None):
         """Get the definition of an item from a workspace"""
         return self.core_client.get_item_definition(workspace_id=self.id, item_id=item_id, type=type, format=format)
 
-    def update_item(self, item_id, display_name = None, description = None, return_item="Default"):
+    def update_item(self, item_id, display_name = None, description = None, return_item=False):
         """Update an item in a workspace"""
         return self.core_client.update_item(workspace_id=self.id,
                                             item_id=item_id, display_name=display_name, description=description,
@@ -233,14 +237,30 @@ class Workspace:
         return self.core_client.cancel_item_job_instance(workspace_id=self.id, item_id=item_id,
                                                          job_instance_id=job_instance_id)
     
+    def create_item_schedule(self, item_id, job_type, configuration, enabled):
+        return self.core_client.create_item_schedule(workspace_id=self.id, item_id=item_id, job_type=job_type,
+                                                     configuration=configuration, enabled=enabled)
+    
     def get_item_job_instance(self, item_id, job_instance_id):
         return self.core_client.get_item_job_instance(workspace_id=self.id, item_id=item_id,
                                                       job_instance_id=job_instance_id)
+
+    def get_item_schedule(self, item_id, job_type, schedule_id):
+        return self.core_client.get_item_schedule(workspace_id=self.id, item_id=item_id, job_type=job_type, schedule_id=schedule_id)
+    
+    def list_item_job_instances(self, item_id):
+        return self.core_client.list_item_job_instances(workspace_id=self.id, item_id=item_id)
+    
+    def list_item_schedules(self, item_id, job_type):
+        return self.core_client.list_item_schedules(workspace_id=self.id, item_id=item_id, job_type=job_type)
 
     def run_on_demand_item_job(self, item_id, job_type, execution_data = None):
         return self.core_client.run_on_demand_item_job(workspace_id=self.id, item_id=item_id,
                                                        job_type=job_type, execution_data=execution_data)
     
+    def update_item_schedule(self, item_id, job_type, schedule_id, configuration, enabled):
+        return self.core_client.update_item_schedule(workspace_id=self.id, item_id=item_id, job_type=job_type,
+                                                    schedule_id=schedule_id, configuration=configuration, enabled=enabled)
 
 
     def commit_to_git(self, mode, comment=None, items=None, workspace_head=None):
@@ -260,6 +280,9 @@ class Workspace:
     def git_get_connection(self):
         return self.core_client.git_get_connection(workspace_id=self.id)
  
+    def get_my_git_credentials(self):
+        return self.core_client.get_my_git_credentials(workspace_id=self.id)
+    
     def git_get_status(self):
         return self.core_client.git_get_status(workspace_id=self.id)
 
@@ -268,7 +291,28 @@ class Workspace:
                                                conflict_resolution=conflict_resolution,
                                                options=options, workspace_head=workspace_head)
     
+    def update_my_git_credentials(self, git_credentials):
+        return self.core_client.update_my_git_credentials(workspace_id=self.id, git_credentials=git_credentials)
 
+    # Managed Private Endpoints:
+
+    def create_workspace_managed_private_endpoint(self, name, target_private_link_resource_id,
+                                                    target_subresource_type, request_message = None):
+        return self.core_client.create_workspace_managed_private_endpoint(workspace_id=self.id, name=name,
+                                                                         target_private_link_resource_id=target_private_link_resource_id,
+                                                                         target_subresource_type=target_subresource_type,
+                                                                         request_message=request_message)
+        
+    def delete_workspace_managed_private_endpoint(self, managed_private_endpoint_id):
+        return self.core_client.delete_workspace_managed_private_endpoint(workspace_id=self.id,
+                                                                          managed_private_endpoint_id=managed_private_endpoint_id)
+
+    def get_workspace_managed_private_endpoint(self, managed_private_endpoint_id):
+        return self.core_client.get_workspace_managed_private_endpoint(workspace_id=self.id,
+                                                                      managed_private_endpoint_id=managed_private_endpoint_id)
+
+    def list_workspace_managed_private_endpoints(self):
+        return self.core_client.list_workspace_managed_private_endpoints(workspace_id=self.id)
 
     # One Lake Data Access Security
 
@@ -290,10 +334,7 @@ class Workspace:
     
     def list_datamarts(self):
         return self.core_client.list_datamarts(workspace_id=self.id)
-    
-    def list_paginated_reports(self):
-        return self.core_client.list_paginated_reports(workspace_id=self.id)
-    
+
     def list_sql_endpoints(self):
         return self.core_client.list_sql_endpoints(workspace_id=self.id)
     
@@ -430,8 +471,41 @@ class Workspace:
         return self.core_client.update_eventstream(workspace_id=self.id, eventstream_id=eventstream_id,
                                                   display_name=display_name, description=description)
     
-    # kqlDatabases
+    # kqlDashboards
 
+    def create_kql_dashboard(self, display_name, description = None):
+        """Create a kql dashboard in a workspace"""
+        return self.core_client.create_kql_dashboard(workspace_id=self.id, display_name=display_name, description=description)
+    
+    def delete_kql_dashboard(self, kql_dashboard_id):
+        """Delete a kql dashboard from a workspace"""
+        return self.core_client.delete_kql_dashboard(workspace_id=self.id, kql_dashboard_id=kql_dashboard_id)
+    
+    def get_kql_dashboard(self, kql_dashboard_id = None, kql_dashboard_name = None):
+        """Get a kql dashboard from a workspace"""
+        return self.core_client.get_kql_dashboard(workspace_id=self.id, kql_dashboard_id=kql_dashboard_id,
+                                                kql_dashboard_name=kql_dashboard_name)
+    
+    def get_kql_dashboard_definition(self, kql_dashboard_id, format = None):
+        """Get the definition of a kql dashboard from a workspace"""
+        return self.core_client.get_kql_dashboard_definition(workspace_id=self.id, kql_dashboard_id=kql_dashboard_id, format=format)
+    
+    def list_kql_dashboards(self, with_properties = False):
+        """List kql dashboards in a workspace"""
+        return self.core_client.list_kql_dashboards(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_kql_dashboard(self, kql_dashboard_id, display_name = None, description = None):
+        """Update a kql dashboard in a workspace"""
+        return self.core_client.update_kql_dashboard(workspace_id=self.id, kql_dashboard_id=kql_dashboard_id,
+                                                    display_name=display_name, description=description)
+    
+    def update_kql_dashboard_definition(self, kql_dashboard_id, definition, update_metadata = None):
+        """Update the definition of a kql dashboard in a workspace"""
+        return self.core_client.update_kql_dashboard_definition(workspace_id=self.id, kql_dashboard_id=kql_dashboard_id,
+                                                                definition=definition, update_metadata=update_metadata)
+    
+
+    # kqlDatabases
 
     def create_kql_database(self, creation_payload, display_name, description = None, ):
         """Create a kql database in a workspace"""
@@ -458,6 +532,11 @@ class Workspace:
 
     # kqlQuerysets
 
+    def create_kql_queryset(self, display_name, description = None, definition = None):
+        """Create a kql queryset in a workspace"""
+        return self.core_client.create_kql_queryset(workspace_id=self.id, display_name=display_name, description=description,
+                                                    definition=definition)
+
     def delete_kql_queryset(self, kql_queryset_id):
         """Delete a kql queryset from a workspace"""
         return self.core_client.delete_kql_queryset(workspace_id=self.id, kql_queryset_id=kql_queryset_id)
@@ -466,6 +545,10 @@ class Workspace:
         """Get a kql queryset from a workspace"""
         return self.core_client.get_kql_queryset(self.id, kql_queryset_id, kql_queryset_name)
     
+    def get_kql_queryset_definition(self, kql_queryset_id, format = None):
+        """Get the definition of a kql queryset from a workspace"""
+        return self.core_client.get_kql_queryset_definition(workspace_id=self.id, kql_queryset_id=kql_queryset_id, format=format)
+
     def list_kql_querysets(self, with_properties = False):
         """List kql querysets in a workspace"""
         return self.core_client.list_kql_querysets(workspace_id=self.id, with_properties=with_properties)
@@ -474,6 +557,11 @@ class Workspace:
         """Update a kql queryset in a workspace"""
         return self.core_client.update_kql_queryset(workspace_id=self.id, kql_queryset_id=kql_queryset_id,
                                                     display_name=display_name, description=description)
+    
+    def update_kql_queryset_definition(self, kql_queryset_id, definition, update_metadata = None):
+        """Update the definition of a kql queryset in a workspace"""
+        return self.core_client.update_kql_queryset_definition(workspace_id=self.id, kql_queryset_id=kql_queryset_id,
+                                                               definition=definition, update_metadata=update_metadata)
 
     # lakehouses
     def run_on_demand_table_maintenance(self, lakehouse_id, execution_data, 
@@ -517,6 +605,45 @@ class Workspace:
                                             file_extension=file_extension, format_options=format_options,
                                             mode=mode, recursive=recursive, wait_for_completion=wait_for_completion)
     
+    # mirroredDatabases
+
+    def create_mirrored_database(self, display_name, description = None, definition = None):
+        return self.core_client.create_mirrored_database(workspace_id=self.id, display_name=display_name, description=description,
+                                                         definition=definition)
+    
+    def delete_mirrored_database(self, mirrored_database_id):
+        return self.core_client.delete_mirrored_database(workspace_id=self.id, mirrored_database_id=mirrored_database_id)
+    
+    def get_mirrored_database(self, mirrored_database_id = None, mirrored_database_name = None):
+        return self.core_client.get_mirrored_database(workspace_id=self.id, mirrored_database_id=mirrored_database_id,
+                                                     mirrored_database_name=mirrored_database_name)
+    
+    def get_mirrored_database_definition(self, mirrored_database_id):
+        return self.core_client.get_mirrored_database_definition(workspace_id=self.id,
+                                                                 mirrored_database_id=mirrored_database_id)
+    
+    def list_mirrored_databases(self, with_properties = False):
+        return self.core_client.list_mirrored_databases(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_mirrored_database(self, mirrored_database_id, display_name = None, description = None, return_item = False):
+        return self.core_client.update_mirrored_database(workspace_id=self.id, mirrored_database_id=mirrored_database_id,
+                                                         display_name=display_name, description=description, return_item=return_item)
+    
+    def update_mirrored_database_definition(self, mirrored_database_id, definition):
+        return self.core_client.update_mirrored_database_definition(workspace_id=self.id, mirrored_database_id=mirrored_database_id,
+                                                                   definition=definition)
+
+    def get_mirroring_status(self, mirrored_database_id):
+        return self.core_client.get_mirroring_status(workspace_id=self.id, mirrored_database_id=mirrored_database_id)
+
+    def get_tables_mirroring_status(self, mirrored_database_id):
+        return self.core_client.get_tables_mirroring_status(workspace_id=self.id, mirrored_database_id=mirrored_database_id)
+      
+    def start_mirroring(self, mirrored_database_id):
+        return self.core_client.start_mirroring(workspace_id=self.id, mirrored_database_id=mirrored_database_id)
+
+    def stop_mirroring(self, mirrored_database_id):
+        return self.core_client.stop_mirroring(workspace_id=self.id, mirrored_database_id=mirrored_database_id)
 
     # mlExperiments
 
@@ -593,6 +720,15 @@ class Workspace:
         """Update the definition of a notebook in a workspace"""
         return self.core_client.update_notebook_definition(workspace_id=self.id, notebook_id=notebook_id, definition=definition)
     
+    # paginated reports
+        
+    def list_paginated_reports(self):
+        return self.core_client.list_paginated_reports(workspace_id=self.id)
+    
+    def update_paginated_report(self, paginated_report_id, display_name = None, description = None):
+        return self.core_client.update_paginated_report(workspace_id=self.id, paginated_report_id=paginated_report_id,
+                                                       display_name=display_name, description=description)
+
     # reports
 
     def create_report(self, display_name, definition = None, description = None):
@@ -640,11 +776,10 @@ class Workspace:
         """Delete a semantic model from a workspace"""
         return self.core_client.delete_semantic_model(workspace_id=self.id, semantic_model_id=semantic_model_id)
     
-    # def update_semantic_model(self, semantic_model_id, display_name = None, description = None):
-    #     """Update a semantic model in a workspace"""
-    #     return self.get_item(item_id=semantic_model_id).update(display_name=display_name,
-    #                                                         description=description,
-    #                                                         type="semanticModels")
+    def update_semantic_model(self, semantic_model_id, display_name = None, description = None):
+        """Update a semantic model in a workspace"""
+        return self.core_client.update_semantic_model(workspace_id=self.id, semantic_model_id=semantic_model_id,
+                                                        display_name=display_name, description=description)
     
     def get_semantic_model_definition(self, semantic_model_id, format = None):
         """Get the definition of a semantic model from a workspace"""
