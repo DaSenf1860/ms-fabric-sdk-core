@@ -542,7 +542,7 @@ semantic_models = fc.list_semantic_models(workspace_id="1232")
 
 # Create Semantic Model
 semantic_model_w_content = fc.get_semantic_model(workspace_id="1232", semantic_model_name="Table")
-definition = semantic_model_w_content.definition
+definition = semantic_model_w_content.definition['definition']
 semantic_model = fc.create_semantic_model(workspace_id="1232", display_name="semanticmodel1", definition=definition)
 
 # Get Semantic Model
