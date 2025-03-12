@@ -505,6 +505,25 @@ class FabricClientAdmin(FabricClient):
 
     # Tenant Settings APIs
 
+    # DELETE https://api.fabric.microsoft.com/v1/admin/capacities/{capacityId}/delegatedTenantSettingOverrides/{tenantSettingName}
+    def delete_capacity_tenant_setting_override(self, capacity_id, tenant_setting_name):
+        """Delete a tenant setting override at the capacity
+        
+        Args:
+            capacity_id (str): The ID of the capacity
+            tenant_setting_name (str): The name of the tenant setting
+            
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides/{tenant_setting_name}"
+
+        response:requests.Response = self.calling_routine(url = url, operation = "DELETE", response_codes = [200, 429],
+                                                          error_message = "Error deleting capacity tenant setting override",
+                                                          return_format="response")
+
+        return response.status_code
+
     def list_capacities_tenant_settings_overrides(self):
         """Returns list of tenant setting overrides that override at the capacities
         
@@ -516,10 +535,42 @@ class FabricClientAdmin(FabricClient):
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                            error_message = "Error listing capacities tenant settings overrides",
-                                           return_format="Overrides", paging=True)
+                                           return_format="value", paging=True)
+
+        return items
+    
+    # GET https://api.fabric.microsoft.com/v1/admin/capacities/{capacityId}/delegatedTenantSettingOverrides?continuationToken={continuationToken}
+    def list_capacity_tenant_settings_overrides_by_capacity_id(self, capacity_id):
+        """Returns list of tenant setting overrides that override at the capacity
+        
+        Args:
+            capacity_id (str): The ID of the capacity
+        Returns:
+            list: The capacities tenant settings overrides
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides"
+
+        items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
+                                           error_message = "Error listing capacity tenant settings overrides",
+                                           return_format="value", paging=True)
 
         return items
 
+    # GET https://api.fabric.microsoft.com/v1/admin/domains/delegatedTenantSettingOverrides?continuationToken={continuationToken}
+    def list_domain_tenant_settings_overrides(self):
+        """Returns list of tenant setting overrides that override at the domains
+
+        Returns:
+            list: The domains tenant settings overrides
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/domains/delegatedTenantSettingOverrides"
+
+        items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
+                                           error_message = "Error listing domain tenant settings overrides",
+                                           return_format="value", paging=True)
+
+        return items
+    
     def list_tenant_settings(self):
         """Get the tenant settings
         
@@ -529,8 +580,97 @@ class FabricClientAdmin(FabricClient):
         url = "https://api.fabric.microsoft.com/v1/admin/tenantsettings"
 
         response_json = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
-                                             error_message = "Error getting tenant settings", return_format="json")
+                                             error_message = "Error getting tenant settings", paging= True, return_format="value")
         return response_json
+    
+    # GET https://api.fabric.microsoft.com/v1/admin/workspaces/delegatedTenantSettingOverrides?continuationToken={continuationToken}
+    def list_workspace_tenant_settings_overrides(self):
+        """Returns list of tenant setting overrides that override at the workspaces
+        
+        Returns:
+            list: The workspaces tenant settings overrides
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/workspaces/delegatedTenantSettingOverrides"
+
+        items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
+                                           error_message = "Error listing workspace tenant settings overrides",
+                                           return_format="value", paging=True)
+
+        return items
+    
+    # POST https://api.fabric.microsoft.com/v1/admin/capacities/{capacityId}/delegatedTenantSettingOverrides/{tenantSettingName}/update
+    def update_capacity_tenant_setting_override(self, capacity_id, tenant_setting_name, enabled, delegate_to_workspace = None,
+                                                enabled_security_groups = None, excluded_security_groups = None):
+        """Update a tenant setting override at the capacity
+        
+        Args:
+            capacity_id (str): The ID of the capacity
+            tenant_setting_name (str): The name of the tenant setting
+            enabled (bool): Whether the tenant setting is enabled
+            delegate_to_workspace (bool): Indicates whether the tenant setting can be delegated to a workspace admin. False - Workspace admin cannot override the tenant setting. True - Workspace admin can override the tenant setting.
+            enabled_security_groups (list): The list of enabled security groups
+            excluded_security_groups (list): The list of excluded security groups
+        Returns:
+            dict: The overrides
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides/{tenant_setting_name}/update"
+        body = {
+            "enabled": enabled
+        }
+        if delegate_to_workspace:
+            body["delegateToWorkspace"] = delegate_to_workspace
+        if enabled_security_groups:
+            body["enabledSecurityGroups"] = enabled_security_groups
+        if excluded_security_groups:
+            body["excludedSecurityGroups"] = excluded_security_groups
+
+        response_json : dict = self.calling_routine(url = url, operation = "POST", body = body, response_codes = [200, 429],
+                                                    error_message = "Error updating capacity tenant setting override", return_format="json")
+
+        return response_json
+
+    # POST https://api.fabric.microsoft.com/v1/admin/tenantsettings/{tenantSettingName}/update
+    def update_tenant_setting(self, tenant_setting_name, enabled, delegate_to_capacity = None, delegate_to_domain = None,
+                              delegate_to_workspace = None, enabled_security_groups = None, excluded_security_groups = None, properties = None):
+        """Update a tenant setting
+
+        Args:
+            capacity_id (str): The ID of the capacity
+            tenant_setting_name (str): The name of the tenant setting
+            enabled (bool): Whether the tenant setting is enabled
+            delegate_to_capacity (bool): Indicates whether the tenant setting can be delegated to a capacity admin. False - Capacity admin cannot override the tenant setting. True - Capacity admin can override the tenant setting.
+            delegate_to_domain (bool): Indicates whether the tenant setting can be delegated to a domain admin. False - Domain admin cannot override the tenant setting. True - Domain admin can override the tenant setting.
+            delegate_to_workspace (bool): Indicates whether the tenant setting can be delegated to a workspace admin. False - Workspace admin cannot override the tenant setting. True - Workspace admin can override the tenant setting.
+            enabled_security_groups (list): The list of enabled security groups
+            excluded_security_groups (list): The list of excluded security groups
+        Returns:
+            dict: The tenant settings
+        """
+
+        url = f"https://api.fabric.microsoft.com/v1/admin/tenantsettings/{tenant_setting_name}/update"
+
+        body = {
+            "enabled": enabled
+        }
+        if delegate_to_capacity:
+            body["delegateToCapacity"] = delegate_to_capacity
+        if delegate_to_domain:
+            body["delegateToDomain"] = delegate_to_domain
+        if delegate_to_workspace:
+            body["delegateToWorkspace"] = delegate_to_workspace
+        if enabled_security_groups:
+            body["enabledSecurityGroups"] = enabled_security_groups
+        if excluded_security_groups:
+            body["excludedSecurityGroups"] = excluded_security_groups
+        if properties:
+            body["properties"] = properties
+
+        response_json : dict = self.calling_routine(url = url, operation = "POST", body = body, response_codes = [200, 429],
+                                                    error_message = "Error updating tenant setting", return_format="json")
+        
+        return response_json
+
+
     
     # Users APIs
 

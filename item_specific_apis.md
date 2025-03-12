@@ -174,6 +174,14 @@ eh2 = fc.update_eventhouse(workspace_id, eh.id, display_name="eventhouse2", retu
 # Delete Eventhouse
 status_code = fc.delete_eventhouse(workspace_id, eh.id)
 
+# Get Eventhouse Definition
+eventhouse_definition = fc.get_eventhouse_definition(workspace_id, eventhouse_id=eh.id, format = None):
+eventhouse_definition = eventhouse_definition["definition"]
+
+# Update Eventhouse Definition
+fc.update_eventhouse_definition(workspace_id, eventhouse_id=eh.id, definition=eventhouse_definition, update_metadata = None):
+
+
 ```
 
 ## Eventstreams
@@ -200,6 +208,41 @@ es2 = fc.update_eventstream(workspace_id, es.id, display_name="es2", return_item
 
 # Delete Eventstream
 fc.delete_eventstream(workspace_id, es.id)
+
+# Get Eventstream Definition
+eventstream_definition = fc.get_eventstream_definition(workspace_id, eventstream_id=es.id, format = None)
+eventstream_definition = eventstream_definition["definition"]
+
+# Update Eventstream Definition
+fc.update_eventstream_definition(workspace_id, eventstream_id=es.id, definition=eventstream_definition, update_metadata = None)
+
+```
+
+## GraphQL APIs
+
+```python
+
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+
+# List GraphQL APIs
+graphql_apis = fc.list_graphql_apis(workspace_id = workspace_id)
+
+# Create GraphQL API
+graphql_api = fc.create_graphql_api(workspace_id = workspace_id, display_name="graphql_api1", description="description")
+
+# Get GraphQL API
+graphql_api = fc.get_graphql_api(workspace_id = workspace_id, graphql_api_name="graphql_api1", graphql_api_id=None)
+
+# Update GraphQL API
+graphql_api2 = fc.update_graphql_api(workspace_id = workspace_id, graphql_api_id = graphql_api.id, display_name="graphql_api2", description="description", return_item=True)
+
+# Delete GraphQL API
+fc.delete_graphql_api(workspace_id = workspace_id, graphql_api_id = graphql_api.id)
 
 ```
 
@@ -262,6 +305,13 @@ kqldb2 = fc.update_kql_database(workspace_id, kqldb.id, display_name="kqldb23", 
 
 # Delete KQL Database
 status_code = fc.delete_kql_database(workspace_id, kqldb.id)
+
+# Get KQL Database Definition
+kql_database_definition = fc.get_kql_database_definition(workspace_id, kql_database_id=kqldb.id, format = None)
+
+# Update KQL Database Definition
+fc.update_kql_database_definition(workspace_id, kql_database_id=kqldb.id, definition=kql_database_definition, update_metadata = None)
+
 
 ```
 
@@ -457,6 +507,42 @@ fc.delete_ml_model(workspace_id, ml_model.id)
 
 ```
 
+## Mounted Data Factories
+
+```python
+
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+
+# List Mounted Data Factories
+mounted_data_factories = fc.list_mounted_data_factories(workspace_id = workspace_id)
+
+mounted_data_factory_w_content = fc.get_mounted_data_factory(workspace_id = workspace_id, mounted_data_factory_name="HelloWorld")
+
+# Create Mounted Data Factory
+mounted_data_factory = fc.create_mounted_data_factory(workspace_id = workspace_id, display_name="mounted_data_factory1", description="description", definition=mounted_data_factory_w_content.definition)
+
+# Get Mounted Data Factory
+mounted_data_factory = fc.get_mounted_data_factory(workspace_id = workspace_id, mounted_data_factory_name="mounted_data_factory1", mounted_data_factory_id=None)
+
+# Update Mounted Data Factory
+mounted_data_factory2 = fc.update_mounted_data_factory(workspace_id = workspace_id, mounted_data_factory_id = mounted_data_factory.id, display_name="mounted_data_factory2", return_item=True)
+
+# Delete Mounted Data Factory
+fc.delete_mounted_data_factory(workspace_id = workspace_id, mounted_data_factory_id = mounted_data_factory.id)
+
+# Get Mounted Data Factory Definition
+mounted_data_factory_definition = fc.get_mounted_data_factory_definition(workspace_id = workspace_id, mounted_data_factory_id = mounted_data_factory.id, format=None)
+
+# Update Mounted Data Factory Definition
+fc.update_mounted_data_factory_definition(workspace_id = workspace_id, mounted_data_factory_id = mounted_data_factory.id, definition=mounted_data_factory_w_content.definition, update_metadata=None)
+
+```
+
 ## Notebooks
 
 ```python
@@ -505,24 +591,63 @@ workspace = fc.get_workspace_by_name("testitems")
 workspace_id = workspace.id
 
 # List Reports
-reports = fc.list_reports(workspace_id)
+reports = fc.list_reports(workspace_id = workspace_id)
 
 # Create Report
-report_w_content = fc.get_report(workspace_id, report_name="HelloWorldReport")
+report_w_content = fc.get_report(workspace_id = workspace_id, report_name="HelloWorldReport")
 definition = report_w_content.definition
-report = fc.create_report(workspace_id, display_name="report1", definition=definition)
+report = fc.create_report(workspace_id = workspace_id, display_name="report1", definition=definition)
 
 # Get Report
-report = fc.get_report(workspace_id, report_name="report1")
+report = fc.get_report(workspace_id = workspace_id, report_name="report1")
 
 # Get Report Definition
-fc.get_report_definition(workspace_id, report.id, format=None)
+fc.get_report_definition(workspace_id = workspace_id, report_id = report.id, format=None)
 
 # Update Report Definition
-fc.update_report_definition(workspace_id, report.id, definition=definition)
+fc.update_report_definition(workspace_id = workspace_id, report_id = report.id, definition=definition)
+
+# Update Report
+fc.update_report(workspace_id = workspace_id, report_id = report.id, display_name = "name", description = "Description", return_item=False):
 
 # Delete Report
-fc.delete_report(workspace_id, report.id)
+fc.delete_report(workspace_id = workspace_id, report_id = report.id)
+
+```
+
+## Reflexes
+
+```python
+
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+
+# List Reflexes
+reflexes = fc.list_reflexes(workspace_id=workspace_id)
+
+# Create Reflex
+reflex_w_content = fc.get_reflex(workspace_id=workspace_id, reflex_name="HelloWorld")
+definition = reflex_w_content.definition
+reflex = fc.create_reflex(workspace_id=workspace_id, display_name="reflex1", description = "Description", definition=definition)
+
+# Get Reflex
+reflex = fc.get_reflex(workspace_id=workspace_id, reflex_name="reflex1")
+
+# Get Reflex Definition
+definition = fc.get_reflex_definition(workspace_id=workspace_id, reflex_id=reflex.id, format=None)
+
+# Update Reflex
+reflex2 = fc.update_reflex(workspace_id=workspace_id, reflex_id= reflex.id, display_name="reflex2", description = "Description", return_item=True)
+
+# Update Reflex Definition
+fc.update_reflex_definition(workspace_id=workspace_id, reflex_id= reflex.id, definition=definition)
+
+# Delete Reflex
+fc.delete_reflex(workspace_id=workspace_id, reflex_id=reflex.id)
 
 ```
 
@@ -653,8 +778,36 @@ fc.update_spark_job_definition_definition(workspace_id, spark_job_definition.id,
 fc.delete_spark_job_definition(workspace_id, spark_job_definition.id)
 
 
+```
+
+## SQL Databases
+
+```python
+
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+
+# List SQL Databases
+sql_databases = fc.list_sql_databases(workspace_id=workspace_id)
+
+# Create SQL Database
+sql_database = fc.create_sql_database(workspace_id=workspace_id, display_name="sqldb1", description="description")
+
+# Get SQL Database
+sql_database = fc.get_sql_database(workspace_id=workspace_id, sql_database_name="sqldb1")
+
+# Update SQL Database
+sql_database2 = fc.update_sql_database(workspace_id=workspace_id, sql_database_id=sql_database.id, display_name="sqldb2", description="description", return_item=True)
+
+# Delete SQL Database
+fc.delete_sql_database(workspace_id=workspace_id, sql_database_id=sql_database.id)
 
 ```
+
 
 ## Warehouses
 

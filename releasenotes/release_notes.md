@@ -1,5 +1,20 @@
 # Release Notes
 
+## 0.2.2
+
+### New Features
+- One Lake Shortcuts: Reset Shortcut Cache
+- Admin Tenant APIs
+- Eventhouse: Get and update definition
+- Eventstream: Get and update definition
+- KQL database: Get and update definition
+- Reflex: CRUDL
+- Sqldatabase: CRUDL
+- GraphQLAPI: 
+- MountedDatafactory: CRUDL
+- Report: Update Report
+
+
 ## 0.2.1
 
 ### New Features

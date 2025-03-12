@@ -233,6 +233,9 @@ class Workspace:
     def list_shortcuts(self, item_id, parent_path = None):
         return self.core_client.list_shortcuts(self.id, item_id, parent_path=parent_path)
 
+    def reset_shortcut_cache(self, wait_for_completion = False):
+        return self.core_client.reset_shortcut_cache(self.id, wait_for_completion=wait_for_completion)
+
     def cancel_item_job_instance(self, item_id, job_instance_id):
         return self.core_client.cancel_item_job_instance(workspace_id=self.id, item_id=item_id,
                                                          job_instance_id=job_instance_id)
@@ -439,6 +442,10 @@ class Workspace:
         return self.core_client.get_eventhouse(workspace_id=self.id, eventhouse_id=eventhouse_id,
                                                 eventhouse_name=eventhouse_name)
     
+    def get_eventhouse_definition(self, eventhouse_id, format = None):
+        """Get the definition of an eventhouse from a workspace"""
+        return self.core_client.get_eventhouse_definition(workspace_id=self.id, eventhouse_id=eventhouse_id, format=format)
+
     def delete_eventhouse(self, eventhouse_id):
         """Delete an eventhouse from a workspace"""
         return self.core_client.delete_eventhouse(workspace_id=self.id, eventhouse_id=eventhouse_id)
@@ -447,6 +454,11 @@ class Workspace:
         """Update an eventhouse in a workspace"""
         return self.core_client.update_eventhouse(workspace_id=self.id, eventhouse_id=eventhouse_id,
                                                   display_name=display_name, description=description)
+
+    def update_eventhouse_definition(self, eventhouse_id, definition, update_metadata = None):
+        """Update the definition of an eventhouse in a workspace"""
+        return self.core_client.update_eventhouse_definition(workspace_id=self.id, eventhouse_id=eventhouse_id,
+                                                             definition=definition, update_metadata=update_metadata)
 
     # eventstreams
 
@@ -462,6 +474,10 @@ class Workspace:
     def get_eventstream(self, eventstream_id = None, eventstream_name = None):
         return self.core_client.get_eventstream(workspace_id=self.id, eventstream_id=eventstream_id, eventstream_name=eventstream_name)
     
+    def get_eventstream_definition(self, eventstream_id, format = None):
+        """Get the definition of an eventstream from a workspace"""
+        return self.core_client.get_eventstream_definition(workspace_id=self.id, eventstream_id=eventstream_id, format=format)
+
     def list_eventstreams(self, with_properties = False):
         """List eventstreams in a workspace"""
         return self.core_client.list_eventstreams(workspace_id=self.id, with_properties=with_properties)
@@ -471,6 +487,34 @@ class Workspace:
         return self.core_client.update_eventstream(workspace_id=self.id, eventstream_id=eventstream_id,
                                                   display_name=display_name, description=description)
     
+    def update_eventstream_definition(self, eventstream_id, definition, update_metadata = None):
+        """Update the definition of an eventstream in a workspace"""
+        return self.core_client.update_eventstream_definition(workspace_id=self.id, eventstream_id=eventstream_id,
+                                                             definition=definition, update_metadata=update_metadata)
+
+    # graphQLapis
+
+    def create_graphql_api(self, display_name, description = None):
+        """Create a graphQL api in a workspace"""
+        return self.core_client.create_graphql_api(workspace_id=self.id, display_name=display_name, description=description)
+    
+    def delete_graphql_api(self, graphql_api_id):
+        """Delete a graphQL api from a workspace"""
+        return self.core_client.delete_graphql_api(workspace_id=self.id, graphql_api_id=graphql_api_id)
+    
+    def get_graphql_api(self, graphql_api_id = None, graphql_api_name = None):
+        """Get a graphQL api from a workspace"""
+        return self.core_client.get_graphql_api(workspace_id=self.id, graphql_api_id=graphql_api_id, graphql_api_name=graphql_api_name)
+    
+    def list_graphql_apis(self, with_properties = False):   
+        """List graphQL apis in a workspace"""
+        return self.core_client.list_graphql_apis(workspace_id=self.id, with_properties=with_properties)
+
+    def update_graphql_api(self, graphql_api_id, display_name = None, description = None):
+        """Update a graphQL api in a workspace"""
+        return self.core_client.update_graphql_api(workspace_id=self.id, graphql_api_id=graphql_api_id,
+                                                 display_name=display_name, description=description)
+
     # kqlDashboards
 
     def create_kql_dashboard(self, display_name, description = None):
@@ -520,7 +564,10 @@ class Workspace:
         return self.core_client.get_kql_database(workspace_id=self.id, kql_database_id=kql_database_id,
                                                   kql_database_name=kql_database_name)
     
-
+    def get_kql_database_definition(self, kql_database_id, format = None):
+        """Get the definition of a kql database from a workspace"""
+        return self.core_client.get_kql_database_definition(workspace_id=self.id, kql_database_id=kql_database_id, format=format)
+    
     def list_kql_databases(self, with_properties = False):
         """List kql databases in a workspace"""
         return self.core_client.list_kql_databases(workspace_id=self.id, with_properties=with_properties)
@@ -529,6 +576,11 @@ class Workspace:
         """Update a kql database in a workspace"""
         return self.core_client.update_kql_database(workspace_id=self.id, kql_database_id=kql_database_id,
                                                   display_name=display_name, description=description)
+
+    def update_kql_database_definition(self, kql_database_id, definition, update_metadata = None):
+        """Update the definition of a kql database in a workspace"""
+        return self.core_client.update_kql_database_definition(workspace_id=self.id, kql_database_id=kql_database_id,
+                                                              definition=definition, update_metadata=update_metadata)
 
     # kqlQuerysets
 
@@ -689,6 +741,40 @@ class Workspace:
         """Update an ml model in a workspace"""
         return self.core_client.update_ml_model(workspace_id=self.id, ml_model_id=ml_model_id, display_name=display_name, description=description)
     
+    # mounted data factory
+
+    def create_mounted_data_factory(self, display_name, description = None, definition = None):
+        """Create a mounted data factory in a workspace"""
+        return self.core_client.create_mounted_data_factory(workspace_id=self.id, display_name=display_name,
+                                                          description=description, definition=definition)
+
+    def delete_mounted_data_factory(self, mounted_data_factory_id):
+        """Delete a mounted data factory from a workspace"""
+        return self.core_client.delete_mounted_data_factory(workspace_id=self.id, mounted_data_factory_id=mounted_data_factory_id)
+    
+    def get_mounted_data_factory(self, mounted_data_factory_id = None, mounted_data_factory_name = None):
+        """Get a mounted data factory from a workspace"""
+        return self.core_client.get_mounted_data_factory(workspace_id=self.id, mounted_data_factory_id=mounted_data_factory_id,
+                                                      mounted_data_factory_name=mounted_data_factory_name)
+    
+    def get_mounted_data_factory_definition(self, mounted_data_factory_id, format = None):
+        """Get the definition of a mounted data factory from a workspace"""
+        return self.core_client.get_mounted_data_factory_definition(workspace_id=self.id, mounted_data_factory_id=mounted_data_factory_id, format=format)
+    
+    def list_mounted_data_factories(self, with_properties = False):
+        """List mounted data factories in a workspace"""
+        return self.core_client.list_mounted_data_factories(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_mounted_data_factory(self, mounted_data_factory_id, display_name = None, description = None):
+        """Update a mounted data factory in a workspace"""
+        return self.core_client.update_mounted_data_factory(workspace_id=self.id, mounted_data_factory_id=mounted_data_factory_id,
+                                                         display_name=display_name, description=description)
+    
+    def update_mounted_data_factory_definition(self, mounted_data_factory_id, definition, update_metadata = None):
+        """Update the definition of a mounted data factory in a workspace"""
+        return self.core_client.update_mounted_data_factory_definition(workspace_id=self.id, mounted_data_factory_id=mounted_data_factory_id, definition=definition,
+                                                                       update_metadata=update_metadata)
+
     # notebooks
 
     def create_notebook(self, display_name, definition = None, description = None):
@@ -729,20 +815,51 @@ class Workspace:
         return self.core_client.update_paginated_report(workspace_id=self.id, paginated_report_id=paginated_report_id,
                                                        display_name=display_name, description=description)
 
+    # reflex
+
+    def create_reflex(self, display_name, description = None):
+        """Create a reflex in a workspace"""
+        return self.core_client.create_reflex(workspace_id=self.id, display_name=display_name, description=description)
+
+    def delete_reflex(self, reflex_id):
+        """Delete a reflex from a workspace"""
+        return self.core_client.delete_reflex(workspace_id=self.id, reflex_id=reflex_id)
+    
+    def get_reflex(self, reflex_id = None, reflex_name = None):
+        """Get a reflex from a workspace"""
+        return self.core_client.get_reflex(workspace_id=self.id, reflex_id=reflex_id, reflex_name=reflex_name)
+    
+    def get_reflex_definition(self, reflex_id, format = None):
+        """Get the definition of a reflex from a workspace"""
+        return self.core_client.get_reflex_definition(workspace_id=self.id, reflex_id=reflex_id, format=format)
+
+    def list_reflexes(self, with_properties = False):
+        """List reflexes in a workspace"""
+        return self.core_client.list_reflexes(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_reflex(self, reflex_id, display_name = None, description = None):
+        """Update a reflex in a workspace"""
+        return self.core_client.update_reflex(workspace_id=self.id, reflex_id=reflex_id, display_name=display_name, description=description)
+    
+    def update_reflex_definition(self, reflex_id, definition, update_metadata = None):
+        """Update the definition of a reflex in a workspace"""
+        return self.core_client.update_reflex_definition(workspace_id=self.id, reflex_id=reflex_id, definition=definition,
+                                                       update_metadata=update_metadata)
+
+
     # reports
 
     def create_report(self, display_name, definition = None, description = None):
         """Create a report in a workspace"""
         return self.core_client.create_report(workspace_id=self.id, display_name=display_name,
                                               definition=definition, description=description)
+    def delete_report(self, report_id):
+        """Delete a report from a workspace"""
+        return self.core_client.delete_report(workspace_id=self.id, report_id=report_id)
     
     def get_report(self, report_id = None, report_name = None):
         """Get a report from a workspace"""
         return self.core_client.get_report(workspace_id=self.id, report_id=report_id, report_name=report_name)
-    
-    def delete_report(self, report_id):
-        """Delete a report from a workspace"""
-        return self.core_client.delete_report(workspace_id=self.id, report_id=report_id)
     
     def get_report_definition(self, report_id, format = None):
         """Get the definition of a report from a workspace"""
@@ -751,6 +868,10 @@ class Workspace:
     def list_reports(self, with_properties = False):
         """List reports in a workspace"""
         return self.core_client.list_reports(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_report(self, report_id, display_name = None, description = None):
+        """Update a report in a workspace"""
+        return self.core_client.update_report(workspace_id=self.id, report_id=report_id, display_name=display_name, description=description)
     
     def update_report_definition(self, report_id, definition):
         """Update the definition of a report in a workspace"""
@@ -864,6 +985,29 @@ class Workspace:
         """Run on demand spark job definition"""
         return self.core_client.run_on_demand_spark_job_definition(workspace_id=self.id, spark_job_definition_id=spark_job_definition_id, job_type=job_type)
     
+    # sql databases
+
+    def create_sql_database(self, display_name, description = None):
+        """Create a sql database in a workspace"""
+        return self.core_client.create_sql_database(workspace_id=self.id, display_name=display_name, description=description)
+    
+    def delete_sql_database(self, sql_database_id):
+        """Delete a sql database from a workspace"""
+        return self.core_client.delete_sql_database(workspace_id=self.id, sql_database_id=sql_database_id)
+    
+    def get_sql_database(self, sql_database_id = None, sql_database_name = None):
+        """Get a sql database from a workspace"""
+        return self.core_client.get_sql_database(workspace_id=self.id, sql_database_id=sql_database_id, sql_database_name=sql_database_name)
+
+    def list_sql_databases(self, with_properties = False):
+        """List sql databases in a workspace"""
+        return self.core_client.list_sql_databases(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_sql_database(self, sql_database_id, display_name = None, description = None):
+        """Update a sql database in a workspace"""
+        return self.core_client.update_sql_database(workspace_id=self.id, sql_database_id=sql_database_id,
+                                                  display_name=display_name, description=description)
+
     # warehouses
 
     def list_warehouses(self, with_properties = False):

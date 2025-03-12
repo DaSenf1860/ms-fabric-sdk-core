@@ -1,6 +1,6 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of November 28, 2024).
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of July 23, 2024).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
@@ -444,6 +444,9 @@ gw = fc.create_gateway(gateway_request=gwr)
 # Delete gateway
 resp_code = fc.delete_gateway(gateway_id= "gateway_id")
 
+# Delete gatewway member
+resp_code = fc.delete_gateway_member(gateway_id= "gateway_id", gateway_member_id= "gateway_member_id")
+
 # Delete gateway role assignment
 resp_code = fc.delete_gateway_role_assignment(gateway_id=gw['id'], gateway_role_assignment_id=new_ras['id'])
 
@@ -614,6 +617,9 @@ ws.list_shortcuts(item_id="item_id",
 
 # or
 item.list_shortcuts(parent_path="Tables")
+
+# Reset shortcut cache
+fc.reset_shortcut_cache(workspace_id="23232", wait_for_completion = False)
 
 ```
 
@@ -805,13 +811,32 @@ from msfabricpysdkcore import FabricClientAdmin
 
 fca = FabricClientAdmin()
 
-# Get tenant settings
-
+# List tenant settings
 tenant_settings = fca.list_tenant_settings()
 
 # Get capacity tenant settings overrides
-
 overrides = fca.list_capacities_tenant_settings_overrides()
+
+# Get domain tenant settings overrides
+overrides = fca.list_domain_tenant_settings_overrides()
+
+# Get workspace tenant settings overrides
+overrides = fca.list_workspace_tenant_settings_overrides()
+
+# Get capacity tenant settings overrides by capacity id
+overrides = fca.list_capacity_tenant_settings_overrides_by_capacity_id(capacity_id="adsfasdfasf")
+
+# Update tenant setting
+fc.update_tenant_setting(tenant_setting_name = "PlatformMonitoringTenantSetting", enabled = True, delegate_to_capacity = None, delegate_to_domain = None,
+                              delegate_to_workspace = None, enabled_security_groups = None, excluded_security_groups = None, properties = None)
+
+# Update capacity tenant setting override
+fc.update_capacity_tenant_setting_override(capacity_id = "capacity_id", tenant_setting_name = "PlatformMonitoringTenantSetting", enabled = True, delegate_to_workspace = None, 
+                                                enabled_security_groups = None, excluded_security_groups = None)
+
+
+# Delete capacity tenant setting override
+fc.delete_capacity_tenant_setting_override(capacity_id = "capacity_id", tenant_setting_name = "PlatformMonitoringTenantSetting")
 
 ```
 

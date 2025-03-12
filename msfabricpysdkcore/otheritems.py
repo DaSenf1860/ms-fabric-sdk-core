@@ -20,6 +20,14 @@ class Eventhouse(Item):
                           properties=item_dict.get('properties', None),
                           description=item_dict.get('description', ""), core_client=core_client)
 
+    def get_definition(self, type=None, format=None):
+        """Method to get the definition of the eventhouse"""
+        return super().get_definition(type="eventhouses", format=format)
+    
+    def update_definition(self, definition):
+        """Method to update the definition of the eventhouse"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="eventhouses")
+
     def create_kql_database(self, display_name = None, description= None):
         from msfabricpysdkcore.coreapi import FabricClientCore
         """Method to create a kql database in the eventhouse"""
@@ -90,6 +98,14 @@ class KQLDatabase(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
+    def get_definition(self, type=None, format=None):
+        """Method to get the definition of the kql database"""
+        return super().get_definition(type="kqlDatabases", format=format)
+    
+    def update_definition(self, definition):
+        """Method to update the definition of the kql database"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="kqlDatabases")
+
 class KQLQueryset(Item):
     """Class to represent a kql database in Microsoft Fabric"""
      
@@ -109,6 +125,8 @@ class KQLQueryset(Item):
         """Method to update the definition of the kql queryset"""
         return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="kqlQuerysets",
                                                        update_metadata=update_metadata)
+    
+    
 
 class Eventstream(Item):
     """Class to represent a eventstream in Microsoft Fabric"""
@@ -121,6 +139,25 @@ class Eventstream(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
+    def get_definition(self, type=None, format=None):
+        """Method to get the definition of the eventstream"""
+        return super().get_definition(type="eventstreams", format=format)
+    
+    def update_definition(self, definition):
+        """Method to update the definition of the eventstream"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="eventstreams")
+
+class GraphQLApi(Item):
+    """Class to represent a graphql api in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+    
+    def from_dict(item_dict, core_client):
+        return GraphQLApi(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
 class MirroredDatabase(Item):
     """Class to represent a mirrored database in Microsoft Fabric"""
      
@@ -177,6 +214,25 @@ class MLModel(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
+class MountedDataFactory(Item):
+    """Class to represent a mounted data factory in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+    
+    def from_dict(item_dict, core_client):
+        return MountedDataFactory(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, type=None, format=None):
+        """Method to get the definition of the mountedDataFactory"""
+        return super().get_definition(type="mountedDataFactories", format=format)
+    
+    def update_definition(self, definition):
+        """Method to update the definition of the mountedDataFactory"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="mountedDataFactories")
+
 class Notebook(Item):
     """Class to represent a notebook in Microsoft Fabric"""
      
@@ -196,6 +252,25 @@ class Notebook(Item):
         """Method to update the definition of the notebook"""
         return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="notebooks")
 
+class Reflex(Item):
+    """Class to represent a reflex in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return Reflex(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, type=None, format=None):
+        """Method to get the definition of the reflex"""
+        return super().get_definition(type="reflexes", format=format)
+    
+    def update_definition(self, definition):
+        """Method to update the definition of the reflex"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="reflexes")
+    
 class Report(Item):
     """Class to represent a report in Microsoft Fabric"""
      
@@ -234,6 +309,17 @@ class SemanticModel(Item):
         """Method to update the definition of the semantic model"""
         return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="semanticModels")
 
+class SQLDatabase(Item):
+    """Class to represent a sql database in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return SQLDatabase(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
 class DataPipeline(Item):
     """Class to represent a spark job definition in Microsoft Fabric"""
      
@@ -244,6 +330,13 @@ class DataPipeline(Item):
         return DataPipeline(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self, type=None, format=None, **kwargs):
+        return super().get_definition(type="dataPipelines", format=format, **kwargs)
+    
+    def update_definition(self, definition):
+        """Method to update the definition of the dataPipeline"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="dataPipelines")
     
     def run_on_demand_item_job(self, execution_data=None):
         return self.core_client.run_on_demand_item_job(workspace_id=self.workspace_id, item_id=self.id, job_type="Pipeline", execution_data=execution_data)

@@ -45,9 +45,9 @@ class Item:
 
         return self.core_client.delete_item(self.workspace_id, self.id, type=type)
     
-    def get_definition(self, type = None, format = None):
+    def get_definition(self, type = None, format = None, **kwargs):
         """Get the definition of the item"""
-        resp_dict = self.core_client.get_item_definition(self.workspace_id, self.id, type=type, format=format)
+        resp_dict = self.core_client.get_item_definition(self.workspace_id, self.id, type=type, format=format, **kwargs)
 
         self.definition = resp_dict['definition']
         return resp_dict
@@ -69,10 +69,12 @@ class Item:
 
         return resp_dict
 
-    def update_definition(self, definition, type = None):
+    def update_definition(self, definition, type = None, **kwargs):
         """Update the item definition"""
+        if not type:
+            type = self.type
         response = self.core_client.update_item_definition(workspace_id=self.workspace_id, item_id=self.id, 
-                                                           definition=definition, type=type)
+                                                           definition=definition, type=type, **kwargs)
 
         self.definition = definition 
         return response
