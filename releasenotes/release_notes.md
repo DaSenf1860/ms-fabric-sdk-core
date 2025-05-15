@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.2.3
+
+### Hotfixes
+- there was a change in the git API for initializing the connection. This is now adjusted
+- there was a change in the API for getting a domain object. This is now adjusted
+
 ## 0.2.2
 
 ### New Features
