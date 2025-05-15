@@ -54,7 +54,10 @@ class Domain:
         if "display_name" not in dic:
             dic["display_name"] = dic["displayName"]
         if "parent_domain_id" not in dic:
-            dic["parent_domain_id"] = dic["parentDomainId"]
+            if "parentDomainId" in dic:
+                dic["parent_domain_id"] = dic["parentDomainId"]
+            else:
+                dic["parent_domain_id"] = None
         if "contributors_scope" not in dic:
             dic["contributors_scope"] = dic["contributorsScope"]
         return Domain(id=dic['id'], display_name=dic['display_name'],

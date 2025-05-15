@@ -783,7 +783,7 @@ class FabricClientCore(FabricClient):
         """
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/initializeConnection"
 
-        body = {'initializeGitConnectionRequest':initialization_strategy}
+        body = {'initializationStrategy':initialization_strategy}
         
         response = self.calling_routine(url=url, operation="POST", body=body, response_codes=[200, 202, 429],
                                         error_message="Error initializing connection", return_format="response")
