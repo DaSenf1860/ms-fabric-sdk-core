@@ -29,7 +29,9 @@ Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and
   - [Capacities](#working-with-capacities)
   - [Connections](#connections)
   - [Deployment Pipelines](#deployment-pipelines)
-  - [External Data Shares](#external-data-shares)
+  - [External Data Shares Provider](#external-data-shares-provider)
+  - [External Data Shares Recipient](#external-data-shares-recipient)
+  - [Folders](#folders)
   - [Gateways](#gateways)
   - [Git](#working-with-git)
   - [Items](#working-with-items)
@@ -38,12 +40,14 @@ Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and
   - [Long Running Operations](#long-running-operations)
   - [OneLakeDataAccessSecurity](#one-lake-data-access-security)
   - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
+  - [Tags](#tags)
   - [Workspaces](#working-with-workspaces)
 - Admin APIs
   - [Domains](#admin-api-for-domains)
   - [External Data Shares](#admin-api-for-external-data-shares)
   - [Items](#admin-api-for-items)
   - [Labels](#admin-api-for-labels)
+  - [Tags](#admin-api-for-tags)
   - [Tenants](#admin-api-for-tenants)
   - [Users](#admin-api-for-users)
   - [Workspaces](#admin-api-for-workspaces)
@@ -101,6 +105,8 @@ fc = FabricClientCore(tenant_id = "tenant_id",
 
 token = fc.get_token()
 ```
+
+
 ### Working with workspaces
     
 ```python
@@ -297,43 +303,112 @@ role_assi = fc.update_connection_role_assignment(connection_id="id",
 ### Deployment Pipelines
 
 ```python
+from msfabricpysdkcore import FabricClientCore
 
+fcc = FabricClientCore()
+workspace_id = "72dasdfasdf56"
 
-# List deployment pipelines 
+user_id = "e05sadfasfd23"
+capacity_id = "9e7easdfasdf2a00"
 
-depl_pipes = fc.list_deployment_pipelines()
+prod_workspace = fcc.create_workspace("prodworkspace")
+prod_workspace.assign_to_capacity(capacity_id)
 
-pipe = [pipe for pipe in depl_pipes if pipe.display_name == 'sdkpipe'][0]
+stages =  [
+    {
+    "displayName": "Development",
+    "description": "Development stage description",
+    "isPublic": False
+    },
+    {
+    "displayName": "Production",
+    "description": "Production stage description",
+    "isPublic":True
+    }
+]
+
+# Create deployment pipeline
+pipe =fcc.create_deployment_pipeline(display_name="sdktestpipeline",
+                        description="Test Deployment Pipeline Description",
+                        stages=stages)
 pipe_id = pipe.id
 
-# Get a deployment pipeline
-pipe = fc.get_deployment_pipeline(pipe_id)
+for stage in pipe.stages:
+    if stage["displayName"] == "Development":
+        dev_stage = stage
+    else:
+        prod_stage = stage
+
+# Get deployment pipeline
+stage = fcc.get_deployment_pipeline_stage(deployment_pipeline_id=pipe_id,
+                                            stage_id=dev_stage["id"])
+
+# Assign workspace to stage
+resp = fcc.assign_workspace_to_stage(deployment_pipeline_id=pipe_id,
+                        stage_id=dev_stage["id"],
+                        workspace_id=workspace_id)
 
 
-# Get deployment pipeline stages
-stages = fc.list_deployment_pipeline_stages(pipe_id)
+resp = fcc.assign_workspace_to_stage(deployment_pipeline_id=pipe_id,
+                        stage_id=prod_stage["id"],
+                        workspace_id=prod_workspace.id)
 
-names = [stage.display_name for stage in stages]
+# Add deployment pipeline role assignment
+principal = {
+    "id": user_id,
+    "type": "User"
+}
 
-dev_stage = [stage for stage in stages if stage.display_name == "Development"][0]
-prod_stage = [stage for stage in stages if stage.display_name == "Production"][0]
+resp = fcc.add_deployment_pipeline_role_assignment(deployment_pipeline_id=pipe_id,principal=principal, role="Admin")
 
-# Get deployment pipeline stages items
-items = fc.list_deployment_pipeline_stages_items(pipeline_id=pipe_id, stage_id=dev_stage.id)
+# List deployment pipeline role assignments
+roles = fcc.list_deployment_pipeline_role_assignments(deployment_pipeline_id=pipe_id)
 
+# Delete deployment pipeline role assignment
+resp = fcc.delete_deployment_pipeline_role_assignment(deployment_pipeline_id=pipe_id, principal_id=user_id)
 
-items = [item for item in dev_stage.get_items() if item["itemDisplayName"] == 'cicdlakehouse']
-item = items[0]
-item = {"sourceItemId": item["itemId"],
-        "itemType": item["itemType"]}
-items = [item]
+# List deployment pipelines
+pipes = fcc.list_deployment_pipelines(with_details=False)
+sdk_pipes = [pipe for pipe in pipes  if "sdk" in pipe["displayName"]]
 
 # Deploy stage content
-response = pipe.deploy(source_stage_id=dev_stage.id,target_stage_id=prod_stage.id, items=items)
+resp = fcc.deploy_stage_content(deployment_pipeline_id=pipe_id,
+                source_stage_id=dev_stage["id"],
+                target_stage_id=prod_stage["id"], wait_for_completion=False)
 
+# List deployment pipeline operations
+ops = fcc.list_deployment_pipeline_operations(deployment_pipeline_id=pipe_id)
+
+# Get deployment pipeline operation
+ops = fcc.get_deployment_pipeline_operation(deployment_pipeline_id=pipe_id, operation_id=ops[0]["id"])
+
+# List deployment pipeline stages
+stages = fcc.list_deployment_pipeline_stages(deployment_pipeline_id=pipe_id)
+
+# List deployment pipeline stage items
+items = fcc.list_deployment_pipeline_stage_items(deployment_pipeline_id=pipe_id, stage_id=dev_stage["id"])
+
+# Update deployment pipeline
+updated_pipe = fcc.update_deployment_pipeline(deployment_pipeline_id=pipe.id, display_name="sdknewname", description="newdescription")
+
+# Get deployment pipeline
+pipe = fcc.get_deployment_pipeline(pipe_id)
+
+# Update deployment pipeline stage
+updated_stage = fcc.update_deployment_pipeline_stage(deployment_pipeline_id=pipe_id, stage_id=prod_stage["id"],
+                                                display_name="newname", description="newdescription")
+
+# Get deployment pipeline stage
+stage = fcc.get_deployment_pipeline_stage(deployment_pipeline_id=pipe_id, stage_id=prod_stage["id"])
+
+# Unassign workspace from stage
+resp = fcc.unassign_workspace_from_stage(deployment_pipeline_id=pipe_id,stage_id=prod_stage["id"])
+
+# Delete deployment pipeline
+resp = fcc.delete_deployment_pipeline(deployment_pipeline_id=pipe_id)
 ```
 
-### External Data Shares
+### External Data Shares Provider
 
 ```python
 from msfabricpysdkcore.coreapi import FabricClientCore
@@ -369,6 +444,36 @@ response_code = fc.revoke_external_data_share(workspace_id, item_id, data_share[
 
 ```
 
+### External Data Shares Recipient
+
+```python
+from msfabricpysdkcore.coreapi import FabricClientCore
+fcc = FabricClientCore()
+
+# Accept external data share invitation
+invitation_id = "adfasdfsd"
+workspace_id = "asdfsdf"
+item_id = "asdfsdf"
+provider_tenant_id = "asdfsdf"
+payload = {
+    "payloadType": "ShortcutCreation",
+    "path": "Files/DataFromContoso",
+    "createShortcutRequests": [
+      {
+        "pathId": "5c95314c-ef86-4663-9f1e-dee186f38715",
+        "shortcutName": "Shortcut_To_Contoso_Sales_2023"
+      },
+      {
+        "pathId": "6c95314c-ef86-4663-9f1e-dee186f38716",
+        "shortcutName": "Shortcut_To_Contoso_Sales_2024"
+      }
+    ]
+  }
+obj = fcc.accept_external_data_share_invitation(invitation_id=invitation_id, item_id=item_id,payload=payload, provider_tenant_id=provider_tenant_id,workspace_id=workspace_id):
+
+# Get external data share invitation details
+details = fcc.get_external_data_share_invitation(invitation_id=invitation_id, provider_tenant_id=provider_tenant_id)
+```
 
 ### Working with items
 
@@ -415,6 +520,36 @@ fc.delete_item(workspace_id="workspace_id", item_id="item_id")
 ws.delete_item(item_id="item_id")
 # or
 item.delete()
+
+```
+
+### Folders
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+
+workspace_id = "asdfasfd"
+folder_id = "asdfasdff"
+
+# Create a folder
+folder = fcc.create_folder(workspace_id=workspace_id, display_name="sdk_sub_folder", parent_folder_id=folder_id)
+
+# Get a folder
+folder_ = fcc.get_folder(workspace_id=workspace_id, folder_id=folder.id)
+
+# List folders
+folders = fcc.list_folders(workspace_id=workspace_id)
+
+# Update a folder
+folder = fcc.update_folder(workspace_id=workspace_id, folder_id=folder.id, display_name="sdk_sub_folder_updated")
+
+# Move a folder
+folder = fcc.move_folder(workspace_id=workspace_id, folder_id=folder.id)
+
+# Delete a folder
+fcc.delete_folder(workspace_id=workspace_id, folder_id=folder.id)
+
 
 ```
 
@@ -623,6 +758,24 @@ fc.reset_shortcut_cache(workspace_id="23232", wait_for_completion = False)
 
 ```
 
+### Tags
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# List tags
+tags = fcc.list_tags()
+
+tag_ids = [tag["id"] for tag in tags]
+
+# Apply tags
+resp = fcc.apply_tags(workspace_id = "adsfsdf", item_id = "a9e59ec1-524b-49b1-a185-37e47dc0ceb9", tags = tag_ids)
+
+# Unapply tags
+resp = fcc.unapply_tags(workspace_id = "adsfsdf", item_id = "a9e59ec1-524b-49b1-a185-37e47dc0ceb9", tags = tag_ids)
+
+```
 
 ### Working with job scheduler
 
@@ -803,6 +956,54 @@ user_id = 'b4fuhaidc2'
 access_entities = fca.list_access_entities(user_id, type="Notebook")
 
 ```
+
+### Admin API for Sharing Links
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+fca = FabricClientAdmin()
+
+items = [
+    {
+      "id": "fe472f5e-636e-4c10-a1c6-7e9edc0b542a",
+      "type": "Report"
+    },
+    {
+      "id": "476fcafe-b514-495d-b13f-ca9a4f0b1d8b",
+      "type": "Report"
+    }]
+
+# Bulk remove sharing links
+fca.bulk_remove_sharing_links(items = items, sharing_link_type = "OrgLink")
+
+# Remove all sharing links
+fca.remove_all_sharing_links(sharing_link_type = "OrgLink")
+```
+
+### Admin API for Tags
+
+```python
+
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# Bulk create tags
+new_tags = [{"displayName": "sdk_tag_temp"}]
+resp = fca.bulk_create_tags(create_tags_request=new_tags)
+
+# Delete tag
+fca.delete_tag(tag_id="adsfasdf")
+
+# List tags
+tag_list = fca.list_tags()
+
+# Update Tag
+updated_tag = fca.update_tag(tag_id="adsfasdf", display_name="sdk_tag_updated")
+
+
+```
+
 
 ### Admin API for Tenants
 

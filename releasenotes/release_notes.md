@@ -1,5 +1,26 @@
 # Release Notes
 
+## 0.2.4
+
+### New Features
+- Admin APIs: 
+  - Tags APIs
+  - Sharing Links (Removal) APIs
+- Core APIs:
+  - Tags APIs
+  - Folders APIs
+  - Copy Jobs APIs
+  - Dataflows APIs
+  - Data Pipeline Definition APIs
+  - Deployment Pipelines (new version) APIs
+  - Variable Library APIs
+  - Eventstream Topology APIs
+  - External Data Shares Recipient APIs
+  - Lakehouse Livy Sessions APIs
+  - Notebooks Livy Sessions APIs
+  - Spark Livy Sessions APIs
+  - SJD Livy Sessions APIs
+
 ## 0.2.3
 
 ### Hotfixes

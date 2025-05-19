@@ -25,3 +25,11 @@ class Lakehouse(Item):
     def run_on_demand_table_maintenance(self, execution_data, job_type = "TableMaintenance", wait_for_completion = True):
         """Run on demand table maintenance"""
         return self.core_client.run_on_demand_table_maintenance(self.workspace_id, self.id, execution_data, job_type, wait_for_completion)
+    
+    def list_livy_sessions(self):
+        """List all livy sessions in the lakehouse"""
+        return self.core_client.list_lakehouse_livy_sessions(self.workspace_id, self.id)
+
+    def get_livy_session(self, livy_id):
+        """Get a livy session in the lakehouse"""
+        return self.core_client.get_lakehouse_livy_session(self.workspace_id, self.id, livy_id)

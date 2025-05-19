@@ -254,8 +254,104 @@ class FabricClientCore(FabricClient):
         
     # Deployment Pipelines
 
+    # POST https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/roleAssignments
+    def add_deployment_pipeline_role_assignment(self, deployment_pipeline_id, principal, role):
+        """Add a role assignment to a deployment pipeline
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            principal (str): The principal
+            role (str): The role
+        Returns:
+            dict: The role assignment
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments"
+
+        body = {
+            'principal': principal,
+            'role': role
+        }
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                             error_message="Error adding deployment pipeline role assignment", return_format="response")
+        return response.status_code
+    
+    # POST https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/stages/{stageId}/assignWorkspace
+    def assign_workspace_to_stage(self, deployment_pipeline_id, stage_id, workspace_id):
+        """Assign a workspace to a stage
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            stage_id (str): The ID of the stage
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The workspace assignment
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/assignWorkspace"
+
+        body = {
+            'workspaceId': workspace_id
+        }
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                             error_message="Error assigning workspace to stage", return_format="response")
+        return response.status_code
+    
+    # POST https://api.fabric.microsoft.com/v1/deploymentPipelines
+    def create_deployment_pipeline(self, display_name, stages, description = None):
+        """Create a deployment pipeline
+        Args:
+            display_name (str): The display name of the deployment pipeline
+            stages (list): The stages of the deployment pipeline
+            description (str): The description of the deployment pipeline
+        Returns:
+            dict: The deployment pipeline
+        """
+        url = "https://api.fabric.microsoft.com/v1/deploymentPipelines"
+
+        body = {
+            'displayName': display_name,
+            'stages': stages
+        }
+        if description:
+            body['description'] = description
+
+        response_json = self.calling_routine(url, operation="POST", body=body, response_codes=[201, 429],
+                                             error_message="Error creating deployment pipeline", return_format="json")
+        
+        from msfabricpysdkcore.deployment_pipeline import DeploymentPipeline
+        deployment_pipeline = DeploymentPipeline.from_dict(response_json, self)
+        return deployment_pipeline
+
+    # DELETE https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}
+    def delete_deployment_pipeline(self, deployment_pipeline_id):
+        """Delete a deployment pipeline
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
+                                        error_message="Error deleting deployment pipeline")
+        return response.status_code
+
+    # DELETE https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/roleAssignments/{principalId}
+    def delete_deployment_pipeline_role_assignment(self, deployment_pipeline_id, principal_id):
+        """Delete a role assignment for a deployment pipeline
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            principal_id (str): The ID of the principal
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments/{principal_id}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
+                                        error_message="Error deleting deployment pipeline role assignment")
+        return response.status_code
+
     def deploy_stage_content(self, deployment_pipeline_id, source_stage_id, target_stage_id, created_workspace_details = None,
-               items = None, note = None, wait_for_completion = True):
+               items = None, note = None, options = None, wait_for_completion = True):
         """Deploy stage content
         Args:
             deployment_pipeline_id (str): The ID of the deployment pipeline
@@ -264,6 +360,7 @@ class FabricClientCore(FabricClient):
             created_workspace_details (list): A list of created workspace details
             items (list): A list of items
             note (str): A note
+            options (dict): A dictionary of options
             wait_for_completion (bool): Whether to wait for the deployment to complete
         Returns:
             Details about the dpeloyment
@@ -284,31 +381,127 @@ class FabricClientCore(FabricClient):
             body["items"] = items
         if note:
             body["note"] = note
+        if options:
+            body["options"] = options
             
         json_operation_result = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429], error_message="Error deploying stage content", 
                                                      return_format="json+operation_result", wait_for_completion=wait_for_completion)
 
         return json_operation_result
     
-    def get_deployment_pipeline(self, deployment_pipeline_id):
+    def get_deployment_pipeline(self, deployment_pipeline_id = None, deployment_pipeline_name = None, with_details = False):
         """Get a deployment pipeline
         Args:
             deployment_pipeline_id (str): The ID of the deployment pipeline
         Returns:
             DeploymentPipeline: The deployment pipeline
         """
+        if deployment_pipeline_id is None and deployment_pipeline_name is not None:
+            deployment_pipelines = self.list_deployment_pipelines()
+            for deployment_pipeline in deployment_pipelines:
+                if deployment_pipeline["displayName"] == deployment_pipeline_name:
+                    deployment_pipeline_id = deployment_pipeline["id"]
+                    break
+
+            if deployment_pipeline_id is None:
+                raise Exception("No deployment_pipeline_id given and deployment_pipeline_name is not found")
+            
+
         from msfabricpysdkcore.deployment_pipeline import DeploymentPipeline
         url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}"
 
         result_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting deployment pipeline", return_format="json")
 
-        return DeploymentPipeline.from_dict(result_json, self)
+        deply = DeploymentPipeline.from_dict(result_json, self)
+        
+        if with_details:
+            stages_ = []
+            from msfabricpysdkcore.deployment_pipeline import DeploymentPipelineStage
+            for stage in deply.stages:
+                stage_items = self.list_deployment_pipeline_stage_items(deployment_pipeline_id, stage["id"])
+                stage["items"] = stage_items
+                stage["deploymentPipelineId"] = deployment_pipeline_id
+                depl_pipe_stage = DeploymentPipelineStage.from_dict(stage, self)
+                stages_.append(depl_pipe_stage)
+            deply.stages = stages_
     
-    def get_deployment_pipeline_stages_items(self, pipeline_id, stage_id = None, stage_name = None):
-        warn("DEPRECATED: get_deployment_pipeline_stages_items. get_deployment_pipeline_stages_items. Use list_deployment_pipeline_stages_items instead", DeprecationWarning, stacklevel=2)
-        return self.list_deployment_pipeline_stages_items(pipeline_id, stage_id, stage_name)
+        return deply
 
-    def list_deployment_pipeline_stages_items(self, deployment_pipeline_id, stage_id = None, stage_name = None):
+    # GET https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/operations/{operationId}
+    def get_deployment_pipeline_operation(self, deployment_pipeline_id, operation_id):
+        """Get a deployment pipeline operation
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            operation_id (str): The ID of the operation
+        Returns:
+            dict: The deployment pipeline operation
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/operations/{operation_id}"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error getting deployment pipeline operation", return_format="json")
+        return response_json
+    
+    # GET https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/stages/{stageId}
+    def get_deployment_pipeline_stage(self, deployment_pipeline_id, stage_id, with_details = False):
+        """Get a deployment pipeline stage
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            stage_id (str): The ID of the stage
+        Returns:
+            dict: The deployment pipeline stage
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}"
+
+        stage = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error getting deployment pipeline stage", return_format="json")
+        
+        if not with_details:
+            stage["items"] = []
+        else:
+            stage_items = self.list_deployment_pipeline_stage_items(deployment_pipeline_id, stage["id"])
+            stage["items"] = stage_items
+        
+        stage["deploymentPipelineId"] = deployment_pipeline_id
+        from msfabricpysdkcore.deployment_pipeline import DeploymentPipelineStage
+
+        depl_pipe_stage = DeploymentPipelineStage.from_dict(stage, self)
+        return depl_pipe_stage
+
+
+    # GET https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/operations
+    def list_deployment_pipeline_operations(self, deployment_pipeline_id):
+        """List deployment pipeline operations
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+        Returns:
+            list: The list of deployment pipeline operations
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/operations"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                     error_message="Error listing deployment pipeline operations", return_format="value_json", paging=True)
+        
+        return items
+    
+    # GET https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/roleAssignments
+    def list_deployment_pipeline_role_assignments(self, deployment_pipeline_id):
+        """List role assignments for a deployment pipeline
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+        Returns:
+            list: The list of role assignments
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                     error_message="Error listing deployment pipeline role assignments", return_format="value_json", paging=True)
+        
+        return items
+    
+
+
+    def list_deployment_pipeline_stage_items(self, deployment_pipeline_id, stage_id = None, stage_name = None):
         """List the items in a deployment stage
         Args:
             pipeline_id (str): The ID of the deployment pipeline
@@ -334,25 +527,15 @@ class FabricClientCore(FabricClient):
                                      error_message="Error getting deployment pipeline stage items", return_format="value_json", paging=True)
 
         return items
-
-    def get_deployment_pipeline_stages(self, pipeline_id):
+    
+    def list_deployment_pipeline_stages(self, deployment_pipeline_id, with_details = False):
         """Get the stages of a deployment pipeline
         Args:
             pipeline_id (str): The ID of the deployment pipeline
         Returns:
             list: List of DeploymentPipelineStage objects
         """
-        warn("DEPRECATED: get_deployment_pipeline_stages. Use list_deployment_pipeline_stages instead", DeprecationWarning, stacklevel=2)
-        return self.list_deployment_pipeline_stages(pipeline_id)
-
-    def list_deployment_pipeline_stages(self, deployment_pipeline_id):
-        """Get the stages of a deployment pipeline
-        Args:
-            pipeline_id (str): The ID of the deployment pipeline
-        Returns:
-            list: List of DeploymentPipelineStage objects
-        """
-        from msfabricpysdkcore.deployment_pipeline import Deployment_Pipeline_Stage
+        from msfabricpysdkcore.deployment_pipeline import DeploymentPipelineStage
 
         url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages"
 
@@ -361,28 +544,97 @@ class FabricClientCore(FabricClient):
 
         for item in items:
             item["deploymentPipelineId"] = deployment_pipeline_id
-        stages = [Deployment_Pipeline_Stage.from_dict(item, self) for item in items]
+            item["items"] = []
+            if with_details:
+                items = self.list_deployment_pipeline_stage_items(deployment_pipeline_id, item["id"])
+                item["items"] = items
+                
+        stages = [DeploymentPipelineStage.from_dict(item, self) for item in items]
+        
         
         return stages
 
-    def list_deployment_pipelines(self):
+    def list_deployment_pipelines(self, with_details = False):
         """List deployment pipelines
         Returns:
             list: List of DeploymentPipeline objects
         """
-        from msfabricpysdkcore.deployment_pipeline import DeploymentPipeline
 
         url = "https://api.fabric.microsoft.com/v1/deploymentPipelines"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing deployment pipelines", return_format="value_json", paging=True)
 
+        if with_details:
+            items = [self.get_deployment_pipeline(i["id"], with_details) for i in items]
 
-        dep_pipes = [DeploymentPipeline.from_dict(i, core_client=self) for i in items]
+        return items
 
-        return dep_pipes
+    # POST https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/stages/{stageId}/unassignWorkspace
+    def unassign_workspace_from_stage(self, deployment_pipeline_id, stage_id):
+        """Unassign a workspace from a stage
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            stage_id (str): The ID of the stage
+        Returns:
+            dict: The workspace unassignment
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/unassignWorkspace"
 
-    # External Data Shares
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 429],
+                                             error_message="Error unassigning workspace from stage", return_format="response")
+        return response.status_code
+
+    # PATCH https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}
+    def update_deployment_pipeline(self, deployment_pipeline_id, display_name = None, description = None):
+        """Update a deployment pipeline
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            display_name (str): The display name of the deployment pipeline
+            description (str): The description of the deployment pipeline
+        Returns:
+            dict: The updated deployment pipeline
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}"
+        body = {}
+        if display_name:
+            body['displayName'] = display_name
+        if description:
+            body['description'] = description
+
+        response_json = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                             error_message="Error updating deployment pipeline", return_format="json")
+        
+        from msfabricpysdkcore.deployment_pipeline import DeploymentPipeline
+        deployment_pipeline = DeploymentPipeline.from_dict(response_json, self)
+        return deployment_pipeline
+    
+    # PATCH https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/stages/{stageId}
+    def update_deployment_pipeline_stage(self, deployment_pipeline_id, stage_id, display_name, description = None, is_public = None):
+        """Update a deployment pipeline stage
+        Args:
+            deployment_pipeline_id (str): The ID of the deployment pipeline
+            stage_id (str): The ID of the stage
+            display_name (str): The display name of the stage
+            description (str): The description of the stage
+        Returns:
+            dict: The updated deployment pipeline stage
+        """
+        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}"
+
+        body = {}
+        body['displayName'] = display_name
+        if description:
+            body['description'] = description
+        if is_public is not None:
+            body['isPublic'] = is_public
+
+        response_json = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                             error_message="Error updating deployment pipeline stage", return_format="json")
+        
+        return response_json
+
+    # External Data Shares Provider
 
     # create
 
@@ -455,6 +707,173 @@ class FabricClientCore(FabricClient):
         response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error revoking external data share", return_format="response")
         return response.status_code
     
+    # External Data Shares Recipient
+
+    # POST https://api.fabric.microsoft.com/v1/externalDataShares/invitations/{invitationId}/accept
+    def accept_external_data_share_invitation(self, invitation_id, item_id, payload, provider_tenant_id, workspace_id):
+        """Accept an external data share invitation
+        Args:
+            invitation_id (str): The ID of the invitation
+            item_id (str): The ID of the item
+            payload (dict): The payload of the invitation
+            provider_tenant_id (str): The ID of the provider tenant
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The external data share invitation
+        """
+        url = f"https://api.fabric.microsoft.com/v1/externalDataShares/invitations/{invitation_id}/accept"
+
+        body = {
+            'itemId': item_id,
+            'payload': payload,
+            'providerTenantId': provider_tenant_id,
+            'workspaceId': workspace_id
+        }
+        response_json = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                             error_message="Error accepting external data share invitation", return_format="value_json")
+        return response_json
+    
+    # GET https://api.fabric.microsoft.com/v1/externalDataShares/invitations/{invitationId}?providerTenantId={providerTenantId}
+    def get_external_data_share_invitation(self, invitation_id, provider_tenant_id):
+        """Get an external data share invitation
+        Args:
+            invitation_id (str): The ID of the invitation
+            provider_tenant_id (str): The ID of the provider tenant
+        Returns:
+            dict: The external data share invitation
+        """
+        url = f"https://api.fabric.microsoft.com/v1/externalDataShares/invitations/{invitation_id}?providerTenantId={provider_tenant_id}"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error getting external data share invitation", return_format="json")
+        return response_json
+    
+    # Folders
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders
+    def create_folder(self, workspace_id, display_name, parent_folder_id = None):
+        """Create a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the folder
+            parent_folder_id (str): The ID of the parent folder
+        Returns:
+            dict: The folder
+        """
+        from msfabricpysdkcore.folder import Folder
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders"
+
+        body = {
+            'displayName': display_name
+        }
+        if parent_folder_id:
+            body['parentFolderId'] = parent_folder_id
+
+        response_json = self.calling_routine(url, operation="POST", body=body, response_codes=[201, 429],
+                                             error_message="Error creating folder", return_format="json")
+        
+        folder = Folder.from_dict(response_json, self)
+        return folder
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}
+    def delete_folder(self, workspace_id, folder_id):
+        """Delete a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
+                                        error_message="Error deleting folder")
+        return response.status_code
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}
+    def get_folder(self, workspace_id, folder_id):
+        """Get a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+        Returns:
+            dict: The folder
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error getting folder", return_format="json")
+        
+        from msfabricpysdkcore.folder import Folder
+
+        folder = Folder.from_dict(response_json, self)
+        return folder
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders
+    def list_folders(self, workspace_id):
+        """List folders
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            list: The list of folders
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                     error_message="Error listing folders", return_format="value_json", paging=True)
+        
+        from msfabricpysdkcore.folder import Folder
+
+        folders = [Folder.from_dict(item, self) for item in items]
+        return folders
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}/move
+    def move_folder(self, workspace_id, folder_id, target_folder_id = None):
+        """Move a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+            parent_folder_id (str): The ID of the parent folder
+        Returns:
+            dict: The moved folder
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}/move"
+
+        body = {
+        }
+        if target_folder_id:
+            body['targetFolderId'] = target_folder_id
+
+        response_json = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                             error_message="Error moving folder", return_format="json")
+        
+        from msfabricpysdkcore.folder import Folder
+
+        folder = Folder.from_dict(response_json, self)
+        return folder
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}
+    def update_folder(self, workspace_id, folder_id, display_name = None):
+        """Update a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+            display_name (str): The display name of the folder
+        Returns:
+            dict: The updated folder
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}"
+
+        body = {'displayName' : display_name}
+
+
+        response_json = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                             error_message="Error updating folder", return_format="json")
+        from msfabricpysdkcore.folder import Folder
+
+        folder = Folder.from_dict(response_json, self)
+        return folder
+
     # Gateways
 
     def add_gateway_role_assignment(self, gateway_id, principal, role):
@@ -861,6 +1280,12 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.item import Item
 
+        if item_dict["type"] == "CopyJob":
+            return self.get_copy_job(workspace_id, item_dict["id"])
+        if item_dict["type"] == "VariableLibrary":
+            return self.get_variable_library(workspace_id, item_dict["id"])
+        if item_dict["type"] == "Dataflow":
+            return self.get_dataflow(workspace_id, item_dict["id"])
         if item_dict["type"] == "DataPipeline":
             return self.get_data_pipeline(workspace_id, item_dict["id"])
         if item_dict["type"] == "Eventstream":
@@ -935,7 +1360,10 @@ class FabricClientCore(FabricClient):
         if description:
             body['description'] = description
 
-        if type in ["dataPipelines",
+        if type in ["copyJobs",
+                    "VariableLibraries",
+                    "dataflows",
+                    "dataPipelines",
                     "environments",
                     "eventhouses",
                     "eventstreams",
@@ -975,7 +1403,10 @@ class FabricClientCore(FabricClient):
             item = None
             i = 0
 
-            type_mapping = {"dataPipelines": "DataPipeline",
+            type_mapping = {"copyJobs": "CopyJob",
+                            "VariableLibraries": "VariableLibrary",
+                            "dataflows": "Dataflow",
+                            "dataPipelines": "DataPipeline",
                             "environments": "Environment",
                             "eventhouses": "Eventhouse",
                             "eventstreams": "Eventstream",
@@ -1614,6 +2045,62 @@ class FabricClientCore(FabricClient):
 
         return response.status_code
 
+    ### Tags
+    # GET https://api.fabric.microsoft.com/v1/tags
+    def list_tags(self):
+        """List all tags
+        Returns:
+            list: The list of tags
+        """
+        url = "https://api.fabric.microsoft.com/v1/tags"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error listing tags", return_format="value_json", paging=True)
+
+        return response_json
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/applyTags
+    def apply_tags(self, workspace_id, item_id, tags):
+        """Apply tags to an item
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            tags (list): The list of tags to apply
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/applyTags"
+
+        payload = {
+            'tags': tags
+        }
+
+        response = self.calling_routine(url, operation="POST", body=payload,
+                                        response_codes=[200, 429], error_message="Error applying tags", return_format="response")
+
+        return response.status_code
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/unapplyTags
+    def unapply_tags(self, workspace_id, item_id, tags):
+        """Unapply tags from an item
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            tags (list): The list of tags to unapply
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/unapplyTags"
+
+        payload = {
+            'tags': tags
+        }
+
+        response = self.calling_routine(url, operation="POST", body=payload,
+                                        response_codes=[200, 429], error_message="Error unapplying tags", return_format="response")
+
+        return response.status_code
+
     ### Workspaces
 
     def add_workspace_role_assignment(self, workspace_id, role, principal):
@@ -1912,6 +2399,323 @@ class FabricClientCore(FabricClient):
         """List mirrored warehouses in a workspace"""
         return self.list_items(workspace_id, type="mirroredWarehouses")
     
+    # copyJobs
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/copyJobs
+    def create_copy_job(self, workspace_id, display_name, definition = None, description = None):
+        """Create a copy job in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the copy job
+            definition (dict): The definition of the copy job
+            description (str): The description of the copy job
+        Returns:
+            CopyJob: The copy job object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "copyJobs",
+                                definition = definition,
+                                description = description)
+    
+    def delete_copy_job(self, workspace_id, copy_job_id):
+        """Delete a copy job from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            copy_job_id (str): The ID of the copy job
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=copy_job_id, type="copyJobs")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/copyJobs/{copyJobId}
+    def get_copy_job(self, workspace_id, copy_job_id = None, copy_job_name = None):
+        """Get a copy job from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            copy_job_id (str): The ID of the copy job
+            copy_job_name (str): The name of the copy job
+        Returns:
+            CopyJob: The copy job object
+        """
+        from msfabricpysdkcore.otheritems import CopyJob
+
+        if copy_job_id is None and copy_job_name is not None:
+            copy_jobs = self.list_copy_jobs(workspace_id)
+            cjs = [cj for cj in copy_jobs if cj.display_name == copy_job_name]
+            if len(cjs) == 0:
+                raise Exception(f"Copy job with name {copy_job_name} not found")
+            copy_job_id = cjs[0].id
+        elif copy_job_id is None:
+            raise Exception("copy_job_id or the copy_job_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/copyJobs/{copy_job_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting copy job", return_format="json")
+
+        cj = CopyJob.from_dict(item_dict, core_client=self)
+        cj.get_definition()
+        return cj
+    
+    def get_copy_job_definition(self, workspace_id, copy_job_id, format = None):
+        """Get the definition of an copy job
+        Args:
+            workspace_id (str): The ID of the workspace
+            copy_job_id (str): The ID of the copy job
+            format (str): The format of the definition
+        Returns:
+            dict: The copy job definition
+        """
+        return self.get_item_definition(workspace_id, copy_job_id, type="copyJobs", format=format)
+
+    def list_copy_jobs(self, workspace_id, with_properties = False):
+        """List copy jobs in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            list: The list of copy jobs
+        """
+        return self.list_items(workspace_id, type="copyJobs", with_properties=with_properties)
+
+    def update_copy_job(self, workspace_id, copy_job_id, display_name = None, description = None, return_item=False):
+        """Update a copy job in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            copy_job_id (str): The ID of the copy job
+            display_name (str): The display name of the copy job
+            description (str): The description of the copy job
+        Returns:
+            dict: The updated copy job or CopyJob object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=copy_job_id, display_name=display_name, description=description, type="copyJobs",
+                                return_item=return_item)
+    
+    def update_copy_job_definition(self, workspace_id, copy_job_id, definition, update_metadata = None):
+        """Update the definition of an copy job
+        Args:
+            workspace_id (str): The ID of the workspace
+            copy_job_id (str): The ID of the copy job
+            definition (dict): The definition of the copy job
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated copy job definition
+        """
+        return self.update_item_definition(workspace_id, copy_job_id, type="copyJobs", definition=definition, update_metadata=update_metadata)
+
+
+    # variable libary
+    def create_variable_library(self, workspace_id, display_name, definition = None, description = None):
+        """Create a copy job in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the copy job
+            definition (dict): The definition of the copy job
+            description (str): The description of the copy job
+        Returns:
+            VariableLibrary: The created variable library
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="VariableLibraries",
+                                definition=definition,
+                                description=description)
+
+    def delete_variable_library(self, workspace_id, variable_library_id):
+        """Delete a variable library from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            variable_library_id (str): The ID of the variable library
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=variable_library_id, type="VariableLibraries")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/VariableLibraries/{variableLibraryId}
+    def get_variable_library(self, workspace_id, variable_library_id = None, variable_library_name = None):
+        """Get a variable library from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            variable_library_id (str): The ID of the variable library
+            variable_library_name (str): The name of the variable library
+        Returns:
+            VariableLibrary: The variable library object
+        """
+        from msfabricpysdkcore.otheritems import VariableLibrary
+
+        if variable_library_id is None and variable_library_name is not None:
+            variable_librarys = self.list_variable_librarys(workspace_id)
+            cjs = [cj for cj in variable_librarys if cj.display_name == variable_library_name]
+            if len(cjs) == 0:
+                raise Exception(f"Variable library with name {variable_library_name} not found")
+            variable_library_id = cjs[0].id
+        elif variable_library_id is None:
+            raise Exception("variable_library_id or the variable_library_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/VariableLibraries/{variable_library_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting variable library", return_format="json")
+
+        vl = VariableLibrary.from_dict(item_dict, core_client=self)
+        vl.get_definition()
+        return vl
+
+    def get_variable_library_definition(self, workspace_id, variable_library_id, format = None):
+        """Get the definition of an variable library
+        Args:
+            workspace_id (str): The ID of the workspace
+            variable_library_id (str): The ID of the variable library
+            format (str): The format of the definition
+        Returns:
+            dict: The variable library definition
+        """
+        return self.get_item_definition(workspace_id, variable_library_id, type="VariableLibraries", format=format)
+
+    def list_variable_libraries(self, workspace_id, with_properties = False):
+        """List variable libraries in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            list: The list of variable libraries
+        """
+        return self.list_items(workspace_id, type="VariableLibraries", with_properties=with_properties)
+
+    def update_variable_library(self, workspace_id, variable_library_id, display_name = None, description = None, return_item=False):
+        """Update a variable library in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            variable_library_id (str): The ID of the variable library
+            display_name (str): The display name of the variable library
+            description (str): The description of the variable library
+        Returns:
+            dict: The updated variable library or VariableLibrary object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=variable_library_id, display_name=display_name, description=description, type="VariableLibraries",
+                                return_item=return_item)
+    
+    def update_variable_library_definition(self, workspace_id, variable_library_id, definition, update_metadata = None):
+        """Update the definition of an variable library
+        Args:
+            workspace_id (str): The ID of the workspace
+            variable_library_id (str): The ID of the variable library
+            definition (dict): The definition of the variable library
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated variable library definition
+        """
+        return self.update_item_definition(workspace_id, variable_library_id, type="VariableLibraries", definition=definition, update_metadata=update_metadata)
+
+
+    # data flow
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows
+    def create_dataflow(self, workspace_id, display_name, definition = None, description = None):
+        """Create a dataflow in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the dataflow
+            definition (dict): The definition of the dataflow
+            description (str): The description of the dataflow
+        Returns:
+            dict: The created dataflow
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "dataflows",
+                                definition = definition,
+                                description = description)
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}
+    def delete_dataflow(self, workspace_id, dataflow_id):
+        """Delete a dataflow from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=dataflow_id, type="dataflows")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}
+    def get_dataflow(self, workspace_id, dataflow_id = None, dataflow_name = None):
+        """Get a dataflow from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            dataflow_name (str): The name of the dataflow
+        Returns:
+            Dataflow: The dataflow object
+        """
+        from msfabricpysdkcore.otheritems import Dataflow
+
+        if dataflow_id is None and dataflow_name is not None:
+            dataflows = self.list_dataflows(workspace_id)
+            dfs = [df for df in dataflows if df.display_name == dataflow_name]
+            if len(dfs) == 0:
+                raise Exception(f"Dataflow with name {dataflow_name} not found")
+            dataflow_id = dfs[0].id
+        elif dataflow_id is None:
+            raise Exception("dataflow_id or the dataflow_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting data flow", return_format="json")
+
+        df = Dataflow.from_dict(item_dict, core_client=self)
+        df.get_definition()
+        return df
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}/getDefinition
+    def get_dataflow_definition(self, workspace_id, dataflow_id, format = None):
+        """Get the definition of a dataflow
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            format (str): The format of the definition
+        Returns:
+            dict: The dataflow definition
+        """
+        return self.get_item_definition(workspace_id, dataflow_id, type="dataflows", format=format)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows
+    def list_dataflows(self, workspace_id, with_properties = False):
+        """List dataflows in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of dataflows
+        """
+        return self.list_items(workspace_id, type="dataflows", with_properties=with_properties)
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}
+    def update_dataflow(self, workspace_id, dataflow_id, display_name = None, description = None, return_item=False):
+        """Update a dataflow in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            display_name (str): The display name of the dataflow
+            description (str): The description of the dataflow
+        Returns:
+            dict: The updated dataflow
+        """
+        return self.update_item(workspace_id, item_id=dataflow_id, display_name=display_name, description=description, type="dataflows",
+                                return_item=return_item)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}/updateDefinition
+    def update_dataflow_definition(self, workspace_id, dataflow_id, definition, update_metadata = None):
+        """Update the definition of a dataflow
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            definition (dict): The definition of the dataflow
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated dataflow definition
+        """
+        return self.update_item_definition(workspace_id, dataflow_id, type="dataflows", definition=definition, update_metadata=update_metadata)
+
+
     # dataPipelines
 
     def create_data_pipeline(self, workspace_id, display_name, definition = None, description = None):
@@ -1961,6 +2765,18 @@ class FabricClientCore(FabricClient):
         dp.get_definition()
         return dp
     
+    def get_data_pipeline_definition(self, workspace_id, data_pipeline_id, format = None):
+        """Get the definition of a data pipeline
+        Args:
+            workspace_id (str): The ID of the workspace
+            data_pipeline_id (str): The ID of the data pipeline
+            format (str): The format of the definition
+        Returns:
+            dict: The data pipeline definition
+        """
+        return self.get_item_definition(workspace_id, data_pipeline_id, type="dataPipelines", format=format)
+
+    
     def list_data_pipelines(self, workspace_id, with_properties = False):
         """List data pipelines in a workspace
         Args:
@@ -1983,6 +2799,18 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item(workspace_id, item_id=data_pipeline_id, display_name=display_name, description=description, type="dataPipelines",
                                 return_item=return_item)
+    
+    def update_data_pipeline_definition(self, workspace_id, data_pipeline_id, definition, update_metadata = None):
+        """Update the definition of a data pipeline
+        Args:
+            workspace_id (str): The ID of the workspace
+            data_pipeline_id (str): The ID of the data pipeline
+            definition (dict): The definition of the data pipeline
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated data pipeline definition
+        """
+        return self.update_item_definition(workspace_id, data_pipeline_id, type="dataPipelines", definition=definition, update_metadata=update_metadata)
     
 
     # environments
@@ -2349,7 +3177,7 @@ class FabricClientCore(FabricClient):
         Returns:
             Eventstream: The eventstream object
         """
-        from msfabricpysdkcore.otheritems import Eventstream
+        from msfabricpysdkcore.eventstream import Eventstream
         if eventstream_id is None and eventstream_name is not None:
             evstreams = self.list_eventstreams(workspace_id)
             evstreams = [ev for ev in evstreams if ev.display_name == eventstream_name]
@@ -2425,6 +3253,216 @@ class FabricClientCore(FabricClient):
             dict: The updated definition of the eventstream
         """
         return self.update_item_definition(workspace_id, eventstream_id, type="eventstreams", definition=definition, update_metadata=update_metadata)
+
+    # eventstream topology
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/destinations/{destinationId}
+    def get_eventstream_destination(self, workspace_id, eventstream_id, destination_id):
+        """Get the destination of an eventstream
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            destination_id (str): The ID of the destination
+        Returns:
+            dict: The eventstream destination
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting eventstream destination", return_format="json")
+        return item_dict
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/destinations/{destinationId}/connection
+    def get_eventstream_destination_connection(self, workspace_id, eventstream_id, destination_id):
+        """Get the connection of an eventstream destination
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            destination_id (str): The ID of the destination
+        Returns:
+            dict: The eventstream destination connection
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/connection"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting eventstream destination connection", return_format="json")
+        return item_dict
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/sources/{sourceId}
+    def get_eventstream_source(self, workspace_id, eventstream_id, source_id):
+        """Get the source of an eventstream
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            source_id (str): The ID of the source
+        Returns:
+            dict: The eventstream source
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting eventstream source", return_format="json")
+        return item_dict
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/sources/{sourceId}/connection
+    def get_eventstream_source_connection(self, workspace_id, eventstream_id, source_id):
+        """Get the connection of an eventstream source
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            source_id (str): The ID of the source
+        Returns:
+            dict: The eventstream source connection
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/connection"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting eventstream source connection", return_format="json")
+        return item_dict
+
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/topology
+    def get_eventstream_topology(self, workspace_id, eventstream_id):
+        """Get the topology of an eventstream
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+        Returns:
+            dict: The eventstream topology
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/topology"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting eventstream topology", return_format="json")
+        return item_dict
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/pause
+    def pause_eventstream(self, workspace_id, eventstream_id):
+        """Pause an eventstream
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+        Returns:
+            dict: The operation result or response value
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/pause"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error pausing eventstream",
+                                         return_format="response")
+
+        return response.status_code
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/destinations/{destinationId}/pause
+    def pause_eventstream_destination(self, workspace_id, eventstream_id, destination_id):
+        """Pause an eventstream destination
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            destination_id (str): The ID of the destination
+        Returns:
+            dict: The operation result or response value
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/pause"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error pausing eventstream destination",
+                                         return_format="response")
+
+        return response.status_code
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/sources/{sourceId}/pause
+    def pause_eventstream_source(self, workspace_id, eventstream_id, source_id):
+        """Pause an eventstream source
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            source_id (str): The ID of the source
+        Returns:
+            dict: The operation result or response value
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/pause"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error pausing eventstream source",
+                                         return_format="response")
+
+        return response.status_code
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/resume
+    def resume_eventstream(self, workspace_id, eventstream_id, start_type, custom_start_date_time = None):
+        """Resume an eventstream
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            start_type (str): The start type of the eventstream
+            custom_start_date_time (str): The custom start date time of the eventstream
+        Returns:
+            dict: The operation result or response value
+        """
+
+        body = {
+            "startType": start_type
+        }
+
+        if custom_start_date_time is not None:
+            body["customStartDateTime"] = custom_start_date_time
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/resume"
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429], error_message="Error resuming eventstream",
+                                         return_format="response")
+
+        return response.status_code
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/destinations/{destinationId}/resume
+    def resume_eventstream_destination(self, workspace_id, eventstream_id, destination_id, start_type, custom_start_date_time = None):
+        """Resume an eventstream destination
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            destination_id (str): The ID of the destination
+            start_type (str): The start type of the eventstream destination
+            custom_start_date_time (str): The custom start date time of the eventstream destination
+        Returns:
+            dict: The operation result or response value
+        """
+        body = {
+            "startType": start_type
+        }
+
+        if custom_start_date_time is not None:
+            body["customStartDateTime"] = custom_start_date_time
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/resume"
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429], error_message="Error resuming eventstream destination",
+                                         return_format="response")
+
+        return response.status_code
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/eventstreams/{eventstreamId}/sources/{sourceId}/resume
+    def resume_eventstream_source(self, workspace_id, eventstream_id, source_id, start_type, custom_start_date_time = None):
+        """Resume an eventstream source
+        Args:
+            workspace_id (str): The ID of the workspace
+            eventstream_id (str): The ID of the eventstream
+            source_id (str): The ID of the source
+            start_type (str): The start type of the eventstream source
+            custom_start_date_time (str): The custom start date time of the eventstream source
+        Returns:
+            dict: The operation result or response value
+        """
+        body = {
+            "startType": start_type
+        }
+
+        if custom_start_date_time is not None:
+            body["customStartDateTime"] = custom_start_date_time
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/resume"
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429], error_message="Error resuming eventstream source",
+                                         return_format="response")
+
+        return response.status_code
 
     # graphqlapis
 
@@ -2989,6 +4027,88 @@ class FabricClientCore(FabricClient):
         else:
             self._logger.info("Table created")
         return response.status_code
+    
+    # lakehouse livy sessions
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses/{lakehouseId}/livySessions
+    def list_lakehouse_livy_sessions(self, workspace_id, lakehouse_id):
+        """List all livy sessions for a lakehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+        Returns:
+            list: The list of livy sessions
+        """
+        return self.list_livy_sessions(workspace_id=workspace_id, item_id=lakehouse_id, item_type="lakehouses")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses/{lakehouseId}/livySessions/{livyId}
+    def get_lakehouse_livy_session(self, workspace_id, lakehouse_id, livy_id):
+        """Get a livy session for a lakehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+            livy_id (str): The ID of the livy session
+        Returns:
+            dict: The livy session
+        """
+        return self.get_livy_session(workspace_id=workspace_id,
+                                     item_id=lakehouse_id, item_type="lakehouses", livy_id=livy_id)
+
+    # Livy sessions
+    
+    
+    def get_livy_session(self, workspace_id, item_id, item_type = None, livy_id = None):
+        """Get a livy session for a lakehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            item_type (str): The type of the item
+            livy_id (str): The ID of the livy session
+        Returns:
+            dict: The livy session
+        """
+
+        if "lakehouse" in item_type.lower():
+            item_type = "lakehouses"
+        elif "notebook" in item_type.lower():
+            item_type = "notebooks"
+        elif "sparkjobdef" in item_type.lower() or "sjd" in item_type.lower():
+            item_type = "sparkJobDefinitions"
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{item_type}/{item_id}/livySessions/{livy_id}"
+        
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting livy session", return_format="json")
+        return item_dict
+
+    def list_livy_sessions(self, workspace_id, item_id = None, item_type = None):
+        """List all livy sessions for a lakehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            item_type (str): The type of the item
+        Returns:
+            list: The list of livy sessions
+        """
+        if item_id is None:
+            item_type = "spark"
+        elif "lakehouse" in item_type.lower():
+            item_type = "lakehouses"
+        elif "notebook" in item_type.lower():
+            item_type = "notebooks"
+        elif "sparkjobdef" in item_type.lower() or "sjd" in item_type.lower():
+            item_type = "sparkJobDefinitions"
+        
+        if item_id is None:
+            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/livySessions"
+        else:
+            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{item_type}/{item_id}/livySessions"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                      error_message="Error listing livy sessions", return_format="value_json", paging=True)
+
+        return items
+
 
     # mirrored_database
 
@@ -3486,7 +4606,29 @@ class FabricClientCore(FabricClient):
             dict: The updated notebook
         """
         return self.update_item_definition(workspace_id, notebook_id, definition, type="notebooks")
+
+    def get_notebook_livy_session(self, workspace_id, notebook_id, livy_id):
+        """Get a livy session for a notebook
+        Args:
+            workspace_id (str): The ID of the workspace
+            notebook_id (str): The ID of the notebook
+            livy_id (str): The ID of the livy session
+        Returns:
+            dict: The livy session
+        """
+        return self.get_livy_session(workspace_id=workspace_id, item_id=notebook_id, item_type="notebooks", livy_id=livy_id)
     
+    def list_notebook_livy_sessions(self, workspace_id, notebook_id):
+        """List all livy sessions for a notebook
+        Args:
+            workspace_id (str): The ID of the workspace
+            notebook_id (str): The ID of the notebook
+        Returns:
+            list: The list of livy sessions
+        """
+
+        return self.list_livy_sessions(workspace_id=workspace_id, item_id=notebook_id, item_type="notebooks")
+
     # paginatedReports
 
     def list_paginated_reports(self, workspace_id):
@@ -4083,6 +5225,27 @@ class FabricClientCore(FabricClient):
         return self.get_item_job_instance(workspace_id = workspace_id,
                                           item_id = spark_job_definition_id,
                                           job_instance_id = job_instance_id)
+    
+    def list_spark_job_definition_livy_sessions(self, workspace_id, spark_job_definition_id):
+        """List all livy sessions for a spark job definition
+        Args:
+            workspace_id (str): The ID of the workspace
+            spark_job_definition_id (str): The ID of the spark job definition
+        Returns:
+            list: The list of livy sessions
+        """
+        return self.list_livy_sessions(workspace_id=workspace_id, item_id=spark_job_definition_id, item_type="sparkJobDefinitions")
+    
+    def get_spark_job_definition_livy_session(self, workspace_id, spark_job_definition_id, livy_id):
+        """Get a livy session for a spark job definition
+        Args:
+            workspace_id (str): The ID of the workspace
+            spark_job_definition_id (str): The ID of the spark job definition
+            livy_id (str): The ID of the livy session
+        Returns:
+            dict: The livy session
+        """
+        return self.get_livy_session(workspace_id=workspace_id, item_id=spark_job_definition_id, item_type="sparkJobDefinitions", livy_id=livy_id)
 
     # sql database
 

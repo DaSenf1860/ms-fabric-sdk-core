@@ -79,6 +79,15 @@ class Item:
         self.definition = definition 
         return response
     
+    # Tags   
+    def apply_tags(self, tags):
+        """Apply tags to an item in a workspace"""
+        return self.core_client.apply_tags(workspace_id=self.workspace_id, item_id=self.id, tags=tags)
+    
+    def unapply_tags(self, tags):
+        """Unapply tags from an item in a workspace"""
+        return self.core_client.unapply_tags(workspace_id=self.workspace_id, item_id=self.id, tags=tags)
+    
     # Shortcut
 
     def create_shortcut(self, path, name, target):

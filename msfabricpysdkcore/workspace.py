@@ -152,6 +152,16 @@ class Workspace:
         return self.core_client.update_workspace_role_assignment(workspace_id=self.id, role=role, workspace_role_assignment_id=workspace_role_assignment_id)
 
 
+    # Tags
+    
+    def apply_tags(self, item_id, tags):
+        """Apply tags to an item in a workspace"""
+        return self.core_client.apply_tags(workspace_id=self.id, item_id=item_id, tags=tags)
+    
+    def unapply_tags(self, item_id, tags):
+        """Unapply tags from an item in a workspace"""
+        return self.core_client.unapply_tags(workspace_id=self.id, item_id=item_id, tags=tags)
+
     # External Data Shares
 
     # create
@@ -174,6 +184,75 @@ class Workspace:
     def revoke_external_data_share(self, item_id, external_data_share_id):
         return self.core_client.revoke_external_data_share(workspace_id=self.id, item_id=item_id, external_data_share_id=external_data_share_id)
     
+    # Folders
+     # Folders
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders
+    def create_folder(self, display_name, parent_folder_id = None):
+        """Create a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the folder
+            parent_folder_id (str): The ID of the parent folder
+        Returns:
+            dict: The folder
+        """
+        return self.core_client.create_folder(workspace_id=self.id, display_name=display_name, parent_folder_id=parent_folder_id)
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}
+    def delete_folder(self, folder_id):
+        """Delete a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_folder(workspace_id=self.id, folder_id=folder_id)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}
+    def get_folder(self, folder_id):
+        """Get a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+        Returns:
+            dict: The folder
+        """
+        return self.core_client.get_folder(workspace_id=self.id, folder_id=folder_id)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders
+    def list_folders(self):
+        """List folders in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            list: A list of folders
+        """
+        return self.core_client.list_folders(workspace_id=self.id)
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}/move
+    def move_folder(self, folder_id, target_folder_id = None):
+        """Move a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+            target_folder_id (str): The ID of the target folder
+        Returns:
+            dict: The moved folder
+        """
+        return self.core_client.move_folder(workspace_id=self.id, folder_id=folder_id, target_folder_id=target_folder_id)
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders/{folderId}
+    def update_folder(self, folder_id, display_name = None):
+        """Update a folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            folder_id (str): The ID of the folder
+            display_name (str): The new display name of the folder
+        Returns:
+            dict: The updated folder
+        """
+        return self.core_client.update_folder(workspace_id=self.id, folder_id=folder_id, display_name=display_name)
 
     # Item specific operations
 
@@ -344,6 +423,112 @@ class Workspace:
     def list_mirrored_warehouses(self):
         return self.core_client.list_mirrored_warehouses(workspace_id=self.id)
 
+    # copy jobs
+
+    def create_copy_job(self, display_name, definition = None, description = None):
+        """Create a copy job in a workspace
+        Args:
+            display_name (str): The display name of the copy job
+            definition (dict): The definition of the copy job
+            description (str): The description of the copy job
+        Returns:
+            dict: The created copy job
+        """
+        return self.core_client.create_copy_job(workspace_id=self.id,
+                                                display_name=display_name,
+                                                definition=definition,
+                                                description=description)
+    
+    def delete_copy_job(self, copy_job_id):
+        """Delete a copy job from a workspace
+        Args:
+            copy_job_id (str): The ID of the copy job
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_copy_job(workspace_id=self.id, copy_job_id=copy_job_id)
+    
+    def get_copy_job(self, copy_job_id = None, copy_job_name = None):
+        """Get a copy job from a workspace
+        Args:
+            copy_job_id (str): The ID of the copy job
+            copy_job_name (str): The name of the copy job
+        Returns:
+            CopyJob: The copy job object
+        """
+        from msfabricpysdkcore.otheritems import CopyJob
+
+        return self.core_client.get_copy_job(workspace_id=self.id, copy_job_id=copy_job_id, copy_job_name=copy_job_name)
+    
+    def get_copy_job_definition(self, copy_job_id, format = None):
+        """Get the definition of an copy job
+        Args:
+            copy_job_id (str): The ID of the copy job
+            format (str): The format of the definition
+        Returns:
+            dict: The copy job definition
+        """
+        return self.core_client.get_copy_job_definition(workspace_id=self.id, copy_job_id=copy_job_id, format=format)
+
+    def list_copy_jobs(self, with_properties = False):
+        """List copy jobs in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of copy jobs
+        """
+        return self.core_client.list_copy_jobs(workspace_id=self.id, with_properties=with_properties)
+
+    def update_copy_job(self, copy_job_id, display_name = None, description = None):
+        """Update a copy job in a workspace
+        Args:
+            copy_job_id (str): The ID of the copy job
+            display_name (str): The display name of the copy job
+            description (str): The description of the copy job
+        Returns:
+            dict: The updated copy job
+        """
+        return self.core_client.update_copy_job(workspace_id=self.id, copy_job_id=copy_job_id,
+                                                display_name=display_name, description=description)
+    
+
+    def update_copy_job_definition(self, copy_job_id, definition, update_metadata = None):
+        """Update the definition of a copy job in a workspace
+        Args:
+            copy_job_id (str): The ID of the copy job
+            definition (dict): The new definition of the copy job
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated copy job
+        """
+        return self.core_client.update_copy_job_definition(workspace_id=self.id, copy_job_id=copy_job_id,
+                                                           definition=definition, update_metadata=update_metadata)
+
+    # dataflows
+    def create_dataflow(self, display_name, definition = None, description = None):
+        return self.core_client.create_dataflow(workspace_id=self.id, display_name=display_name,
+                                                definition=definition, description=description)
+    
+    def delete_dataflow(self, dataflow_id):
+        return self.core_client.delete_dataflow(workspace_id=self.id, dataflow_id=dataflow_id)
+    
+    def get_dataflow(self, dataflow_id = None, dataflow_name = None):
+        return self.core_client.get_dataflow(workspace_id=self.id, dataflow_id=dataflow_id, dataflow_name=dataflow_name)
+    
+    def get_dataflow_definition(self, dataflow_id, format = None):
+        return self.core_client.get_dataflow_definition(workspace_id=self.id, dataflow_id=dataflow_id, format=format)
+    
+    def list_dataflows(self, with_properties = False):
+        return self.core_client.list_dataflows(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_dataflow(self, dataflow_id, display_name = None, description = None):
+        return self.core_client.update_dataflow(workspace_id=self.id, dataflow_id=dataflow_id,
+                                                display_name=display_name, description=description)
+    
+    def update_dataflow_definition(self, dataflow_id, definition, update_metadata = None):
+        return self.core_client.update_dataflow_definition(workspace_id=self.id, dataflow_id=dataflow_id,
+                                                           definition=definition, update_metadata=update_metadata)
+
     # datapipelines
 
     def create_data_pipeline(self, display_name, definition = None, description = None):
@@ -357,12 +542,19 @@ class Workspace:
         return self.core_client.get_data_pipeline(workspace_id=self.id, data_pipeline_id=data_pipeline_id,
                                                  data_pipeline_name=data_pipeline_name)
     
+    def get_data_pipeline_definition(self, data_pipeline_id, format = None):
+        return self.core_client.get_data_pipeline_definition(workspace_id=self.id, data_pipeline_id=data_pipeline_id, format=format)
+    
     def delete_data_pipeline(self, data_pipeline_id):
         return self.core_client.delete_data_pipeline(workspace_id=self.id, data_pipeline_id=data_pipeline_id)
     
     def update_data_pipeline(self, data_pipeline_id, display_name = None, description = None):
         return self.core_client.update_data_pipeline(workspace_id=self.id, data_pipeline_id=data_pipeline_id,
                                                     display_name=display_name, description=description)
+    
+    def update_data_pipeline_definition(self, data_pipeline_id, definition, update_metadata = None):
+        return self.core_client.update_data_pipeline_definition(workspace_id=self.id, data_pipeline_id=data_pipeline_id,
+                                                                definition=definition, update_metadata=update_metadata)
     
     # environments
 
@@ -491,6 +683,60 @@ class Workspace:
         """Update the definition of an eventstream in a workspace"""
         return self.core_client.update_eventstream_definition(workspace_id=self.id, eventstream_id=eventstream_id,
                                                              definition=definition, update_metadata=update_metadata)
+
+    # eventstream topology
+    def get_eventstream_destination(self, eventstream_id, destination_id):
+        """Get the destination of an eventstream in a workspace"""
+        return self.core_client.get_eventstream_destination(workspace_id=self.id, eventstream_id=eventstream_id, destination_id=destination_id)
+    
+    def get_eventstream_destination_connection(self, eventstream_id, destination_id):
+        """Get the connection of a destination in an eventstream in a workspace"""
+        return self.core_client.get_eventstream_destination_connection(workspace_id=self.id, eventstream_id=eventstream_id,
+                                                                       destination_id=destination_id)
+    
+    def get_eventstream_source(self, eventstream_id, source_id):
+        """Get the source of an eventstream in a workspace"""
+        return self.core_client.get_eventstream_source(workspace_id=self.id, eventstream_id=eventstream_id, source_id=source_id)
+    
+    def get_eventstream_source_connection(self, eventstream_id, source_id):
+        """Get the connection of a source in an eventstream in a workspace"""
+        return self.core_client.get_eventstream_source_connection(workspace_id=self.id, eventstream_id=eventstream_id,
+                                                                   source_id=source_id)
+
+    def get_eventstream_topology(self, eventstream_id):
+        """Get the topology of an eventstream in a workspace"""
+        return self.core_client.get_eventstream_topology(workspace_id=self.id, eventstream_id=eventstream_id)
+    
+    def pause_eventstream(self, eventstream_id):
+        """Pause an eventstream in a workspace"""
+        return self.core_client.pause_eventstream(workspace_id=self.id, eventstream_id=eventstream_id)
+    
+    def pause_eventstream_destination(self, eventstream_id, destination_id):
+        """Pause a destination in an eventstream in a workspace"""
+        return self.core_client.pause_eventstream_destination(workspace_id=self.id, eventstream_id=eventstream_id,
+                                                               destination_id=destination_id)
+    
+    def pause_eventstream_source(self, eventstream_id, source_id):
+        """Pause a source in an eventstream in a workspace"""
+        return self.core_client.pause_eventstream_source(workspace_id=self.id, eventstream_id=eventstream_id,
+                                                         source_id=source_id)
+    
+    def resume_eventstream(self, eventstream_id, start_type, custom_start_date_time = None):
+        """Resume an eventstream in a workspace"""
+        return self.core_client.resume_eventstream(workspace_id=self.id, eventstream_id=eventstream_id, start_type=start_type,
+                                                   custom_start_date_time=custom_start_date_time)
+    
+    def resume_eventstream_destination(self, eventstream_id, destination_id, start_type, custom_start_date_time = None):
+        """Resume a destination in an eventstream in a workspace"""
+        return self.core_client.resume_eventstream_destination(workspace_id=self.id, eventstream_id=eventstream_id,
+                                                                destination_id=destination_id, start_type=start_type,
+                                                                custom_start_date_time=custom_start_date_time)
+    
+    def resume_eventstream_source(self, eventstream_id, source_id, start_type, custom_start_date_time = None):
+        """Resume a source in an eventstream in a workspace"""
+        return self.core_client.resume_eventstream_source(workspace_id=self.id, eventstream_id=eventstream_id,
+                                                         source_id=source_id, start_type=start_type,
+                                                         custom_start_date_time=custom_start_date_time)
 
     # graphQLapis
 
@@ -657,6 +903,14 @@ class Workspace:
                                             file_extension=file_extension, format_options=format_options,
                                             mode=mode, recursive=recursive, wait_for_completion=wait_for_completion)
     
+    def list_lakehouse_livy_sessions(self, lakehouse_id):
+        """List lakehouse livy sessions in a workspace"""
+        return self.core_client.list_lakehouse_livy_sessions(workspace_id=self.id, lakehouse_id=lakehouse_id)
+    
+    def get_lakehouse_livy_session(self, lakehouse_id, livy_id):
+        """Get a lakehouse livy session from a workspace"""
+        return self.core_client.get_lakehouse_livy_session(workspace_id=self.id, lakehouse_id=lakehouse_id, livy_id=livy_id)
+    
     # mirroredDatabases
 
     def create_mirrored_database(self, display_name, description = None, definition = None):
@@ -806,6 +1060,14 @@ class Workspace:
         """Update the definition of a notebook in a workspace"""
         return self.core_client.update_notebook_definition(workspace_id=self.id, notebook_id=notebook_id, definition=definition)
     
+    def list_notebook_livy_sessions(self, notebook_id):
+        """List notebook livy sessions in a workspace"""
+        return self.core_client.list_notebook_livy_sessions(workspace_id=self.id, notebook_id=notebook_id)
+    
+    def get_notebook_livy_session(self, notebook_id, livy_id):
+        """Get a notebook livy session from a workspace"""
+        return self.core_client.get_notebook_livy_session(workspace_id=self.id, notebook_id=notebook_id, livy_id=livy_id)
+    
     # paginated reports
         
     def list_paginated_reports(self):
@@ -910,6 +1172,11 @@ class Workspace:
         """Update the definition of a semantic model in a workspace"""
         return self.core_client.update_semantic_model_definition(workspace_id=self.id, semantic_model_id=semantic_model_id, definition=definition)
 
+    # livy sessions
+    def list_livy_sessions(self):
+        """List livy sessions in a workspace"""
+        return self.core_client.list_livy_sessions(workspace_id=self.id)
+
     # spark workspace custom pools
 
     def list_workspace_custom_pools(self):
@@ -985,6 +1252,14 @@ class Workspace:
         """Run on demand spark job definition"""
         return self.core_client.run_on_demand_spark_job_definition(workspace_id=self.id, spark_job_definition_id=spark_job_definition_id, job_type=job_type)
     
+    def list_spark_job_definition_livy_sessions(self, spark_job_definition_id):
+        """List spark job definition livy sessions in a workspace"""
+        return self.core_client.list_spark_job_definition_livy_sessions(workspace_id=self.id, spark_job_definition_id=spark_job_definition_id)
+    
+    def get_spark_job_definition_livy_session(self, spark_job_definition_id, livy_id):
+        """Get a livy session for a spark job definition from a workspace"""
+        return self.core_client.get_spark_job_definition_livy_session(workspace_id=self.id, spark_job_definition_id=spark_job_definition_id, livy_id=livy_id)
+
     # sql databases
 
     def create_sql_database(self, display_name, description = None):
@@ -1029,3 +1304,82 @@ class Workspace:
     def update_warehouse(self, warehouse_id, display_name = None, description = None):
         """Update a warehouse in a workspace"""
         return self.core_client.update_warehouse(workspace_id=self.id, warehouse_id=warehouse_id, display_name=display_name, description=description)    
+
+    # variable libraries
+
+    def create_variable_library(self, display_name, definition = None, description = None):
+        """Create a variable library in a workspace
+        Args:
+            display_name (str): The display name of the variable library
+            definition (dict): The definition of the variable library
+            description (str): The description of the variable library
+        Returns:
+            VariableLibrary: The created variable library
+        """
+        return self.core_client.create_variable_library(workspace_id=self.id,
+                                                        display_name=display_name,
+                                                        definition=definition,
+                                                        description=description)
+
+    def delete_variable_library(self, variable_library_id):
+        """Delete a variable library from a workspace
+        Args:
+            variable_library_id (str): The ID of the variable library
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_variable_library(workspace_id=self.id, variable_library_id=variable_library_id)
+
+    def get_variable_library(self, variable_library_id = None, variable_library_name = None):
+        """Get a variable library from a workspace
+        Args:
+            variable_library_id (str): The ID of the variable library
+            variable_library_name (str): The name of the variable library
+        Returns:
+            VariableLibrary: The variable library object
+        """
+        return self.core_client.get_variable_library(workspace_id=self.id, variable_library_id=variable_library_id, variable_library_name=variable_library_name)
+
+    def get_variable_library_definition(self, variable_library_id, format = None):
+        """Get the definition of a variable library
+        Args:
+            variable_library_id (str): The ID of the variable library
+            format (str): The format of the definition
+        Returns:
+            dict: The variable library definition
+        """
+        return self.core_client.get_variable_library_definition(workspace_id=self.id, variable_library_id=variable_library_id, format=format)
+
+    def list_variable_libraries(self, with_properties = False):
+        """List variable libraries in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of variable libraries
+        """
+        return self.core_client.list_variable_libraries(workspace_id=self.id, with_properties=with_properties)
+
+    def update_variable_library(self, variable_library_id, display_name = None, description = None, return_item = False):
+        """Update a variable library in a workspace
+        Args:
+            variable_library_id (str): The ID of the variable library
+            display_name (str): The display name of the variable library
+            description (str): The description of the variable library
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated variable library or VariableLibrary object if return_item is True
+        """
+        return self.core_client.update_variable_library(workspace_id=self.id, variable_library_id=variable_library_id,
+                                                        display_name=display_name, description=description, return_item=return_item)
+
+    def update_variable_library_definition(self, variable_library_id, definition, update_metadata = None):
+        """Update the definition of a variable library in a workspace
+        Args:
+            variable_library_id (str): The ID of the variable library
+            definition (dict): The new definition of the variable library
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated variable library definition
+        """
+        return self.core_client.update_variable_library_definition(workspace_id=self.id, variable_library_id=variable_library_id,
+                                                                   definition=definition, update_metadata=update_metadata)

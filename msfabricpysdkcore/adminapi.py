@@ -502,7 +502,121 @@ class FabricClientAdmin(FabricClient):
                                                    error_message = "Error setting labels", return_format="json")
 
         return response_json
+    
+    # POST https://api.fabric.microsoft.com/v1/admin/items/bulkRemoveSharingLinks
+    def bulk_remove_sharing_links(self, items, sharing_link_type):
+        """Remove sharing links in bulk
+        Args:
+            items (list): The list of item IDs
+            sharing_link_type (str): The type of the sharing link
+        Returns:
+            Response: The response from the API
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/items/bulkRemoveSharingLinks"
 
+        if len(items) > 500:
+            self.bulk_remove_sharing_links(items = items[500:], sharing_link_type = sharing_link_type)
+            items = items[:500]
+
+        body = {
+            "items": items,
+            "sharingLinkType": sharing_link_type
+        }
+
+        response = self.calling_routine(url = url, operation = "POST", body = body, response_codes = [200, 202, 429],
+                                                   error_message = "Error removing sharing links", return_format="response")
+
+        return response
+    
+    # POST https://api.fabric.microsoft.com/v1/admin/items/removeAllSharingLinks
+    def remove_all_sharing_links(self, sharing_link_type):
+        """Remove all sharing links
+        Args:
+            sharing_link_type (str): The type of the sharing link
+        Returns:
+            Response: The response from the API
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/items/removeAllSharingLinks"
+
+        body = {
+            "sharingLinkType": sharing_link_type
+        }
+
+        response= self.calling_routine(url = url, operation = "POST", body = body, response_codes = [200, 202, 429],
+                                                   error_message = "Error removing all sharing links", return_format="response")
+
+        return response
+    
+    # Tags APIs
+
+    #POST https://api.fabric.microsoft.com/v1/admin/tags/bulkCreateTags
+    def bulk_create_tags(self, create_tags_request):
+        """Create tags in bulk
+        Args:
+            create_tags_request (list): The request body
+        Returns:
+            dict: The response from the API
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/tags/bulkCreateTags"
+
+        body = {
+            "createTagsRequest": create_tags_request
+        }
+
+        response_json: dict = self.calling_routine(url = url, operation = "POST", body = body,
+                                                   response_codes = [201, 429], error_message = "Error creating tags",
+                                                   return_format="json")
+
+        return response_json
+    
+    # DELETE https://api.fabric.microsoft.com/v1/admin/tags/{tagId}
+    def delete_tag(self, tag_id):
+        """Delete a tag
+        Args:
+            tag_id (str): The ID of the tag
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/tags/{tag_id}"
+
+        response:requests.Response = self.calling_routine(url = url, operation = "DELETE", response_codes = [200, 429],
+                                                          error_message = "Error deleting tag", return_format="response")
+
+        return response.status_code
+    
+    # GET https://api.fabric.microsoft.com/v1/admin/tags
+    def list_tags(self):
+        """List all tags
+        Returns:
+            list: The list of tags
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/tags"
+
+        items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
+                                           error_message = "Error listing tags", return_format="value_json", paging=True)
+
+        return items
+
+    # PATCH https://api.fabric.microsoft.com/v1/admin/tags/{tagId}
+    def update_tag(self, tag_id, display_name = None):
+        """Update a tag
+        Args:
+            tag_id (str): The ID of the tag
+            display_name (str): The display name of the tag
+        Returns:
+            dict: The response from the API
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/tags/{tag_id}"
+        body = {}
+        if display_name:
+            body["displayName"] = display_name
+
+        response_json: dict = self.calling_routine(url = url, operation = "PATCH", body = body, response_codes = [200, 429],
+                                                   error_message = "Error updating tag", return_format="json")
+
+        return response_json
+
+    
     # Tenant Settings APIs
 
     # DELETE https://api.fabric.microsoft.com/v1/admin/capacities/{capacityId}/delegatedTenantSettingOverrides/{tenantSettingName}

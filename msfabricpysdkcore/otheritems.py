@@ -1,6 +1,42 @@
 from msfabricpysdkcore.item import Item
 
 
+class CopyJob(Item):
+    """Class to represent a copy job in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return CopyJob(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+class Dataflow(Item):
+    """Class to represent a dataflow in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return Dataflow(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+class DataPipeline(Item):
+    """Class to represent a spark job definition in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return DataPipeline(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+        
+    def run_on_demand_item_job(self, execution_data=None):
+        return self.core_client.run_on_demand_item_job(workspace_id=self.workspace_id, item_id=self.id, job_type="Pipeline", execution_data=execution_data)
+    
 class Eventhouse(Item):
     """Class to represent a eventhouse in Microsoft Fabric"""
      
@@ -56,6 +92,13 @@ class SparkJobDefinition(Item):
     def run_on_demand_spark_job_definition(self, job_type = "sparkjob"):
         return self.core_client.run_on_demand_spark_job_definition(workspace_id=self.workspace_id, spark_job_definition_id=self.id, job_type=job_type)
 
+    def list_livy_sessions(self):
+        """List all livy sessions in the spark job definition"""
+        return self.core_client.list_spark_job_definition_livy_sessions(self.workspace_id, self.id)
+
+    def get_livy_session(self, livy_id):
+        """Get a livy session in the spark job definition"""
+        return self.core_client.get_spark_job_definition_livy_session(self.workspace_id, self.id, livy_id)
 
 class Warehouse(Item):
     """Class to represent a warehouse in Microsoft Fabric"""
@@ -126,31 +169,11 @@ class KQLQueryset(Item):
         return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="kqlQuerysets",
                                                        update_metadata=update_metadata)
     
-    
-
-class Eventstream(Item):
-    """Class to represent a eventstream in Microsoft Fabric"""
-     
-    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
-        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
-    
-    def from_dict(item_dict, core_client):
-        return Eventstream(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
-            properties=item_dict.get('properties', None),
-            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
-
-    def get_definition(self, type=None, format=None):
-        """Method to get the definition of the eventstream"""
-        return super().get_definition(type="eventstreams", format=format)
-    
-    def update_definition(self, definition):
-        """Method to update the definition of the eventstream"""
-        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="eventstreams")
 
 class GraphQLApi(Item):
     """Class to represent a graphql api in Microsoft Fabric"""
-     
-    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
         super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
     
     def from_dict(item_dict, core_client):
@@ -251,6 +274,14 @@ class Notebook(Item):
     def update_definition(self, definition):
         """Method to update the definition of the notebook"""
         return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="notebooks")
+    
+    def list_livy_sessions(self):
+        """List all livy sessions in the notebook"""
+        return self.core_client.list_notebook_livy_sessions(self.workspace_id, self.id)
+
+    def get_livy_session(self, livy_id):
+        """Get a livy session in the notebook"""
+        return self.core_client.get_notebook_livy_session(self.workspace_id, self.id, livy_id)
 
 class Reflex(Item):
     """Class to represent a reflex in Microsoft Fabric"""
@@ -320,25 +351,13 @@ class SQLDatabase(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
-class DataPipeline(Item):
-    """Class to represent a spark job definition in Microsoft Fabric"""
-     
-    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+class VariableLibrary(Item):
+    """Class to represent a variable library in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
         super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
 
     def from_dict(item_dict, core_client):
-        return DataPipeline(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+        return VariableLibrary(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
-    
-    def get_definition(self, type=None, format=None, **kwargs):
-        return super().get_definition(type="dataPipelines", format=format, **kwargs)
-    
-    def update_definition(self, definition):
-        """Method to update the definition of the dataPipeline"""
-        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="dataPipelines")
-    
-    def run_on_demand_item_job(self, execution_data=None):
-        return self.core_client.run_on_demand_item_job(workspace_id=self.workspace_id, item_id=self.id, job_type="Pipeline", execution_data=execution_data)
-    
-    

@@ -5,10 +5,14 @@ All APIs are also available on workspace level as well.
 
 Go to:
 - [Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports](#dashboards-datamarts-sql-endpoints-mirrored-warehouses-paginated-reports)
+- [Copy Jobs](#copy-jobs)
+- [Dataflows](#dataflows)
 - [Data Pipelines](#data-pipelines)
 - [Environments](#environments)
 - [Eventhouses](#eventhouses)
 - [Eventstreams](#eventstreams)
+- [Eventstream Topology](#eventstream-topology)
+- [GraphQL APIs](#graphql-apis)
 - [KQL Dashboards](#kql-dashboards)
 - [KQL Databases](#kql-databases)
 - [KQL Querysets](#kql-querysets)
@@ -19,8 +23,11 @@ Go to:
 - [Notebooks](#notebooks)
 - [Reports](#reports)
 - [Semantic Models](#semantic-models)
+- [Spark Livy Sessions](#spark-livy-sessions)
 - [Spark Custom Pools](#spark-custom-pools)
 - [Spark Job Definitions](#spark-job-definitions)
+- [SQL Databases](#sql-databases)
+- [Variable Libraries](#variable-libraries)
 - [Warehouses](#warehouses)
 
 
@@ -55,6 +62,78 @@ fc.update_paginated_report(workspace_id="1232", paginated_report_id="12312",
 
 ```
 
+## Copy Jobs
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "asdfasdf"
+item_id = "asdfasdf9"
+
+# Get copy job definition
+copy_job_definition = fcc.get_copy_job_definition(workspace_id=workspace_id, copy_job_id=item_id)
+
+# Create copy job
+copy_job_new = fcc.create_copy_job(workspace_id=workspace_id, display_name="name", definition=definition)
+
+# Get copy job
+copy_job_get = fcc.get_copy_job(workspace_id=workspace_id, copy_job_id=copy_job_new.id)
+
+# List copy jobs
+copy_jobs = fcc.list_copy_jobs(workspace_id=workspace_id)
+
+# Update copy job
+copy_job_updated = fcc.update_copy_job(workspace_id=workspace_id, copy_job_id=copy_job_new.id, display_name="date_str_updated", return_item=True)
+
+# Update copy job definition
+copy_job_updated = fcc.update_copy_job_definition(workspace_id=workspace_id, copy_job_id=copy_job_new.id, definition=definition)
+
+# Delete copy job
+resp = fcc.delete_copy_job(workspace_id=workspace_id, copy_job_id=copy_job.id)
+
+
+```
+
+### Dataflows
+
+```python
+from msfabricpysdkcore import FabricClientCore
+from datetime import datetime
+
+fcc = FabricClientCore()
+
+workspace_id = "0asdfasdfd3"
+item_id = "8bsadf4088"
+
+# List dataflows
+dataflows = fcc.list_dataflows(workspace_id=workspace_id)
+
+# Get dataflow definition
+dataflow_definition = fcc.get_dataflow_definition(workspace_id=workspace_id, dataflow_id=item_id)
+definition = dataflow_definition["definition"]
+
+date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+date_str = date_str.replace(" ", "T").replace(":", "").replace("-", "")
+date_str = f"dataflow{date_str}"
+
+# Create dataflow
+dataflow_new = fcc.create_dataflow(workspace_id=workspace_id, display_name=date_str, definition=definition)
+
+# Get dataflow
+dataflow_get = fcc.get_dataflow(workspace_id=workspace_id, dataflow_id=dataflow_new.id)
+
+# Update dataflow
+date_str_updated = date_str + "_updated"
+dataflow_updated = fcc.update_dataflow(workspace_id=workspace_id, dataflow_id=dataflow_new.id, display_name=date_str_updated, return_item=True)
+
+# Update dataflow definition
+dataflow_updated = fcc.update_dataflow_definition(workspace_id=workspace_id, dataflow_id=dataflow_new.id, definition=definition)
+
+# Delete dataflow
+resp = fcc.delete_dataflow(workspace_id=workspace_id, dataflow_id=dataflow_new.id)
+
+
+```
 
 ## Data Pipelines
 
@@ -63,25 +142,36 @@ from msfabricpysdkcore import FabricClientCore
 
 fc = FabricClientCore()
 
-workspace = fc.get_workspace_by_name("testitems")
-workspace_id = workspace.id
+workspace_id = "asdfasdf"
+item_id = "b7dasfasf26b5d3"
 
-# List Data Pipelines
+# List data pipelines
+data_pipelines = fcc.list_data_pipelines(workspace_id=workspace_id)
 
-dps = fc.list_data_pipelines(workspace_id)
+# Get data pipeline definition
+data_pipeline_definition = fcc.get_data_pipeline_definition(workspace_id=workspace_id, data_pipeline_id=item_id)
+definition = data_pipeline_definition["definition"]
 
-# Create Data Pipeline
+date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+date_str = date_str.replace(" ", "T").replace(":", "").replace("-", "")
+date_str = f"data_pipeline{date_str}"
 
-dp_new = fc.create_data_pipeline(workspace_id, display_name="pipeline_new", description="asda")
+# Create data pipeline
+data_pipeline_new = fcc.create_data_pipeline(workspace_id=workspace_id, display_name=date_str, definition=definition)
 
-# Get Data Pipeline
-dp = fc.get_data_pipeline(workspace_id, data_pipeline_name="pipeline1")
+# Get data pipeline
+data_pipeline_get = fcc.get_data_pipeline(workspace_id=workspace_id, data_pipeline_id=data_pipeline_new.id)
 
-# Update Data Pipeline
-dp2 = fc.update_data_pipeline(workspace_id, dp.id, display_name="pipeline2", return_item=True)
+# Update data pipeline
+date_str_updated = date_str + "_updated"
+data_pipeline_updated = fcc.update_data_pipeline(workspace_id=workspace_id, data_pipeline_id=data_pipeline_new.id, display_name=date_str_updated, return_item=True)
 
-# Delete Data Pipeline
-fc.delete_data_pipeline(workspace_id, dp.id)
+# Update data pipeline definition
+data_pipeline_updated = fcc.update_data_pipeline_definition(workspace_id=workspace_id, data_pipeline_id=data_pipeline_new.id, definition=definition)
+
+# Delete data pipeline
+resp = fcc.delete_data_pipeline(workspace_id=workspace_id, data_pipeline_id=data_pipeline_updated.id)
+
 
 ```
 
@@ -216,8 +306,58 @@ eventstream_definition = eventstream_definition["definition"]
 # Update Eventstream Definition
 fc.update_eventstream_definition(workspace_id, eventstream_id=es.id, definition=eventstream_definition, update_metadata = None)
 
-```
 
+
+```
+## Eventstream Topology
+
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fcc = FabricClientCore()
+
+workspace_id = "05basdfasdf1d3"
+
+item_id = "94f4adfsff1b9"
+custom_destination_id = "acdasdfasff2fb984d"
+custom_source_id = "9f3829asdfasdf2ad3ecd"
+source_id = "e58dasdfasf0540b17"
+destination_id = "2446e6asdfasdfa3eb257"
+
+# Get Eventstream Topology
+topology = fcc.get_eventstream_topology(workspace_id, item_id)
+
+# Get Eventstream Destination
+destination = fcc.get_eventstream_destination(workspace_id, item_id, destination_id)
+
+# Get Eventstream Destination Connection
+destination_conn = fcc.get_eventstream_destination_connection(workspace_id, item_id, custom_destination_id)
+
+# Get Eventstream Source
+source = fcc.get_eventstream_source(workspace_id, item_id, source_id)
+
+# Get Eventstream Source Connection
+source_conn = fcc.get_eventstream_source_connection(workspace_id, item_id, custom_source_id)
+
+# Pause Eventstream
+resp = fcc.pause_eventstream(workspace_id, item_id)
+
+# Resume Eventstream
+resp = fcc.resume_eventstream(workspace_id, item_id, start_type="Now")
+
+# Pause Eventstream Source
+resp = fcc.pause_eventstream_source(workspace_id, item_id, source_id)
+
+# Resume Eventstream Destination
+resp = fcc.pause_eventstream_destination(workspace_id, item_id, destination_id)
+
+# Resume Eventstream Source
+resp = fcc.resume_eventstream_source(workspace_id, item_id, source_id, start_type="Now")
+
+# Resume Eventstream Destination
+resp = fcc.resume_eventstream_destination(workspace_id, item_id, destination_id, start_type="Now")
+
+```
 ## GraphQL APIs
 
 ```python
@@ -245,6 +385,8 @@ graphql_api2 = fc.update_graphql_api(workspace_id = workspace_id, graphql_api_id
 fc.delete_graphql_api(workspace_id = workspace_id, graphql_api_id = graphql_api.id)
 
 ```
+
+
 
 ## KQL Dashboards
 
@@ -405,6 +547,12 @@ lakehouse2 = fc.update_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehou
 
 # Delete Lakehouse
 fc.delete_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
+
+# List Livy Sessions
+livy_sessions = fc.list_lakehouse_livy_sessions(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
+
+# Get Livy Session
+livy_session = fc.get_lakehouse_livy_session(workspace_id=workspace_id, lakehouse_id=lakehouse.id, livy_id=livy_id)
 
 ```
 ## Mirrored Database
@@ -577,6 +725,12 @@ fc.update_notebook_definition(workspace_id, notebook.id, definition=definition)
 # Delete Notebook
 fc.delete_notebook(workspace_id, notebook.id)
 
+# List Notebook Livy Sessions
+notebook_livy_sessions = fc.list_notebook_livy_sessions(workspace_id, notebook.id)
+
+# Get Notebook Livy Session
+notebook_livy_session = fc.get_notebook_livy_session(workspace_id, notebook.id, livy_id=livy_id)
+
 ```
 
 ## Reports
@@ -688,6 +842,19 @@ fc.delete_semantic_model(workspace_id="1232", semantic_model_id="semantic_model.
 
 ```
 
+## Spark Livy Sessions
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fc = FabricClientCore()
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+
+# List Spark Livy Sessions
+spark_livy_sessions = fc.list_livy_sessions(workspace_id=workspace_id)
+
+```
+
 ## Spark Custom Pools
 
 ```python	
@@ -777,6 +944,13 @@ fc.update_spark_job_definition_definition(workspace_id, spark_job_definition.id,
 # Delete Spark Job Definition
 fc.delete_spark_job_definition(workspace_id, spark_job_definition.id)
 
+# List Spark Job Definition Livy Sessions
+spark_job_definition_livy_sessions = fc.list_spark_job_definition_livy_sessions(workspace_id, spark_job_definition.id)
+
+# Get Spark Job Definition Livy Session
+spark_job_definition_livy_session = fc.get_spark_job_definition_livy_session(workspace_id, spark_job_definition.id, livy_id=livy_id)
+
+
 
 ```
 
@@ -805,6 +979,46 @@ sql_database2 = fc.update_sql_database(workspace_id=workspace_id, sql_database_i
 
 # Delete SQL Database
 fc.delete_sql_database(workspace_id=workspace_id, sql_database_id=sql_database.id)
+
+```
+
+## Variable Libraries
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+workspace_id = "0asdfasdf8151d3"
+item_id = "0812fasdfsdf2709ec"
+
+# get variable library definition
+variable_library_definition = fcc.get_variable_library_definition(workspace_id=workspace_id, variable_library_id=item_id)
+definition = variable_library_definition["definition"]
+
+
+# create variable library
+date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+date_str = date_str.replace(" ", "T").replace(":", "").replace("-", "")
+date_str = f"variablelibrary{date_str}"
+
+variable_library_new = fcc.create_variable_library(workspace_id=workspace_id, display_name=date_str, definition=definition)
+
+
+# get variable library
+variable_library_get = fcc.get_variable_library(workspace_id=workspace_id, variable_library_id=variable_library_new.id)
+
+# list variable libraries
+variable_librarys = fcc.list_variable_libraries(workspace_id=workspace_id)
+
+# update variable library
+date_str_updated = date_str + "_updated"
+variable_library_updated = fcc.update_variable_library(workspace_id=workspace_id, variable_library_id=variable_library_new.id, display_name=date_str_updated, return_item=True)
+
+# update variable library definition
+variable_library_updated = fcc.update_variable_library_definition(workspace_id=workspace_id, variable_library_id=variable_library_new.id, definition=definition)
+
+# delete variable library
+resp = fcc.delete_variable_library(workspace_id=workspace_id, variable_library_id=variable_library_updated.id)
 
 ```
 
