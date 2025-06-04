@@ -535,6 +535,12 @@ fc.run_on_demand_table_maintenance(workspace_id=workspace_id, lakehouse_id=lakeh
 
 # Create Lakehouse
 lakehouse = fc.create_lakehouse(workspace_id=workspace_id, display_name="lakehouse2")
+
+# (Preview Feature) Create Lakehouse with Schema
+creation_payload = {
+    "enableSchemas": True
+}
+lakehouse = fc.create_lakehouse(workspace_id=workspace_id, display_name="lakehouse2", creation_payload=creation_payload)
         
 # List Lakehouses
 lakehouses = fc.list_lakehouses(workspace_id)
