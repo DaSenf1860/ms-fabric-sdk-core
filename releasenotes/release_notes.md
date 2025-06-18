@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.2.5
+
+### New Features
+- Allow to create lakehouses with creation payload which allows lakehouses with schemas
+
 ## 0.2.4
 
 ### New Features
