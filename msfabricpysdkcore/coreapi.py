@@ -3877,7 +3877,7 @@ class FabricClientCore(FabricClient):
 
         return respone_operation_result
     
-    def create_lakehouse(self, workspace_id, display_name, description = None):
+    def create_lakehouse(self, workspace_id, display_name, description = None, creation_payload = None):
         """Create a lakehouse in a workspace
         Args:
             workspace_id (str): The ID of the workspace
@@ -3889,23 +3889,9 @@ class FabricClientCore(FabricClient):
         return self.create_item(workspace_id = workspace_id,
                                 display_name = display_name,
                                 type = "lakehouses",
-                                description = description)
+                                description = description,
+                                creation_payload = creation_payload)
     
-    def create_lakehouse_with_schema(self, workspace_id, display_name, creation_payload, description = None):
-        """Create a lakehouse in a workspace
-        Args:
-            workspace_id (str): The ID of the workspace
-            creation_payload (dict): The creation payload
-            display_name (str): The display name of the lakehouse
-            description (str): The description of the lakehouse
-        Returns:
-            dict: The created lakehouse
-        """
-        return self.create_item(workspace_id = workspace_id,
-                                display_name = display_name,
-                                type = "lakehouses",
-                                creation_payload = creation_payload,
-                                description = description)
     
     def delete_lakehouse(self, workspace_id, lakehouse_id):
         """Delete a lakehouse from a workspace

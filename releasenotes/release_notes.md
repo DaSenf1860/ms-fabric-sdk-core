@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.2.6
+
+### Bug Fixes
+- Reworked the new addition of lakehouses with schemas to work correctly with the API.
+
 ## 0.2.5
 
 ### New Features

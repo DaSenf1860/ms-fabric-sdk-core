@@ -869,10 +869,10 @@ class Workspace:
                                                                 execution_data=execution_data, job_type=job_type,
                                                                 wait_for_completion=wait_for_completion)
 
-    def create_lakehouse(self, display_name, description = None):
+    def create_lakehouse(self, display_name, description = None, creation_payload = None):
         """Create a lakehouse in a workspace"""
-        return self.core_client.create_lakehouse(workspace_id=self.id, display_name=display_name, description=description)
-    
+        return self.core_client.create_lakehouse(workspace_id=self.id, display_name=display_name, description=description, creation_payload=creation_payload)
+
     def delete_lakehouse(self, lakehouse_id):
         """Delete a lakehouse from a workspace"""
         return self.core_client.delete_lakehouse(workspace_id=self.id, lakehouse_id=lakehouse_id)
