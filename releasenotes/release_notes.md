@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.2.7
+### New Features
+- external data shares providers delete
+- dataflow - Background jobs
+- Warehouse Snapshot
+- Apache Airflow Job
+- digital twin builder
+- digital twin builder flow
+- mirrored azure databricks 
+- sql endpoint refresh metadata
+
 ## 0.2.6
 
 ### Bug Fixes

@@ -1,5 +1,15 @@
 from msfabricpysdkcore.item import Item
 
+class ApacheAirflowJob(Item):
+    """Class to represent a ApacheAirflowJob in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return ApacheAirflowJob(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
 class CopyJob(Item):
     """Class to represent a copy job in Microsoft Fabric"""
@@ -36,7 +46,44 @@ class DataPipeline(Item):
         
     def run_on_demand_item_job(self, execution_data=None):
         return self.core_client.run_on_demand_item_job(workspace_id=self.workspace_id, item_id=self.id, job_type="Pipeline", execution_data=execution_data)
+
+class DigitalTwinBuilder(Item):
+    """Class to represent a DigitalTwinBuilder in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return DigitalTwinBuilder(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+class DigitalTwinBuilderFlow(Item):
+    """Class to represent a DigitalTwinBuilderFlow in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return DigitalTwinBuilderFlow(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+class MirroredAzureDatabricksCatalog(Item):
+    """Class to represent a mirrored Azure Databricks catalog in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return MirroredAzureDatabricksCatalog(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
     
+    def refresh_catalog_metadata(self):
+        """Method to refresh the metadata of the mirrored Azure Databricks catalog"""
+        return self.core_client.refresh_mirrored_azure_databricks_catalog_metadata(self.workspace_id, self.id)
+
 class Eventhouse(Item):
     """Class to represent a eventhouse in Microsoft Fabric"""
      
@@ -110,6 +157,17 @@ class Warehouse(Item):
         return Warehouse(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+class WarehouseSnapshot(Item):
+    """Class to represent a warehouse snapshot in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return WarehouseSnapshot(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
 class KQLDashboard(Item):
     """Class to represent a kql dashboard in Microsoft Fabric"""
@@ -180,7 +238,9 @@ class GraphQLApi(Item):
         return GraphQLApi(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
-    
+
+
+
 class MirroredDatabase(Item):
     """Class to represent a mirrored database in Microsoft Fabric"""
      

@@ -4,10 +4,13 @@ Each item type has its own set of APIs. The following are the APIs for each item
 All APIs are also available on workspace level as well.
 
 Go to:
-- [Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports](#dashboards-datamarts-sql-endpoints-mirrored-warehouses-paginated-reports)
+- [Dashboards, DataMarts, Mirrored Warehouses, Paginated Reports](#dashboards-datamarts-mirrored-warehouses-paginated-reports)
+- [Apache Airflow Jobs](#apache-airflow-jobs)
 - [Copy Jobs](#copy-jobs)
 - [Dataflows](#dataflows)
 - [Data Pipelines](#data-pipelines)
+- [Digital Twin Builder](#digital-twin-builder)
+- [Digital Twin Builder Flow](#digital-twin-builder-flow)
 - [Environments](#environments)
 - [Eventhouses](#eventhouses)
 - [Eventstreams](#eventstreams)
@@ -27,11 +30,13 @@ Go to:
 - [Spark Custom Pools](#spark-custom-pools)
 - [Spark Job Definitions](#spark-job-definitions)
 - [SQL Databases](#sql-databases)
+- [SQL Endpoints](#sql-endpoints)
 - [Variable Libraries](#variable-libraries)
 - [Warehouses](#warehouses)
+- [Warehouse Snapshots](#warehouse-snapshots)
 
 
-## Dashboards, DataMarts, SQL Endpoints, Mirrored Warehouses, Paginated Reports
+## Dashboards, DataMarts, Mirrored Warehouses, Paginated Reports
 
 ```python
 from msfabricpysdkcore import FabricClientCore
@@ -47,9 +52,6 @@ list_dashboards = fc.list_dashboards(workspace_id)
 # List datamarts
 list_datamarts = fc.list_datamarts(workspace_id)
 
-# List sql endpoints
-list_sql_endpoints = fc.list_sql_endpoints(workspace_id)
-
 # List mirrored warehouses
 list_mirrored_warehouses = fc.list_mirrored_warehouses(workspace_id)
 
@@ -60,6 +62,44 @@ list_paginated_reports = fc.list_paginated_reports(workspace_id)
 fc.update_paginated_report(workspace_id="1232", paginated_report_id="12312",
                            display_name = "newname", description = "newdescription", return_item=False)
 
+```
+## Apache Airflow Jobs
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+          
+
+workspace_id = "05bc5bsdfs478151d3"
+item_id = "4e68dfgd3c3df14"
+
+# List Apache Airflow Jobs
+apache_airflow_job = fcc.list_apache_airflow_jobs(workspace_id=workspace_id)
+
+# Get Apache Airflow Job Definition
+apache_airflow_job_definition = fcc.get_apache_airflow_job_definition(workspace_id=workspace_id, apache_airflow_job_id=item_id)
+definition = apache_airflow_job_definition["definition"]
+
+# Create Apache Airflow Job
+date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+date_str = date_str.replace(" ", "T").replace(":", "").replace("-", "")
+date_str = f"copyjob{date_str}"
+
+apache_airflow_job_new = fcc.create_apache_airflow_job(workspace_id=workspace_id, display_name=date_str, definition=definition)
+
+# Get Apache Airflow Job
+apache_airflow_job_get = fcc.get_apache_airflow_job(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id)
+self.assertEqual(apache_airflow_job_get.display_name, date_str)
+
+
+# Update Apache Airflow Job
+date_str_updated = date_str + "_updated"
+apache_airflow_job_updated = fcc.update_apache_airflow_job(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id, display_name=date_str_updated, return_item=True)
+
+# Update Apache Airflow Job Definition
+apache_airflow_job_updated = fcc.update_apache_airflow_job_definition(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id, definition=definition)
+
+# Delete Apache Airflow Job
+resp = fcc.delete_apache_airflow_job(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_updated.id)
 ```
 
 ## Copy Jobs
@@ -132,6 +172,30 @@ dataflow_updated = fcc.update_dataflow_definition(workspace_id=workspace_id, dat
 # Delete dataflow
 resp = fcc.delete_dataflow(workspace_id=workspace_id, dataflow_id=dataflow_new.id)
 
+# Apply changes to dataflow
+resp = fcc.run_on_demand_apply_changes(workspace_id=workspace_id, dataflow_id=dataflow_new.id, 
+                                job_type = "ApplyChanges", wait_for_completion = False):
+
+# Execute dataflow
+resp = fcc.run_on_demand_execute(workspace_id=workspace_id, dataflow_id=dataflow_new.id, 
+                                job_type = "Execute", wait_for_completion = False):
+
+
+configuration = {
+    "startDateTime": "2025-04-28T00:00:00",
+    "endDateTime": "2025-04-30T23:59:00",
+    "localTimeZoneId": "Central Standard Time",
+    "type": "Cron",
+    "interval": 10
+  }
+
+# Schedule apply changes job for a dataflow
+resp = fcc.schedule_apply_changes(workspace_id=workspace_id, dataflow_id=dataflow_new.id, 
+                                    configuration=configuration, enabled=True)
+
+# Schedule execute job for a dataflow
+resp = fcc.schedule_execute(workspace_id=workspace_id, dataflow_id=dataflow_new.id, 
+                              configuration=configuration, enabled=True)
 
 ```
 
@@ -175,6 +239,83 @@ resp = fcc.delete_data_pipeline(workspace_id=workspace_id, data_pipeline_id=data
 
 ```
 
+## Digital Twin Builder
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+workspace_id = "05bc5ba128a478151d3"
+item_id = "d726asdfa1723931d1"
+
+# List Digital Twin Builders
+digital_twin_builders = fcc.list_digital_twin_builders(workspace_id=workspace_id)
+
+# Get Digital Twin Builder Definition
+digital_twin_builder_definition = fcc.get_digital_twin_builder_definition(workspace_id=workspace_id, digital_twin_builder_id=item_id)
+definition = digital_twin_builder_definition["definition"]
+
+# Create Digital Twin Builder
+date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+date_str = date_str.replace(" ", "T").replace(":", "").replace("-", "")
+date_str = f"copyjob{date_str}"
+
+digital_twin_builder_new = fcc.create_digital_twin_builder(workspace_id=workspace_id, display_name=date_str, definition=definition)
+
+# Get Digital Twin Builder
+digital_twin_builder_get = fcc.get_digital_twin_builder(workspace_id=workspace_id, digital_twin_builder_id=digital_twin_builder_new.id)
+
+# Update Digital Twin Builder
+date_str_updated = date_str + "_updated"
+digital_twin_builder_updated = fcc.update_digital_twin_builder(workspace_id=workspace_id, digital_twin_builder_id=digital_twin_builder_new.id, display_name=date_str_updated, return_item=True)
+
+# Update Digital Twin Builder Definition
+digital_twin_builder_updated = fcc.update_digital_twin_builder_definition(workspace_id=workspace_id, digital_twin_builder_id=digital_twin_builder_new.id, definition=definition)
+
+# Delete Digital Twin Builder
+resp = fcc.delete_digital_twin_builder(workspace_id=workspace_id, digital_twin_builder_id=digital_twin_builder_updated.id)
+
+```
+
+## Digital Twin Builder Flow
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+workspace_id = "05basdf51d3"
+item_id = "d726asasdf3931d1"
+
+# Create Digital Twin Builder Flow
+
+creation_payload = {"digitalTwinBuilderItemReference": {
+      "referenceType": "ById",
+      "itemId": "d96de2f4-7dd1-45ad-9ff6-37a2d6aa9861",
+      "workspaceId": "cfafbeb1-8037-4d0c-896e-a46fb27ff229"
+    }}
+
+digital_twin_builder_flow_new = fcc.create_digital_twin_builder_flow(workspace_id=workspace_id, display_name="New Digital Twin Builder Flow", creation_payload=creation_payload, description="This is a new digital twin builder flow")
+
+
+# Get Digital Twin Builder Flow
+digital_twin_builder_flow_get = fcc.get_digital_twin_builder_flow(workspace_id=workspace_id, digital_twin_builder_flow_id=digital_twin_builder_flow_new.id)
+
+# Get Digital Twin Builder Flow Definition
+digital_twin_builder_flow_definition = fcc.get_digital_twin_builder_flow_definition(workspace_id=workspace_id, digital_twin_builder_flow_id=digital_twin_builder_flow_new.id)
+
+  
+# List Digital Twin Builder Flows
+dtwbfs = fcc.list_digital_twin_builder_flows(workspace_id=workspace_id, with_properties=False)
+
+# Update Digital Twin Builder Flow
+digital_twin_builder_flow_updated = fcc.update_digital_twin_builder_flow(workspace_id=workspace_id, digital_twin_builder_flow_id=digital_twin_builder_flow_new.id, display_name="Updated Digital Twin Builder Flow", return_item=True)
+
+# Update Digital Twin Builder Flow Definition
+digital_twin_builder_flow_definition_updated = fcc.update_digital_twin_builder_flow_definition(workspace_id=workspace_id, digital_twin_builder_flow_id=digital_twin_builder_flow_new.id, definition=digital_twin_builder_flow_definition)
+
+# Delete Digital Twin Builder Flow
+status_code = fcc.delete_digital_twin_builder_flow(workspace_id=workspace_id, digital_twin_builder_flow_id=digital_twin_builder_flow_definition_updated.id)
+```
 ## Environments
 
 ```python
@@ -560,6 +701,65 @@ livy_sessions = fc.list_lakehouse_livy_sessions(workspace_id=workspace_id, lakeh
 # Get Livy Session
 livy_session = fc.get_lakehouse_livy_session(workspace_id=workspace_id, lakehouse_id=lakehouse.id, livy_id=livy_id)
 
+```
+## Mirrored Azure Databricks Catalogs
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+workspace_id = "05bc5baa-ef02-4a31-ab20-158a478151d3"
+item_id = "eb5a54af-f282-4612-97c1-95120620b5d3"
+connection_id = "f7ac4f29-a70e-4868-87a1-9cdd92eacfa0"
+
+catalog_name = "unitycatalogdbxsweden"
+schema_name = "testinternal"
+table_name = "internal_customer"
+
+# List Mirrored Azure Databricks Catalogs
+mirrored_azure_databricks_catalog = fcc.list_mirrored_azure_databricks_catalogs(workspace_id=workspace_id)
+
+# Get Mirrored Azure Databricks Catalog Definition
+mirrored_azure_databricks_catalog_definition = fcc.get_mirrored_azure_databricks_catalog_definition(workspace_id=workspace_id, mirrored_azure_databricks_catalog_id=item_id)
+definition = mirrored_azure_databricks_catalog_definition["definition"]
+
+# Create Mirrored Azure Databricks Catalog
+date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+date_str = date_str.replace(" ", "T").replace(":", "").replace("-", "")
+date_str = f"copyjob{date_str}"
+
+creation_payload = {
+    "catalogName": "catalog_1",
+    "databricksWorkspaceConnectionId": "c1128asdfas1e35f86",
+    "mirroringMode": "Full",
+    "storageConnectionId": "c1128fasfdb91e35f87"
+  }
+
+mirrored_azure_databricks_catalog_new = fcc.create_mirrored_azure_databricks_catalog(workspace_id=workspace_id, display_name=date_str, creation_payload=creation_payload)
+
+# Get Mirrored Azure Databricks Catalog
+mirrored_azure_databricks_catalog_get = fcc.get_mirrored_azure_databricks_catalog(workspace_id=workspace_id, mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_new.id)
+
+# Update Mirrored Azure Databricks Catalog
+date_str_updated = date_str + "_updated"
+mirrored_azure_databricks_catalog_updated = fcc.update_mirrored_azure_databricks_catalog(workspace_id=workspace_id, mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_new.id, display_name=date_str_updated, return_item=True)
+
+# Update Mirrored Azure Databricks Catalog Definition
+mirrored_azure_databricks_catalog_updated = fcc.update_mirrored_azure_databricks_catalog_definition(workspace_id=workspace_id, mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_new.id, definition=definition)
+
+# Delete Mirrored Azure Databricks Catalog
+resp = fcc.delete_mirrored_azure_databricks_catalog(workspace_id=workspace_id, mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_updated.id)
+
+# Discover Mirrored Azure Databricks Catalogs, Schemas, and Tables
+catalogs = fcc.discover_mirrored_azure_databricks_catalogs(workspace_id=workspace_id, databricks_workspace_connection_id=connection_id)
+
+schemas = fcc.discover_mirrored_azure_databricks_catalog_schemas(workspace_id=workspace_id, catalog_name=catalog_name, databricks_workspace_connection_id=connection_id)
+
+tables = fcc.discover_mirrored_azure_databricks_catalog_tables(workspace_id=workspace_id, catalog_name=catalog_name, schema_name=schema_name, databricks_workspace_connection_id=connection_id)
+
+# Refresh Mirrored Azure Databricks Catalog Metadata
+status = fcc.refresh_mirrored_azure_databricks_catalog_metadata(workspace_id=workspace_id,
+                                                        item_id= item_id, wait_for_completion=False)
 ```
 ## Mirrored Database
 
@@ -987,6 +1187,20 @@ sql_database2 = fc.update_sql_database(workspace_id=workspace_id, sql_database_i
 fc.delete_sql_database(workspace_id=workspace_id, sql_database_id=sql_database.id)
 
 ```
+## SQL Endpoints
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fc = FabricClientCore()
+
+workspace_id = "0asdfasdf8151d3"
+# List sql endpoints
+list_sql_endpoints = fc.list_sql_endpoints(workspace_id)
+
+# Refresh SQL Endpoint Metadata
+sql_endpoint_id = "123123"
+resp = fc.refresh_sql_endpoint_metadata(workspace_id, sql_endpoint_id, preview = True, timeout = None, wait_for_completion = False):
+```
 
 ## Variable Libraries
 
@@ -1057,3 +1271,42 @@ fc.delete_warehouse(workspace_id, warehouse.id)
 
 ```
 
+# Warehouse Snapshots
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fc = FabricClientCore()
+
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+
+creation_payload = {
+    "parentWarehouseId": "7332259c-fb34-4975-99db-85818fb8664f",
+    "snapshotDateTime": "2024-10-15T13:00:00Z"
+  }
+
+# Create Warehouse Snapshot
+warehouse_sn = fc.create_warehouse_snapshot(workspace_id=workspace_id, display_name="warehouse_snapshot1", 
+                                creation_payload=creation_payload, description="Description")
+
+
+
+# Get Warehouse Snapshot
+warehouse_sn2 = fc.get_warehouse_snapshot(workspace_id=workspace_id, warehouse_snapshot_name="warehouse_snapshot1")
+# Get Warehouse Snapshot by ID
+warehouse_sn2 = fc.get_warehouse_snapshot(workspace_id=workspace_id, warehouse_snapshot_id=warehouse_sn.id)
+    
+# List Warehouse Snapshots
+warehouse_snapshots = fc.list_warehouse_snapshots(workspace_id=workspace_id, with_properties = False)
+    
+# Update Warehouse Snapshot
+
+properties = {
+    "snapshotDateTime": "2024-10-10T15:20:15Z"
+  }
+warehouse_sn3 = fc.update_warehouse_snapshot(workspace_id=workspace_id, warehouse_snapshot_id=warehouse_sn.id, 
+                                                display_name="warehouse_snapshot2", description="Description", properties=properties, return_item=True)  
+
+# Delete Warehouse Snapshot
+resp = fc.delete_warehouse_snapshot(workspace_id=workspace_id, warehouse_snapshot_id=warehouse_sn.id)
+```

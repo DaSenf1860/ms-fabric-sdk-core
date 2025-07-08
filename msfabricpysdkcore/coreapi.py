@@ -707,6 +707,22 @@ class FabricClientCore(FabricClient):
         response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error revoking external data share", return_format="response")
         return response.status_code
     
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/externalDataShares/{externalDataShareId}
+    def delete_external_data_share(self, workspace_id, item_id, external_data_share_id):
+        """Delete an external data share in an item
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            external_data_share_id (str): The ID of the external data share
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
+                                        error_message="Error deleting external data share")
+        return response.status_code
+    
     # External Data Shares Recipient
 
     # POST https://api.fabric.microsoft.com/v1/externalDataShares/invitations/{invitationId}/accept
@@ -1280,6 +1296,8 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.item import Item
 
+        if item_dict["type"] == "ApacheAirflowJob":
+            return self.get_apache_airflow_job(workspace_id, item_dict["id"])
         if item_dict["type"] == "CopyJob":
             return self.get_copy_job(workspace_id, item_dict["id"])
         if item_dict["type"] == "VariableLibrary":
@@ -1288,6 +1306,10 @@ class FabricClientCore(FabricClient):
             return self.get_dataflow(workspace_id, item_dict["id"])
         if item_dict["type"] == "DataPipeline":
             return self.get_data_pipeline(workspace_id, item_dict["id"])
+        if item_dict["type"] == "DigitalTwinBuilder":
+            return self.get_digital_twin_builder(workspace_id, item_dict["id"])
+        if item_dict["type"] == "DigitalTwinBuilderFlow":
+            return self.get_digital_twin_builder_flow(workspace_id, item_dict["id"])
         if item_dict["type"] == "Eventstream":
             return self.get_eventstream(workspace_id, item_dict["id"])
         if item_dict["type"] == "Eventhouse":
@@ -1300,6 +1322,8 @@ class FabricClientCore(FabricClient):
             return self.get_kql_queryset(workspace_id, item_dict["id"])
         if item_dict["type"] == "Lakehouse":
             return self.get_lakehouse(workspace_id, item_dict["id"])
+        if item_dict["type"] == "MirroredAzureDatabricksCatalog":
+            return self.get_mirrored_azure_databricks_catalog(workspace_id, item_dict["id"])
         if item_dict["type"] == "MirroredDatabase":
             return self.get_mirrored_database(workspace_id, item_dict["id"])
         if item_dict["type"] == "MLExperiment":
@@ -1316,6 +1340,8 @@ class FabricClientCore(FabricClient):
             return self.get_spark_job_definition(workspace_id, item_dict["id"])
         if item_dict["type"] == "Warehouse":
             return self.get_warehouse(workspace_id, item_dict["id"])
+        if item_dict["type"] == "WarehouseSnapshot":
+            return self.get_warehouse_snapshot(workspace_id, item_dict["id"])
         if item_dict["type"] == "Environment":
             return self.get_environment(workspace_id, item_dict["id"])
 
@@ -1336,7 +1362,7 @@ class FabricClientCore(FabricClient):
     
     # Create
   
-    def create_item(self, workspace_id, display_name, type, definition = None, description = None, wait_for_completion = True, **kwargs):
+    def create_item(self, workspace_id, display_name, type, definition = None, description = None, wait_for_completion = True, creation_payload = None, folder_id = None, **kwargs):
         """Create an item in a workspace
         Args:
             workspace_id (str): The ID of the workspace
@@ -1359,11 +1385,20 @@ class FabricClientCore(FabricClient):
             body['definition'] = definition
         if description:
             body['description'] = description
+                    
+        if creation_payload:
+            body["creationPayload"] = creation_payload
 
-        if type in ["copyJobs",
+        if folder_id:
+            body['folderId'] = folder_id
+
+        if type in ["ApacheAirflowJobs",
+                    "copyJobs",
                     "VariableLibraries",
                     "dataflows",
                     "dataPipelines",
+                    "digitaltwinbuilders",
+                    "DigitalTwinBuilderFlows",
                     "environments",
                     "eventhouses",
                     "eventstreams",
@@ -1372,6 +1407,7 @@ class FabricClientCore(FabricClient):
                     "kqlDashboards",
                     "kqlQuerysets",
                     "lakehouses",
+                    "mirroredAzureDatabricksCatalogs",
                     "mirroredDatabases",
                     "mlExperiments", 
                     "mlModels",
@@ -1382,16 +1418,14 @@ class FabricClientCore(FabricClient):
                     "semanticModels", 
                     "sparkJobDefinitions",
                     "SQLDatabases",
-                    "warehouses"]:
+                    "warehouses",
+                    "warehousesnapshots"]:
                         
-            if type == "lakehouses":
-                if "creation_payload" in kwargs:
-                    body["creationPayload"] = kwargs["creation_payload"]
 
             if type == "kqlDatabases":
-                if "creation_payload" not in kwargs:
+                if creation_payload is None:
                     raise Exception("creation_payload is required for KQLDatabase")
-                body["creationPayload"] = kwargs["creation_payload"]
+                body["creationPayload"] = creation_payload
             
             url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{type}"
             body.pop('type')
@@ -1407,9 +1441,12 @@ class FabricClientCore(FabricClient):
             item = None
             i = 0
 
-            type_mapping = {"copyJobs": "CopyJob",
+            type_mapping = {"ApacheAirflowJobs": "ApacheAirflowJob",
+                            "copyJobs": "CopyJob",
                             "VariableLibraries": "VariableLibrary",
                             "dataflows": "Dataflow",
+                            "digitaltwinbuilders": "DigitalTwinBuilder",
+                            "DigitalTwinBuilderFlows":"DigitalTwinBuilderFlow",
                             "dataPipelines": "DataPipeline",
                             "environments": "Environment",
                             "eventhouses": "Eventhouse",
@@ -1419,6 +1456,7 @@ class FabricClientCore(FabricClient):
                             "kqlDatabases": "KQLDatabase",
                             "kqlQuerysets": "KQLQueryset",
                             "lakehouses": "Lakehouse",
+                            "mirroredAzureDatabricksCatalogs": "MirroredAzureDatabricksCatalog",
                             "mirroredDatabases": "MirroredDatabase",
                             "mlExperiments": "MLExperiment",
                             "mlModels": "MLModel", 
@@ -1429,7 +1467,8 @@ class FabricClientCore(FabricClient):
                             "semanticModels": "SemanticModel",
                             "sparkJobDefinitions": "SparkJobDefinition",
                             "SQLDatabases": "SQLDatabase",
-                            "warehouses": "Warehouse"
+                            "warehouses": "Warehouse",
+                            "warehousesnapshots": "WarehouseSnapshot"
                             }
             
             if type in type_mapping.keys():
@@ -1587,7 +1626,7 @@ class FabricClientCore(FabricClient):
                                     return_format="json+operation_result")
     
     
-    def update_item(self, workspace_id, item_id, display_name = None, description = None, type = None, return_item=False):
+    def update_item(self, workspace_id, item_id, display_name = None, description = None, type = None, return_item=False, **kwargs):
         """Update the item
         Args:
             workspace_id (str): The ID of the workspace
@@ -1607,6 +1646,8 @@ class FabricClientCore(FabricClient):
             payload['displayName'] = display_name
         if description:
             payload['description'] = description
+        if "properties" in kwargs:
+            payload['properties'] = kwargs["properties"]
 
         resp_dict = self.calling_routine(url, operation="PATCH", body=payload,
                                          response_codes=[200, 429], error_message="Error updating item",
@@ -2403,6 +2444,115 @@ class FabricClientCore(FabricClient):
         """List mirrored warehouses in a workspace"""
         return self.list_items(workspace_id, type="mirroredWarehouses")
     
+
+    #airflowjob
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs
+    def create_apache_airflow_job(self, workspace_id, display_name, definition = None, description = None, folder_id = None):
+        """Create an Apache Airflow job in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the Apache Airflow job
+            definition (dict): The definition of the Apache Airflow job
+            description (str): The description of the Apache Airflow job
+            folder_id (str): The ID of the folder to create the job in
+        Returns:
+            ApacheAirflowJob: The created Apache Airflow job object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "ApacheAirflowJobs",
+                                definition = definition,
+                                description = description, folder_id=folder_id)
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}
+    def delete_apache_airflow_job(self, workspace_id, apache_airflow_job_id):
+        """Delete an Apache Airflow job from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=apache_airflow_job_id, type="ApacheAirflowJobs")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}
+    def get_apache_airflow_job(self, workspace_id, apache_airflow_job_id = None, apache_airflow_job_name = None):
+        """Get an Apache Airflow job from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            apache_airflow_job_name (str): The name of the Apache Airflow job
+        Returns:
+            ApacheAirflowJob: The Apache Airflow job object
+        """
+        from msfabricpysdkcore.otheritems import ApacheAirflowJob
+
+        if apache_airflow_job_id is None and apache_airflow_job_name is not None:
+            apache_airflow_jobs = self.list_apache_airflow_jobs(workspace_id)
+            aajs = [aaj for aaj in apache_airflow_jobs if aaj.display_name == apache_airflow_job_name]
+            if len(aajs) == 0:
+                raise Exception(f"Apache Airflow job with name {apache_airflow_job_name} not found")
+            apache_airflow_job_id = aajs[0].id
+        elif apache_airflow_job_id is None:
+            raise Exception("apache_airflow_job_id or the apache_airflow_job_name is required")
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}"
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting Apache Airflow job", return_format="json")
+        aaj = ApacheAirflowJob.from_dict(item_dict, core_client=self)
+        aaj.get_definition()
+        return aaj
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}/getDefinition
+    def get_apache_airflow_job_definition(self, workspace_id, apache_airflow_job_id, format = None):
+        """Get the definition of an Apache Airflow job
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            format (str): The format of the definition
+        Returns:
+            dict: The Apache Airflow job definition
+        """
+        return self.get_item_definition(workspace_id, apache_airflow_job_id, type="ApacheAirflowJobs", format=format)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs
+    def list_apache_airflow_jobs(self, workspace_id, with_properties = False):
+        """List Apache Airflow jobs in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of Apache Airflow jobs
+        """
+        return self.list_items(workspace_id, type="ApacheAirflowJobs", with_properties=with_properties)
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}
+    def update_apache_airflow_job(self, workspace_id, apache_airflow_job_id,
+                                    display_name = None, description = None, return_item=False):
+        """Update an Apache Airflow job in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            display_name (str): The display name of the Apache Airflow job
+            description (str): The description of the Apache Airflow job
+        Returns:
+            dict: The updated Apache Airflow job or ApacheAirflowJob object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=apache_airflow_job_id, display_name=display_name, description=description, type="ApacheAirflowJobs",
+                                return_item=return_item)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}/updateDefinition
+    def update_apache_airflow_job_definition(self, workspace_id, apache_airflow_job_id, definition, update_metadata = None):
+        """Update the definition of an Apache Airflow job
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            definition (dict): The definition of the Apache Airflow job
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated Apache Airflow job definition
+        """
+        return self.update_item_definition(workspace_id, apache_airflow_job_id, type="ApacheAirflowJobs", definition=definition, update_metadata=update_metadata)
+
     # copyJobs
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/copyJobs
     def create_copy_job(self, workspace_id, display_name, definition = None, description = None):
@@ -2719,6 +2869,87 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item_definition(workspace_id, dataflow_id, type="dataflows", definition=definition, update_metadata=update_metadata)
 
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}/jobs/instances?jobType={jobType}
+    def run_on_demand_apply_changes(self, workspace_id, dataflow_id, job_type = "ApplyChanges", wait_for_completion = True):
+        """Run an on-demand apply changes job for a dataflow
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            job_type (str): The type of the job, default is "ApplyChanges"
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            requests.Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/instances?jobType={job_type}"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[202, 429], error_message="Error running on-demand apply changes",
+                                        return_format="response", wait_for_completion=wait_for_completion)
+
+        return response
+    
+    def run_on_demand_execute(self, workspace_id, dataflow_id, job_type = "Execute", wait_for_completion = True):
+        """Run an on-demand execute job for a dataflow
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            job_type (str): The type of the job, default is "Execute"
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            requests.Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/instances?jobType={job_type}"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[202, 429], error_message="Error running on-demand execute",
+                                        return_format="response", wait_for_completion=wait_for_completion)
+
+        return response
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}/jobs/ApplyChanges/schedules
+    def schedule_apply_changes(self, workspace_id, dataflow_id, configuration, enabled):
+        """Schedule an apply changes job for a dataflow
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            configuration (dict): The configuration of the schedule
+            enabled (bool): Whether the schedule is enabled
+        Returns:
+            dict: The schedule object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/ApplyChanges/schedules"
+
+        body = {
+            "configuration": configuration,
+            "enabled": enabled
+        }
+
+        response_dict = self.calling_routine(url, operation="POST", body=body, response_codes=[201, 429], error_message="Error scheduling apply changes",
+                                        return_format="json")
+
+        return response_dict
+    
+    def schedule_execute(self, workspace_id, dataflow_id, configuration, enabled):
+        """Schedule an execute job for a dataflow
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            configuration (dict): The configuration of the schedule
+            enabled (bool): Whether the schedule is enabled
+        Returns:
+            dict: The schedule object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/Execute/schedules"
+
+        body = {
+            "configuration": configuration,
+            "enabled": enabled
+        }
+
+        response_dict = self.calling_routine(url, operation="POST", body=body, response_codes=[201, 429], error_message="Error scheduling execute",
+                                        return_format="json")
+
+        return response_dict
+
+
 
     # dataPipelines
 
@@ -2816,6 +3047,210 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item_definition(workspace_id, data_pipeline_id, type="dataPipelines", definition=definition, update_metadata=update_metadata)
     
+    # digitaltwinbuilder
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/digitaltwinbuilders
+    def create_digital_twin_builder(self, workspace_id, display_name, definition = None, description = None, folder_id = None):
+        """Create a digital twin builder in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the digital twin builder
+            definition (dict): The definition of the digital twin builder
+            description (str): The description of the digital twin builder
+            folder_id (str): The ID of the folder to create the digital twin builder in
+        Returns:
+            DigitalTwinBuilder: The created digital twin builder object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "digitaltwinbuilders",
+                                definition = definition,
+                                description = description, folder_id=folder_id)
+    
+    def delete_digital_twin_builder(self, workspace_id, digital_twin_builder_id):
+        """Delete a digital twin builder from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_id (str): The ID of the digital twin builder
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=digital_twin_builder_id, type="digitaltwinbuilders")
+    
+    def get_digital_twin_builder(self, workspace_id, digital_twin_builder_id = None, digital_twin_builder_name = None):
+        """Get a digital twin builder from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_id (str): The ID of the digital twin builder
+            digital_twin_builder_name (str): The name of the digital twin builder
+        Returns:
+            DigitalTwinBuilder: The digital twin builder object
+        """
+        from msfabricpysdkcore.otheritems import DigitalTwinBuilder
+
+        if digital_twin_builder_id is None and digital_twin_builder_name is not None:
+            digital_twin_builders = self.list_digital_twin_builders(workspace_id)
+            dtbs = [dtb for dtb in digital_twin_builders if dtb.display_name == digital_twin_builder_name]
+            if len(dtbs) == 0:
+                raise Exception(f"Digital twin builder with name {digital_twin_builder_name} not found")
+            digital_twin_builder_id = dtbs[0].id
+        elif digital_twin_builder_id is None:
+            raise Exception("digital_twin_builder_id or the digital_twin_builder_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/digitaltwinbuilders/{digital_twin_builder_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting digital twin builder", return_format="json")
+
+        dtb = DigitalTwinBuilder.from_dict(item_dict, core_client=self)
+        dtb.get_definition()
+        return dtb
+    
+    def get_digital_twin_builder_definition(self, workspace_id, digital_twin_builder_id, format = None):
+        """Get the definition of a digital twin builder
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_id (str): The ID of the digital twin builder
+            format (str): The format of the definition
+        Returns:
+            dict: The digital twin builder definition
+        """
+        return self.get_item_definition(workspace_id, digital_twin_builder_id, type="digitaltwinbuilders", format=format)
+    
+    def list_digital_twin_builders(self, workspace_id, with_properties = False):
+        """List digital twin builders in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of digital twin builders
+        """
+        return self.list_items(workspace_id, type="digitaltwinbuilders", with_properties=with_properties)
+    
+    def update_digital_twin_builder(self, workspace_id, digital_twin_builder_id, display_name = None, description = None, return_item=False):
+        """Update a digital twin builder in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_id (str): The ID of the digital twin builder
+            display_name (str): The display name of the digital twin builder
+            description (str): The description of the digital twin builder
+        Returns:
+            dict: The updated digital twin builder or DigitalTwinBuilder object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=digital_twin_builder_id, display_name=display_name, description=description, type="digitaltwinbuilders",
+                                return_item=return_item)
+    
+    def update_digital_twin_builder_definition(self, workspace_id, digital_twin_builder_id, definition, update_metadata = None):
+        """Update the definition of a digital twin builder
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_id (str): The ID of the digital twin builder
+            definition (dict): The definition of the digital twin builder
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated digital twin builder definition
+        """
+        return self.update_item_definition(workspace_id, digital_twin_builder_id, type="digitaltwinbuilders", definition=definition, update_metadata=update_metadata)
+
+    # digital twin builder flows
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/DigitalTwinBuilderFlows
+    def create_digital_twin_builder_flow(self, workspace_id, display_name, creation_payload, definition = None, description = None):
+        """Create a digital twin builder flow in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the digital twin builder flow
+            creation_payload (dict): The creation payload for the digital twin builder flow
+            definition (dict): The definition of the digital twin builder flow
+            description (str): The description of the digital twin builder flow
+        Returns:
+            DigitalTwinBuilderFlow: The created digital twin builder flow object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "DigitalTwinBuilderFlows",
+                                definition = definition,
+                                description = description, creation_payload=creation_payload)
+    
+    def delete_digital_twin_builder_flow(self, workspace_id, digital_twin_builder_flow_id):
+        """Delete a digital twin builder flow from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_flow_id (str): The ID of the digital twin builder flow
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=digital_twin_builder_flow_id, type="DigitalTwinBuilderFlows")
+
+    def get_digital_twin_builder_flow(self, workspace_id, digital_twin_builder_flow_id = None, digital_twin_builder_flow_name = None):
+        """Get a digital twin builder flow from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_flow_id (str): The ID of the digital twin builder flow
+            digital_twin_builder_flow_name (str): The name of the digital twin builder flow
+        Returns:
+            DigitalTwinBuilderFlow: The digital twin builder flow object
+        """
+        from msfabricpysdkcore.otheritems import DigitalTwinBuilderFlow
+
+        if digital_twin_builder_flow_id is None and digital_twin_builder_flow_name is not None:
+            digital_twin_builder_flows = self.list_digital_twin_builder_flows(workspace_id)
+            dtbfs = [dtbf for dtbf in digital_twin_builder_flows if dtbf.display_name == digital_twin_builder_flow_name]
+            if len(dtbfs) == 0:
+                raise Exception(f"Digital twin builder flow with name {digital_twin_builder_flow_name} not found")
+            digital_twin_builder_flow_id = dtbfs[0].id
+        elif digital_twin_builder_flow_id is None:
+            raise Exception("digital_twin_builder_flow_id or the digital_twin_builder_flow_name is required")
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/DigitalTwinBuilderFlows/{digital_twin_builder_flow_id}"
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting digital twin builder flow", return_format="json")
+        dtbf = DigitalTwinBuilderFlow.from_dict(item_dict, core_client=self)
+        dtbf.get_definition()
+        return dtbf
+    
+    def get_digital_twin_builder_flow_definition(self, workspace_id, digital_twin_builder_flow_id, format = None):
+        """Get the definition of a digital twin builder flow
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_flow_id (str): The ID of the digital twin builder flow
+            format (str): The format of the definition
+        Returns:
+            dict: The digital twin builder flow definition
+        """
+        return self.get_item_definition(workspace_id, digital_twin_builder_flow_id, type="DigitalTwinBuilderFlows", format=format)
+    
+    def list_digital_twin_builder_flows(self, workspace_id, with_properties = False):
+        """List digital twin builder flows in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of digital twin builder flows
+        """
+        return self.list_items(workspace_id, type="DigitalTwinBuilderFlows", with_properties=with_properties)
+    
+    def update_digital_twin_builder_flow(self, workspace_id, digital_twin_builder_flow_id, display_name = None, description = None, return_item=False):
+        """Update a digital twin builder flow in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_flow_id (str): The ID of the digital twin builder flow
+            display_name (str): The display name of the digital twin builder flow
+            description (str): The description of the digital twin builder flow
+        Returns:
+            dict: The updated digital twin builder flow or DigitalTwinBuilderFlow object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=digital_twin_builder_flow_id, display_name=display_name, description=description, type="DigitalTwinBuilderFlows",
+                                return_item=return_item)
+    
+    def update_digital_twin_builder_flow_definition(self, workspace_id, digital_twin_builder_flow_id, definition, update_metadata = None):
+        """Update the definition of a digital twin builder flow
+        Args:
+            workspace_id (str): The ID of the workspace
+            digital_twin_builder_flow_id (str): The ID of the digital twin builder flow
+            definition (dict): The definition of the digital twin builder flow
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated digital twin builder flow definition
+        """
+        return self.update_item_definition(workspace_id, digital_twin_builder_flow_id, type="DigitalTwinBuilderFlows", definition=definition, update_metadata=update_metadata)
 
     # environments
 
@@ -3053,11 +3488,13 @@ class FabricClientCore(FabricClient):
     
     # eventhouses
 
-    def create_eventhouse(self, workspace_id, display_name, description = None):
+    def create_eventhouse(self, workspace_id, display_name, definition = None, creation_payload = None, description = None):
         """Create an eventhouse in a workspace
         Args:
             workspace_id (str): The ID of the workspace
             display_name (str): The display name of the eventhouse
+            definition (str): The definition of the eventhouse
+            creation_payload (dict): The creation payload for the eventhouse
             description (str): The description of the eventhouse
         Returns:
             Eventhouse: The created eventhouse
@@ -3065,7 +3502,8 @@ class FabricClientCore(FabricClient):
         return self.create_item(workspace_id=workspace_id,
                                 display_name = display_name,
                                 type = "eventhouses",
-                                definition = None,
+                                definition = definition,
+                                creation_payload = creation_payload,
                                 description = description)
 
     def delete_eventhouse(self, workspace_id, eventhouse_id):
@@ -3156,7 +3594,7 @@ class FabricClientCore(FabricClient):
 
     # eventstreams
 
-    def create_eventstream(self, workspace_id, display_name, description = None):
+    def create_eventstream(self, workspace_id, display_name, description = None, definition = None, creation_payload = None):
         """Create an eventstream in a workspace
         Args:
             workspace_id (str): The ID of the workspace
@@ -3168,7 +3606,8 @@ class FabricClientCore(FabricClient):
         return self.create_item(workspace_id = workspace_id,
                                 display_name = display_name,
                                 type = "eventstreams",
-                                definition = None,
+                                definition = definition,
+                                creation_payload= creation_payload,
                                 description = description)
     
 
@@ -3849,6 +4288,195 @@ class FabricClientCore(FabricClient):
         return self.update_item_definition(workspace_id, kql_queryset_id,
                                            type="kqlQuerysets", definition=definition, update_metadata=update_metadata)
 
+
+    # mirrored azure databricks catalog
+    def create_mirrored_azure_databricks_catalog(self, workspace_id, display_name, description = None, definition = None,creation_payload = None, folder_id = None):
+        """Create a mirrored azure databricks catalog in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the mirrored azure databricks catalog
+            description (str): The description of the mirrored azure databricks catalog
+            creation_payload (dict): The creation payload
+            folder_id (str): The folder ID to create the item in
+        Returns:
+            dict: The created mirrored azure databricks catalog
+        """
+        if creation_payload is None and definition is None:
+            raise Exception("Either creation_payload or definition must be provided")
+        if creation_payload is not None and definition is not None:
+            raise Exception("Only one of creation_payload or definition can be provided")
+        return self.create_item(workspace_id = workspace_id,
+                                display_name = display_name,
+                                type = "mirroredAzureDatabricksCatalogs",
+                                description = description,
+                                definition = definition,
+                                creation_payload = creation_payload,
+                                folder_id = folder_id)
+    
+    def delete_mirrored_azure_databricks_catalog(self, workspace_id, mirrored_azure_databricks_catalog_id):
+        """Delete a mirrored azure databricks catalog from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_azure_databricks_catalog_id (str): The ID of the mirrored azure databricks catalog
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, mirrored_azure_databricks_catalog_id, type="mirroredAzureDatabricksCatalogs")
+    
+    def get_mirrored_azure_databricks_catalog(self, workspace_id, mirrored_azure_databricks_catalog_id = None,
+                                                  mirrored_azure_databricks_catalog_name = None):
+        """Get a mirrored azure databricks catalog from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_azure_databricks_catalog_id (str): The ID of the mirrored azure dat
+            mirrored_azure_databricks_catalog_name (str): The name of the mirrored azure databricks catalog
+        Returns:
+            MirroredAzureDatabricksCatalog: The mirrored azure databricks catalog object
+        """
+        from msfabricpysdkcore.otheritems import MirroredAzureDatabricksCatalog
+        if mirrored_azure_databricks_catalog_id is None and mirrored_azure_databricks_catalog_name is not None:
+            mirrored_azure_databricks_catalogs = self.list_mirrored_azure_databricks_catalogs(workspace_id)
+            mirrored_azure_databricks_catalogs = [madc for madc in mirrored_azure_databricks_catalogs if madc.display_name == mirrored_azure_databricks_catalog_name]
+            if len(mirrored_azure_databricks_catalogs) == 0:
+                raise Exception(f"Mirrored azure databricks catalog with name {mirrored_azure_databricks_catalog_name} not found")
+            mirrored_azure_databricks_catalog_id = mirrored_azure_databricks_catalogs[0].id
+        if mirrored_azure_databricks_catalog_id is None:
+            raise Exception("mirrored_azure_databricks_catalog_id or the mirrored_azure_databricks_catalog_name is required")
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredAzureDatabricksCatalogs/{mirrored_azure_databricks_catalog_id}"
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                            error_message="Error getting mirrored azure databricks catalog", return_format="json")
+        madc = MirroredAzureDatabricksCatalog.from_dict(item_dict, core_client=self)
+        madc.get_definition()
+        return madc
+
+    def get_mirrored_azure_databricks_catalog_definition(self, workspace_id, mirrored_azure_databricks_catalog_id, format=None):
+        """Get the definition of a mirrored azure databricks catalog
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_azure_databricks_catalog_id (str): The ID of the mirrored azure databricks catalog
+            format (str): The format of the definition
+        Returns:
+            dict: The definition of the mirrored azure databricks catalog
+        """
+        return self.get_item_definition(workspace_id, mirrored_azure_databricks_catalog_id, type="mirroredAzureDatabricksCatalogs", format=format)
+    
+    def list_mirrored_azure_databricks_catalogs(self, workspace_id, with_properties = False):
+        """List mirrored azure databricks catalogs in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of mirrored azure databricks catalogs
+        """
+        return self.list_items(workspace_id=workspace_id, type="mirroredAzureDatabricksCatalogs", with_properties=with_properties)
+    
+    def update_mirrored_azure_databricks_catalog(self, workspace_id, mirrored_azure_databricks_catalog_id, display_name = None, description = None, return_item=False):
+        """Update a mirrored azure databricks catalog in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_azure_databricks_catalog_id (str): The ID of the mirrored azure databricks catalog
+            display_name (str): The display name of the mirrored azure databricks catalog
+            description (str): The description of the mirrored azure databricks catalog
+        Returns:
+            dict: The updated mirrored azure databricks catalog
+        """
+        return self.update_item(workspace_id, mirrored_azure_databricks_catalog_id, display_name = display_name,
+                                description = description, type= "mirroredAzureDatabricksCatalogs", return_item=return_item)
+    
+    def update_mirrored_azure_databricks_catalog_definition(self, workspace_id, mirrored_azure_databricks_catalog_id, definition, update_metadata = None):
+        """Update the definition of a mirrored azure databricks catalog
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_azure_databricks_catalog_id (str): The ID of the mirrored azure databricks catalog
+            definition (dict): The definition of the mirrored azure databricks catalog
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated definition of the mirrored azure databricks catalog
+        """
+        return self.update_item_definition(workspace_id, mirrored_azure_databricks_catalog_id,
+                                           type="mirroredAzureDatabricksCatalogs", definition=definition, update_metadata=update_metadata)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mirroredAzureDatabricksCatalogs/{mirroredAzureDatabricksCatalogId}/refreshCatalogMetadata
+    def refresh_mirrored_azure_databricks_catalog_metadata(self, workspace_id, mirrored_azure_databricks_catalog_id, wait_for_completion = False):
+        """Refresh the metadata of a mirrored azure databricks catalog
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_azure_databricks_catalog_id (str): The ID of the mirrored azure databricks catalog
+        Returns:
+            dict: The operation result or response value
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredAzureDatabricksCatalogs/{mirrored_azure_databricks_catalog_id}/refreshCatalogMetadata"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                         error_message="Error refreshing mirrored azure databricks catalog metadata",
+                                         return_format="response", wait_for_completion=wait_for_completion)
+
+        return response.status_code
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/azuredatabricks/catalogs?databricksWorkspaceConnectionId={databricksWorkspaceConnectionId}
+    def discover_mirrored_azure_databricks_catalogs(self, workspace_id, databricks_workspace_connection_id, max_results = None):
+        """List mirrored azure databricks catalogs by connection
+        Args:
+            workspace_id (str): The ID of the workspace
+            databricks_workspace_connection_id (str): The ID of the databricks workspace connection
+            max_results (int): The maximum number of results to return
+        Returns:
+            list: The list of mirrored azure databricks catalogs
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/azuredatabricks/catalogs?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
+        
+        if max_results is not None:
+            url += f"&maxResults={max_results}"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                        error_message="Error listing mirrored azure databricks catalogs by connection", return_format="value_json", paging=True)
+
+        return items
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/azuredatabricks/catalogs/{catalogName}/schemas?databricksWorkspaceConnectionId={databricksWorkspaceConnectionId}
+    def discover_mirrored_azure_databricks_catalog_schemas(self, workspace_id, catalog_name, databricks_workspace_connection_id, max_results = None):
+        """List mirrored azure databricks catalog schemas by connection
+        Args:
+            workspace_id (str): The ID of the workspace
+            catalog_name (str): The name of the catalog
+            databricks_workspace_connection_id (str): The ID of the databricks workspace connection
+            max_results (int): The maximum number of results to return
+        Returns:
+            list: The list of mirrored azure databricks catalog schemas
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/azuredatabricks/catalogs/{catalog_name}/schemas?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
+        
+        if max_results is not None:
+            url += f"&maxResults={max_results}"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                        error_message="Error listing mirrored azure databricks catalog schemas by connection",
+                                          return_format="value_json", paging=True)
+
+        return items
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/azuredatabricks/catalogs/{catalogName}/schemas/{schemaName}/tables?databricksWorkspaceConnectionId={databricksWorkspaceConnectionId}
+    def discover_mirrored_azure_databricks_catalog_tables(self, workspace_id, catalog_name, schema_name, databricks_workspace_connection_id, max_results = None):
+        """List mirrored azure databricks catalog tables by connection
+        Args:
+            workspace_id (str): The ID of the workspace
+            catalog_name (str): The name of the catalog
+            schema_name (str): The name of the schema
+            databricks_workspace_connection_id (str): The ID of the databricks workspace connection
+            max_results (int): The maximum number of results to return
+        Returns:
+            list: The list of mirrored azure databricks catalog tables
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/azuredatabricks/catalogs/{catalog_name}/schemas/{schema_name}/tables?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
+        
+        if max_results is not None:
+            url += f"&maxResults={max_results}"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                        error_message="Error listing mirrored azure databricks catalog tables by connection", 
+                                        return_format="value_json", paging=True)
+
+        return items
 
     # lakehouses
 
@@ -5326,6 +5954,28 @@ class FabricClientCore(FabricClient):
         return self.update_item(workspace_id, sql_database_id, display_name = display_name, description = description,
                                 type="SQLDatabases", return_item=return_item)
     
+    # SQL endpoints
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sqlEndpoints/{sqlEndpointId}/refreshMetadata?preview={preview}
+    def refresh_sql_endpoint_metadata(self, workspace_id, sql_endpoint_id, preview = True, timeout = None, wait_for_completion = False):
+        """Refresh the metadata of a SQL endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_endpoint_id (str): The ID of the SQL endpoint
+            preview (bool): Whether to preview the refresh
+            timeout (int): The timeout for the request
+        Returns:
+            response: The response of the refresh operation
+        """
+        body = {}
+        if timeout is not None:
+            body["timeout"] = timeout
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/refreshMetadata?preview={preview}"
+        
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                             error_message="Error refreshing SQL endpoint metadata", return_format="response",
+                                             wait_for_completion=wait_for_completion)
+        
+        return response
 
     # warehouses
 
@@ -5398,3 +6048,77 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item(workspace_id, warehouse_id, display_name = display_name, description = description, 
                                 type="warehouses", return_item=return_item)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehousesnapshots
+    def create_warehouse_snapshot(self, workspace_id, display_name, creation_payload, description = None, folder_id = None):
+        """Create a snapshot of a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the snapshot
+            creation_payload (dict): The payload for creating the snapshot
+            description (str): The description of the snapshot
+            folder_id (str): The ID of the folder to create the snapshot in
+        Returns:
+            dict: The created snapshot
+        """
+        return self.create_item(workspace_id = workspace_id, display_name = display_name, type = "warehousesnapshots", 
+                                creation_payload = creation_payload, description = description, folder_id = folder_id)
+    
+    def delete_warehouse_snapshot(self, workspace_id, warehouse_snapshot_id):
+        """Delete a warehouse snapshot from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_snapshot_id (str): The ID of the warehouse snapshot
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, warehouse_snapshot_id, type="warehousesnapshots")
+    
+    def get_warehouse_snapshot(self, workspace_id, warehouse_snapshot_id = None, warehouse_snapshot_name = None):
+        """Get a warehouse snapshot from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_snapshot_id (str): The ID of the warehouse snapshot
+            warehouse_snapshot_name (str): The name of the warehouse snapshot
+        Returns:
+            WarehouseSnapshot: The warehouse snapshot object
+        """
+        from msfabricpysdkcore.otheritems import WarehouseSnapshot
+        if warehouse_snapshot_id is None and warehouse_snapshot_name is not None:
+            warehouse_snapshots = self.list_warehouse_snapshots(workspace_id)
+            warehouse_snapshots = [ws for ws in warehouse_snapshots if ws.display_name == warehouse_snapshot_name]
+            if len(warehouse_snapshots) == 0:
+                raise Exception(f"Warehouse snapshot with name {warehouse_snapshot_name} not found")
+            warehouse_snapshot_id = warehouse_snapshots[0].id
+        if warehouse_snapshot_id is None:
+            raise Exception("warehouse_snapshot_id or the warehouse_snapshot_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehousesnapshots/{warehouse_snapshot_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting warehouse snapshot", return_format="json")
+        
+        return WarehouseSnapshot.from_dict(item_dict, core_client=self)
+    
+    def list_warehouse_snapshots(self, workspace_id, with_properties = False):
+        """List warehouse snapshots in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of warehouse snapshots
+        """
+        return self.list_items(workspace_id = workspace_id, type = "warehousesnapshots", with_properties = with_properties)
+    
+    def update_warehouse_snapshot(self, workspace_id, warehouse_snapshot_id, display_name = None, description = None, return_item=False, properties = None):
+        """Update a warehouse snapshot in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_snapshot_id (str): The ID of the warehouse snapshot
+            display_name (str): The display name of the warehouse snapshot
+            description (str): The description of the warehouse snapshot
+        Returns:
+            dict: The updated warehouse snapshot
+        """
+        return self.update_item(workspace_id, warehouse_snapshot_id, display_name = display_name, description = description,
+                                type="warehousesnapshots", return_item=return_item, properties=properties)

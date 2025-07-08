@@ -184,6 +184,11 @@ class Workspace:
     def revoke_external_data_share(self, item_id, external_data_share_id):
         return self.core_client.revoke_external_data_share(workspace_id=self.id, item_id=item_id, external_data_share_id=external_data_share_id)
     
+    # delete
+    def delete_external_data_share(self, item_id, external_data_share_id):
+        """Delete an external data share from an item in a workspace"""
+        return self.core_client.delete_external_data_share(workspace_id=self.id, item_id=item_id, external_data_share_id=external_data_share_id)
+    
     # Folders
      # Folders
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/folders
@@ -423,6 +428,33 @@ class Workspace:
     def list_mirrored_warehouses(self):
         return self.core_client.list_mirrored_warehouses(workspace_id=self.id)
 
+    # apache airflow jobs
+    def create_apache_airflow_job(self, display_name, definition = None, description = None, folder_id = None):
+        return self.core_client.create_apache_airflow_job(workspace_id=self.id, display_name=display_name, description=description,
+                                                          definition=definition, folder_id=folder_id)
+    
+    def delete_apache_airflow_job(self, apache_airflow_job_id):
+        return self.core_client.delete_apache_airflow_job(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id)
+    
+    def get_apache_airflow_job(self, apache_airflow_job_id = None, apache_airflow_job_name = None):
+        return self.core_client.get_apache_airflow_job(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
+                                                       apache_airflow_job_name=apache_airflow_job_name)
+
+    # get_apache_airflow_job_definition
+    def get_apache_airflow_job_definition(self, apache_airflow_job_id, format = None):
+        return self.core_client.get_apache_airflow_job_definition(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id, format=format)
+    
+    def list_apache_airflow_jobs(self, with_properties = False):
+        return self.core_client.list_apache_airflow_jobs(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_apache_airflow_job(self, apache_airflow_job_id, display_name = None, description = None):
+        return self.core_client.update_apache_airflow_job(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
+                                                          display_name=display_name, description=description)
+    
+    def update_apache_airflow_job_definition(self, apache_airflow_job_id, definition, update_metadata = None):
+        return self.core_client.update_apache_airflow_job_definition(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
+                                                                     definition=definition, update_metadata=update_metadata)
+
     # copy jobs
 
     def create_copy_job(self, display_name, definition = None, description = None):
@@ -556,6 +588,40 @@ class Workspace:
         return self.core_client.update_data_pipeline_definition(workspace_id=self.id, data_pipeline_id=data_pipeline_id,
                                                                 definition=definition, update_metadata=update_metadata)
     
+    # digital twin builders
+
+    def create_digital_twin_builder(self, display_name, definition = None, description = None, folder_id = None):
+        """Create a digital twin builder in a workspace"""
+        return self.core_client.create_digital_twin_builder(workspace_id=self.id, display_name=display_name,
+                                                            definition=definition, description=description, folder_id=folder_id)
+    
+    def delete_digital_twin_builder(self, digital_twin_builder_id):
+        """Delete a digital twin builder from a workspace"""
+        return self.core_client.delete_digital_twin_builder(workspace_id=self.id, digital_twin_builder_id=digital_twin_builder_id)
+    
+    def get_digital_twin_builder(self, digital_twin_builder_id = None, digital_twin_builder_name = None):
+        """Get a digital twin builder from a workspace"""
+        return self.core_client.get_digital_twin_builder(workspace_id=self.id, digital_twin_builder_id=digital_twin_builder_id,
+                                                         digital_twin_builder_name=digital_twin_builder_name)
+    
+    def get_digital_twin_builder_definition(self, digital_twin_builder_id, format = None):
+        """Get the definition of a digital twin builder from a workspace"""
+        return self.core_client.get_digital_twin_builder_definition(workspace_id=self.id, digital_twin_builder_id=digital_twin_builder_id, format=format)
+    
+    def list_digital_twin_builders(self, with_properties = False):
+        """List digital twin builders in a workspace"""
+        return self.core_client.list_digital_twin_builders(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_digital_twin_builder(self, digital_twin_builder_id, display_name = None, description = None):
+        """Update a digital twin builder in a workspace"""
+        return self.core_client.update_digital_twin_builder(workspace_id=self.id, digital_twin_builder_id=digital_twin_builder_id,
+                                                            display_name=display_name, description=description)
+    
+    def update_digital_twin_builder_definition(self, digital_twin_builder_id, definition, update_metadata = None):
+        """Update the definition of a digital twin builder in a workspace"""
+        return self.core_client.update_digital_twin_builder_definition(workspace_id=self.id, digital_twin_builder_id=digital_twin_builder_id,
+                                                                       definition=definition, update_metadata=update_metadata)
+
     # environments
 
     def list_environments(self, with_properties = False):
@@ -625,10 +691,10 @@ class Workspace:
         """List eventhouses in a workspace"""
         return self.core_client.list_eventhouses(workspace_id=self.id, with_properties=with_properties)
     
-    def create_eventhouse(self, display_name, description = None):
+    def create_eventhouse(self, display_name, definition = None, creation_payload = None, description = None):
         """Create an eventhouse in a workspace"""
-        return self.core_client.create_eventhouse(workspace_id=self.id, display_name=display_name, description=description)
-    
+        return self.core_client.create_eventhouse(workspace_id=self.id, display_name=display_name, description=description, definition=definition, creation_payload=creation_payload)
+
     def get_eventhouse(self, eventhouse_id = None, eventhouse_name = None):
         """Get an eventhouse from a workspace"""
         return self.core_client.get_eventhouse(workspace_id=self.id, eventhouse_id=eventhouse_id,
@@ -655,10 +721,11 @@ class Workspace:
     # eventstreams
 
 
-    def create_eventstream(self, display_name, description = None):
+    def create_eventstream(self, display_name, description = None, definition = None, creation_payload = None):
         """Create an eventstream in a workspace"""
-        return self.core_client.create_eventstream(workspace_id=self.id, display_name=display_name, description=description)
-    
+        return self.core_client.create_eventstream(workspace_id=self.id, display_name=display_name,
+                                                   description=description, definition=definition, creation_payload=creation_payload)
+
     def delete_eventstream(self, eventstream_id):
         """Delete an eventstream from a workspace"""
         return self.core_client.delete_eventstream(workspace_id=self.id, eventstream_id=eventstream_id)
@@ -860,6 +927,62 @@ class Workspace:
         """Update the definition of a kql queryset in a workspace"""
         return self.core_client.update_kql_queryset_definition(workspace_id=self.id, kql_queryset_id=kql_queryset_id,
                                                                definition=definition, update_metadata=update_metadata)
+
+    # mirrored Azure databricks catalog
+    def create_mirrored_azure_databricks_catalog(self, display_name, description = None, definition = None):
+        """Create a mirrored Azure Databricks catalog in a workspace"""
+        return self.core_client.create_mirrored_azure_databricks_catalog(workspace_id=self.id, display_name=display_name,
+                                                                         description=description, definition=definition)
+    
+    def delete_mirrored_azure_databricks_catalog(self, mirrored_azure_databricks_catalog_id):
+        """Delete a mirrored Azure Databricks catalog from a workspace"""
+        return self.core_client.delete_mirrored_azure_databricks_catalog(workspace_id=self.id, 
+                                                                          mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_id)
+    def get_mirrored_azure_databricks_catalog(self, mirrored_azure_databricks_catalog_id = None,
+                                              mirrored_azure_databricks_catalog_name = None):
+        """Get a mirrored Azure Databricks catalog from a workspace"""
+        return self.core_client.get_mirrored_azure_databricks_catalog(workspace_id=self.id, 
+                                                                       mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_id,
+                                                                       mirrored_azure_databricks_catalog_name=mirrored_azure_databricks_catalog_name)
+    def get_mirrored_azure_databricks_catalog_definition(self, mirrored_azure_databricks_catalog_id, format = None):
+        """Get the definition of a mirrored Azure Databricks catalog from a workspace"""
+        return self.core_client.get_mirrored_azure_databricks_catalog_definition(workspace_id=self.id, 
+                                                                                   mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_id,
+                                                                                   format=format)
+    def list_mirrored_azure_databricks_catalogs(self, with_properties = False):
+        """List mirrored Azure Databricks catalogs in a workspace"""
+        return self.core_client.list_mirrored_azure_databricks_catalogs(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_mirrored_azure_databricks_catalog(self, mirrored_azure_databricks_catalog_id, display_name = None,
+                                                    description = None):
+        """Update a mirrored Azure Databricks catalog in a workspace"""
+        return self.core_client.update_mirrored_azure_databricks_catalog(workspace_id=self.id, 
+                                                                          mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_id,
+                                                                          display_name=display_name, description=description)
+    def update_mirrored_azure_databricks_catalog_definition(self, mirrored_azure_databricks_catalog_id, definition,
+                                                            update_metadata = None):
+        """Update the definition of a mirrored Azure Databricks catalog in a workspace"""
+        return self.core_client.update_mirrored_azure_databricks_catalog_definition(workspace_id=self.id, 
+                                                                                       mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_id,
+                                                                                       definition=definition, update_metadata=update_metadata)
+    def refresh_mirrored_azure_databricks_catalog_metadata(self, mirrored_azure_databricks_catalog_id):
+        """Refresh the metadata of a mirrored Azure Databricks catalog in a workspace"""
+        return self.core_client.refresh_mirrored_azure_databricks_catalog_metadata(workspace_id=self.id, 
+                                                                                   mirrored_azure_databricks_catalog_id=mirrored_azure_databricks_catalog_id)
+
+    def discover_mirrored_azure_databricks_catalogs(self, databricks_workspace_connection_id, max_results = None):
+        return self.core_client.discover_mirrored_azure_databricks_catalogs(workspace_id=self.id, databricks_workspace_connection_id=databricks_workspace_connection_id,
+                                                                           max_results=max_results)
+
+    def discover_mirrored_azure_databricks_catalog_schemas(self, catalog_name, databricks_workspace_connection_id, max_results = None):
+        return self.core_client.discover_mirrored_azure_databricks_catalog_schemas(workspace_id=self.id, catalog_name=catalog_name,
+                                                                                   databricks_workspace_connection_id=databricks_workspace_connection_id,
+                                                                                   max_results=max_results)
+    def discover_mirrored_azure_databricks_catalog_tables(self, catalog_name, schema_name, databricks_workspace_connection_id, max_results = None):
+        return self.core_client.discover_mirrored_azure_databricks_catalog_tables(workspace_id=self.id, catalog_name=catalog_name,
+                                                                                   schema_name=schema_name,
+                                                                                   databricks_workspace_connection_id=databricks_workspace_connection_id,
+                                                                                   max_results=max_results)
 
     # lakehouses
     def run_on_demand_table_maintenance(self, lakehouse_id, execution_data, 
@@ -1260,6 +1383,12 @@ class Workspace:
         """Get a livy session for a spark job definition from a workspace"""
         return self.core_client.get_spark_job_definition_livy_session(workspace_id=self.id, spark_job_definition_id=spark_job_definition_id, livy_id=livy_id)
 
+    # sql endpoint
+    def refresh_sql_endpoint_metadata(self, sql_endpoint_id, preview = True, timeout = None, wait_for_completion = False):
+        """Refresh the metadata of a sql endpoint in a workspace"""
+        return self.core_client.refresh_sql_endpoint_metadata(workspace_id=self.id, sql_endpoint_id=sql_endpoint_id,
+                                                              preview=preview, timeout=timeout, wait_for_completion=wait_for_completion)
+
     # sql databases
 
     def create_sql_database(self, display_name, description = None):
@@ -1304,6 +1433,29 @@ class Workspace:
     def update_warehouse(self, warehouse_id, display_name = None, description = None):
         """Update a warehouse in a workspace"""
         return self.core_client.update_warehouse(workspace_id=self.id, warehouse_id=warehouse_id, display_name=display_name, description=description)    
+
+    def create_warehouse_snapshot(self, display_name, creation_payload, description = None, folder_id = None):
+        return self.core_client.create_warehouse_snapshot(workspace_id=self.id, display_name=display_name,
+                                                          creation_payload=creation_payload, description=description,
+                                                          folder_id=folder_id)
+
+    def delete_warehouse_snapshot(self, warehouse_snapshot_id):
+        """Delete a warehouse snapshot from a workspace"""
+        return self.core_client.delete_warehouse_snapshot(workspace_id=self.id, warehouse_snapshot_id=warehouse_snapshot_id)
+    
+    def get_warehouse_snapshot(self, warehouse_snapshot_id = None, warehouse_snapshot_name = None):
+        """Get a warehouse snapshot from a workspace"""
+        return self.core_client.get_warehouse_snapshot(workspace_id=self.id, warehouse_snapshot_id=warehouse_snapshot_id,
+                                                       warehouse_snapshot_name=warehouse_snapshot_name)
+    
+    def list_warehouse_snapshots(self, with_properties = False):
+        """List warehouse snapshots in a workspace"""
+        return self.core_client.list_warehouse_snapshots(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_warehouse_snapshot(self, warehouse_snapshot_id, display_name = None, description = None):
+        """Update a warehouse snapshot in a workspace"""
+        return self.core_client.update_warehouse_snapshot(workspace_id=self.id, warehouse_snapshot_id=warehouse_snapshot_id,
+                                                          display_name=display_name, description=description)
 
     # variable libraries
 

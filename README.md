@@ -1,6 +1,6 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of May 19, 2025).
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of June 25, 2025).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
@@ -442,6 +442,8 @@ data_share_ids = [ds['id'] for ds in data_share_list]
 
 response_code = fc.revoke_external_data_share(workspace_id, item_id, data_share['id'])
 
+# Delete
+response_code = fc.delete_external_data_share(workspace_id, item_id, data_share['id'])
 ```
 
 ### External Data Shares Recipient
