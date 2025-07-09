@@ -9,10 +9,10 @@ from msfabricpysdkcore.util import logger
 class FabricClientCore(FabricClient):
     """FabricClientCore class to interact with Fabric Core APIs"""
 
-    def __init__(self, tenant_id = None, client_id = None, client_secret = None,
+    def __init__(self, scope="https://api.fabric.microsoft.com/.default", tenant_id = None, client_id = None, client_secret = None,
                  username = None, password = None, silent=None) -> None:
         """Initialize FabricClientCore object"""
-        super().__init__(scope="https://api.fabric.microsoft.com/.default", 
+        super().__init__(scope=scope, 
                          tenant_id=tenant_id,
                          client_id=client_id,
                          client_secret=client_secret,
