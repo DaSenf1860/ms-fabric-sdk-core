@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.2.8
+### New Features
+- Workspace APIs:
+  - Get workspace by id with return_item parameter
+  - workspace item gives all the new properties like capacity_region, one_lake_endpoints, capacity_assignment_progress, workspace_identity
+
 ## 0.2.7
 ### New Features
 - external data shares providers delete

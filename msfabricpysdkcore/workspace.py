@@ -6,21 +6,34 @@ from msfabricpysdkcore.coreapi import FabricClientCore
 class Workspace:
     """Class to represent a workspace in Microsoft Fabric"""
 
-    def __init__(self, id, display_name, description, type, core_client: FabricClientCore, capacity_id = None) -> None:
+    def __init__(self, id, display_name, description, type, core_client: FabricClientCore, capacity_id = None,
+                 capacity_region = None, one_lake_endpoints = None, capacity_assignment_progress = None,
+                 workspace_identity = None) -> None:
         self.id = id
         self.display_name = display_name
         self.description = description
         self.type = type
         self.capacity_id = capacity_id
+        self.capacity_region = capacity_region
+        self.one_lake_endpoints = one_lake_endpoints
+        self.capacity_assignment_progress = capacity_assignment_progress
+        self.workspace_identity = workspace_identity
 
         self.core_client = core_client
         
     
     def from_dict(dict,  core_client):
         """Create a Workspace object from a dictionary"""
-        return Workspace(id=dict['id'], display_name=dict['displayName'], description=dict['description'], type=dict['type'], capacity_id=dict.get('capacityId', None),
+        return Workspace(id=dict['id'], display_name=dict['displayName'],
+                         description=dict['description'],
+                         type=dict['type'],
+                         capacity_id=dict.get('capacityId', None),
+                         capacity_region=dict.get('capacityRegion', None),
+                         one_lake_endpoints=dict.get('oneLakeEndpoints', None),
+                         capacity_assignment_progress=dict.get('capacityAssignmentProgress', None),
+                         workspace_identity=dict.get('workspaceIdentity', None),
                          core_client=core_client)
-    
+
     def __str__(self) -> str:
         """Return a string representation of the workspace object"""
         dict_ = {
@@ -28,7 +41,12 @@ class Workspace:
             'display_name': self.display_name,
             'description': self.description,
             'type': self.type,
-            'capacity_id': self.capacity_id
+            'capacity_id': self.capacity_id,
+            'capacity_region': self.capacity_region,
+            'one_lake_endpoints': self.one_lake_endpoints,
+            'capacity_assignment_progress': self.capacity_assignment_progress,
+            'workspace_identity': self.workspace_identity
+            
         }
         return json.dumps(dict_, indent=2)
     

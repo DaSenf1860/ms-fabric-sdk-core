@@ -2267,7 +2267,7 @@ class FabricClientCore(FabricClient):
 
         return response
 
-    def get_workspace(self, id = None, name = None):
+    def get_workspace(self, id = None, name = None, return_item=True):
         """Get workspace by id or name
         Args:
             id (str): The ID of the workspace
@@ -2278,12 +2278,12 @@ class FabricClientCore(FabricClient):
             ValueError: If neither id nor name is provided
         """
         if id:
-            return self.get_workspace_by_id(id)
+            return self.get_workspace_by_id(id, return_item=return_item)
         if name:
             return self.get_workspace_by_name(name)
         raise ValueError("Either id or name must be provided")
     
-    def get_workspace_by_id(self, id):
+    def get_workspace_by_id(self, id, return_item=True):
         """Get workspace by id
         Args:
             id (str): The ID of the workspace
@@ -2296,9 +2296,9 @@ class FabricClientCore(FabricClient):
 
         ws_dict = self.calling_routine(url, operation="GET", response_codes=[200, 404], error_message="Error getting workspace", return_format="json")
 
-        ws = Workspace.from_dict(ws_dict, core_client=self)
-
-        return ws
+        if return_item:
+            return Workspace.from_dict(ws_dict, core_client=self)
+        return ws_dict
 
     def get_workspace_by_name(self, name):
         """Get workspace by name
