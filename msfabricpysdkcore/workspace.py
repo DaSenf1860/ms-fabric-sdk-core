@@ -325,6 +325,9 @@ class Workspace:
     def create_shortcut(self, item_id, path, name, target):
         return self.core_client.create_shortcut(workspace_id=self.id, item_id=item_id, 
                                                 path=path, name=name, target=target)
+    
+    def create_shortcuts_bulk(self, workspace_id, item_id, create_shortcut_requests):
+        return self.core_client.create_shortcuts_bulk(workspace_id=self.id, item_id=item_id, create_shortcut_requests=create_shortcut_requests)
         
     def delete_shortcut(self, item_id, path, name):
         return self.core_client.delete_shortcut(self.id, item_id, path=path, name=name)

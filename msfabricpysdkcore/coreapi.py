@@ -2005,7 +2005,46 @@ class FabricClientCore(FabricClient):
         shortcut_dict['itemId'] = item_id
         return OneLakeShortcut.from_dict(shortcut_dict,
                                          core_client = self)
-    
+     
+
+    def create_shortcuts_bulk(self, workspace_id, item_id, create_shortcut_requests):
+        """
+        Bulk create OneLake shortcuts.
+
+        Args:
+            workspace_id (str)
+            item_id (str)
+            create_shortcut_requests (list[dict]): Each dict must have:
+                path, name, target (target has 'oneLake' OR 'adlsGen2' child object)
+
+        Returns:
+            dict: The results of the operation
+        """
+        if not isinstance(create_shortcut_requests, list) or len(create_shortcut_requests) == 0:
+            raise Exception("create_shortcut_requests must be a non-empty list.")
+
+        required_keys = {"path", "name", "target"}
+        for idx, req in enumerate(create_shortcut_requests):
+            if not isinstance(req, dict):
+                raise Exception(f"Shortcut request at index {idx} is not a dict.")
+            missing = required_keys - set(req.keys())
+            if missing:
+                raise Exception(f"Shortcut request at index {idx} missing keys: {missing}")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts/bulkCreate"
+        body = {
+            "createShortcutRequests": create_shortcut_requests
+        }
+
+        return self.calling_routine(
+            url=url,
+            operation="POST",
+            body=body,
+            response_codes=[200, 202, 429],
+            error_message="Error creating shortcuts in bulk",
+            return_format="value_json+operation_result",
+            wait_for_completion=True
+        )   
 
     def get_shortcut(self, workspace_id, item_id, path, name):
         """Get the shortcut in the item
@@ -2028,7 +2067,8 @@ class FabricClientCore(FabricClient):
         shortcut_dict['itemId'] = id
         return OneLakeShortcut.from_dict(shortcut_dict,
                                          core_client = self)
-    
+
+
     def delete_shortcut(self, workspace_id, item_id, path, name):
         """Delete the shortcut
         Args:
