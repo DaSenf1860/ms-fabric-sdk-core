@@ -118,6 +118,8 @@ class FabricClient():
                 if wait_for_completion:
                     operation_result = self.long_running_operation(response.headers)
                     if "operation_result" in return_format:
+                        if ("value_json" in return_format and isinstance(operation_result, dict) and "value" in operation_result):
+                            return operation_result["value"]
                         return operation_result
                 return response
             elif response.status_code not in response_codes:

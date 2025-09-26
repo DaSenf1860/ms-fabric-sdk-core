@@ -713,6 +713,34 @@ item.create_shortcut(path="path",
                                        "workspaceId": "workspace_id_target"}})
 
 
+# Bulk create shortcuts
+fc.create_shortcuts_bulk(workspace_id="workspace_id",
+                         item_id="item_id",
+                         create_shortcut_requests=[
+                             {
+                                 "path": "Files",
+                                 "name": "sales_2023",
+                                 "target": {
+                                     "oneLake": {
+                                         "workspaceId": "workspace_id_target",
+                                         "itemId": "item_id_target",
+                                         "path": "Tables/Sales2023"
+                                     }
+                                 }
+                             },
+                              {
+                                "path": "Files/landingZone",
+                                "name": "PartnerProducts",
+                                "target": {
+                                    "adlsGen2": {
+                                        "location": "https://contosoadlsaccount.dfs.core.windows.net",
+                                        "subpath": "/mycontainer/data/ContosoProducts",
+                                        "connectionId": "91324db9-8dc4-4730-a1e5-bafabf1fb91e"
+                                    }
+                                }
+                              }
+                         ])
+
 # Get a shortcut
 shortcut = fc.get_shortcut(workspace_id="workspace_id",
                            item_id="item_id",
