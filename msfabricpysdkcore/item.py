@@ -95,6 +95,11 @@ class Item:
         return self.core_client.create_shortcut(workspace_id=self.workspace_id, item_id=self.id,
                                                 path=path, name=name, target=target)
     
+    def create_shortcuts_bulk(self, create_shortcut_requests):
+        """Create multiple shortcuts in the item"""
+        return self.core_client.create_shortcuts_bulk(workspace_id=self.workspace_id, item_id=self.id,
+                                                      create_shortcut_requests=create_shortcut_requests)
+    
     def delete_shortcut(self, path, name):
         """Delete the shortcut in the item"""
         return self.core_client.delete_shortcut(workspace_id=self.workspace_id, item_id=self.id,

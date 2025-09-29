@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.2.9
+### New Features
+- Bulk creation of shortcuts in an item
+- Git connect with my git credentials
+
 ## 0.2.8
 ### New Features
 - Workspace APIs:

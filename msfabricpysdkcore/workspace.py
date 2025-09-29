@@ -326,7 +326,7 @@ class Workspace:
         return self.core_client.create_shortcut(workspace_id=self.id, item_id=item_id, 
                                                 path=path, name=name, target=target)
     
-    def create_shortcuts_bulk(self, workspace_id, item_id, create_shortcut_requests):
+    def create_shortcuts_bulk(self, item_id, create_shortcut_requests):
         return self.core_client.create_shortcuts_bulk(workspace_id=self.id, item_id=item_id, create_shortcut_requests=create_shortcut_requests)
         
     def delete_shortcut(self, item_id, path, name):
@@ -375,9 +375,9 @@ class Workspace:
         return self.core_client.commit_to_git(workspace_id=self.id, mode=mode, comment=comment,
                                               items=items, workspace_head=workspace_head)
 
-
-    def git_connect(self, git_provider_details):
-        return self.core_client.git_connect(workspace_id=self.id, git_provider_details=git_provider_details)
+    def git_connect(self, git_provider_details, my_git_credentials):
+        return self.core_client.git_connect(workspace_id=self.id, git_provider_details=git_provider_details,
+                                            my_git_credentials=my_git_credentials)
 
     def git_disconnect(self):
         return self.core_client.git_disconnect(workspace_id=self.id)

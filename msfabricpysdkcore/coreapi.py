@@ -1128,11 +1128,13 @@ class FabricClientCore(FabricClient):
 
         return response.status_code
 
-    def git_connect(self, workspace_id, git_provider_details):
+
+    def git_connect(self, workspace_id, git_provider_details, my_git_credentials = None):
         """Connect git
         Args:
             workspace_id (str): The ID of the workspace
             git_provider_details (dict): The git provider details
+            my_git_credentials (dict): The git credentials
         Returns:
             int: The status code of the response
         """
@@ -1140,8 +1142,11 @@ class FabricClientCore(FabricClient):
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/connect"
 
         payload = {
-            'gitProviderDetails': git_provider_details
+            'gitProviderDetails': git_provider_details,
+            
         }
+        if my_git_credentials:
+            payload['myGitCredentials'] = my_git_credentials
 
         response = self.calling_routine(url=url, operation="POST", body=payload,
                                         response_codes=[200, 202, 429],

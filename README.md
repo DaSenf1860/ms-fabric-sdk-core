@@ -635,9 +635,15 @@ git_provider_details = {'organizationName': 'dasenf1860',
                 'branchName': 'main',
                 'directoryName': '/folder1'}
 
-fc.git_connect(workspace_id="workspaceid", git_provider_details=git_provider_details)
+# Optional:
+my_git_credentials = {
+    "source": "ConfiguredConnection",
+    "connectionId": "3f2asdfasdf82c3301"
+}
+
+fc.git_connect(workspace_id="workspaceid", git_provider_details=git_provider_details, my_git_credentials=my_git_credentials)
 # or
-ws.git_connect(git_provider_details=git_provider_details)
+ws.git_connect(git_provider_details=git_provider_details, my_git_credentials=my_git_credentials)
 
 
 # Initialize a git connection
@@ -733,9 +739,9 @@ fc.create_shortcuts_bulk(workspace_id="workspace_id",
                                 "name": "PartnerProducts",
                                 "target": {
                                     "adlsGen2": {
-                                        "location": "https://contosoadlsaccount.dfs.core.windows.net",
+                                        "location": "https://casdfasdfat.dfs.core.windows.net",
                                         "subpath": "/mycontainer/data/ContosoProducts",
-                                        "connectionId": "91324db9-8dc4-4730-a1e5-bafabf1fb91e"
+                                        "connectionId": "91asdfasdfa1e"
                                     }
                                 }
                               }
