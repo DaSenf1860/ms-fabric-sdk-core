@@ -23,6 +23,8 @@ This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs 
     <img src="https://badgen.net/pypi/dm/msfabricpysdkcore" alt="Monthly Downloads">
 </a>
 
+<p>    </p>
+
 
 The Microsoft Fabric REST APIs are documented [here](https://docs.microsoft.com/en-us/rest/api/fabric/).
 The Azure Resoure Management APIs for Fabric are documented [here](https://learn.microsoft.com/en-us/rest/api/microsoftfabric/fabric-capacities?view=rest-microsoftfabric-2023-11-01).
