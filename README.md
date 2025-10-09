@@ -2,10 +2,8 @@
 
 This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of June 25, 2025).
 
-<p align="center">
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
-<p align="center">
 <a href="https://badgen.net/github/license/DaSenf1860/ms-fabric-sdk-core" target="_blank">
     <img src="https://badgen.net/github/license/DaSenf1860/ms-fabric-sdk-core" alt="License">
 </a>
@@ -24,7 +22,6 @@ This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs 
   <a href="https://badgen.net/pypi/dm/msfabricpysdkcore" target="_blank">
     <img src="https://badgen.net/pypi/dm/msfabricpysdkcore" alt="Monthly Downloads">
 </a>
-</p>
 
 
 The Microsoft Fabric REST APIs are documented [here](https://docs.microsoft.com/en-us/rest/api/fabric/).
