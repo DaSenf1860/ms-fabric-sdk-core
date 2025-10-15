@@ -4,6 +4,28 @@ This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs 
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
+<a href="https://badgen.net/github/license/DaSenf1860/ms-fabric-sdk-core" target="_blank">
+    <img src="https://badgen.net/github/license/DaSenf1860/ms-fabric-sdk-core" alt="License">
+</a>
+<a href="https://badgen.net/github/releases/DaSenf1860/ms-fabric-sdk-core" target="_blank">
+    <img src="https://badgen.net/github/releases/DaSenf1860/ms-fabric-sdk-core" alt="Test">
+</a>
+<a href="https://badgen.net/github/contributors/DaSenf1860/ms-fabric-sdk-core" target="_blank">
+    <img src="https://badgen.net/github/contributors/DaSenf1860/ms-fabric-sdk-core" alt="Publish">
+</a>
+<a href="https://badgen.net/github/commits/DaSenf1860/ms-fabric-sdk-core" target="_blank">
+    <img src="https://badgen.net/github/commits/DaSenf1860/ms-fabric-sdk-core" alt="Commits">
+</a>
+<a href="https://badgen.net/pypi/v/msfabricpysdkcore" target="_blank">
+    <img src="https://badgen.net/pypi/v/msfabricpysdkcore" alt="Package version">
+</a>
+  <a href="https://badgen.net/pypi/dm/msfabricpysdkcore" target="_blank">
+    <img src="https://badgen.net/pypi/dm/msfabricpysdkcore" alt="Monthly Downloads">
+</a>
+
+<p>    </p>
+
+
 The Microsoft Fabric REST APIs are documented [here](https://docs.microsoft.com/en-us/rest/api/fabric/).
 The Azure Resoure Management APIs for Fabric are documented [here](https://learn.microsoft.com/en-us/rest/api/microsoftfabric/fabric-capacities?view=rest-microsoftfabric-2023-11-01).
 They are designed to automate your Fabric processes.
