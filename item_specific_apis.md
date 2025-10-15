@@ -5,6 +5,7 @@ All APIs are also available on workspace level as well.
 
 Go to:
 - [Dashboards, DataMarts, Mirrored Warehouses, Paginated Reports](#dashboards-datamarts-mirrored-warehouses-paginated-reports)
+- [Anomaly Detectors](#anomaly-detectors)
 - [Apache Airflow Jobs](#apache-airflow-jobs)
 - [Copy Jobs](#copy-jobs)
 - [Dataflows](#dataflows)
@@ -20,6 +21,7 @@ Go to:
 - [KQL Databases](#kql-databases)
 - [KQL Querysets](#kql-querysets)
 - [Lakehouse](#lakehouse)
+- [Maps](#maps)
 - [Mirrored Database](#mirrored-database)
 - [ML Experiments](#ml-experiments)
 - [ML Models](#ml-models)
@@ -63,6 +65,42 @@ fc.update_paginated_report(workspace_id="1232", paginated_report_id="12312",
                            display_name = "newname", description = "newdescription", return_item=False)
 
 ```
+
+## Anomaly Detectors
+
+```python
+fcc = FabricClientCore()
+
+workspace_id = "0asdfasdfsdf3"
+item_id = "9asdfasdfasdf2"
+
+
+# get anomaly detector definition
+anomaly_detector_definition = fcc.get_anomaly_detector_definition(workspace_id=workspace_id, anomaly_detector_id=item_id)
+definition = anomaly_detector_definition["definition"]
+
+# create anomaly detector
+anomaly_detector_new = fcc.create_anomaly_detector(workspace_id=workspace_id, display_name="date_str", definition=definition)
+
+# get anomaly detector
+anomaly_detector_get = fcc.get_anomaly_detector(workspace_id=workspace_id, anomaly_detector_id=anomaly_detector_new.id)
+
+# list anomaly detectors
+anomaly_detectors = fcc.list_anomaly_detectors(workspace_id=workspace_id)
+
+# update anomaly detector
+date_str_updated = date_str + "_updated"
+anomaly_detector_updated = fcc.update_anomaly_detector(workspace_id=workspace_id, anomaly_detector_id=anomaly_detector_new.id, display_name=date_str_updated, return_item=True)
+
+# update anomaly detector definition
+anomaly_detector_updated = fcc.update_anomaly_detector_definition(workspace_id=workspace_id, anomaly_detector_id=anomaly_detector_new.id, definition=definition)
+
+# delete anomaly detector
+resp = fcc.delete_anomaly_detector(workspace_id=workspace_id, anomaly_detector_id=anomaly_detector_new.id)
+
+```
+
+
 ## Apache Airflow Jobs
 ```python
 from msfabricpysdkcore import FabricClientCore
@@ -196,6 +234,9 @@ resp = fcc.schedule_apply_changes(workspace_id=workspace_id, dataflow_id=dataflo
 # Schedule execute job for a dataflow
 resp = fcc.schedule_execute(workspace_id=workspace_id, dataflow_id=dataflow_new.id, 
                               configuration=configuration, enabled=True)
+
+# Discover dataflow parameters
+params = fcc.discover_dataflow_parameters(workspace_id=workspace_id, dataflow_id=dataflow_new.id)
 
 ```
 
@@ -701,6 +742,32 @@ livy_sessions = fc.list_lakehouse_livy_sessions(workspace_id=workspace_id, lakeh
 # Get Livy Session
 livy_session = fc.get_lakehouse_livy_session(workspace_id=workspace_id, lakehouse_id=lakehouse.id, livy_id=livy_id)
 
+
+workspace_id = "f8xxxxxxxxxxxx"
+lakehouse_id = "bxxxxxxxxxxxx"
+
+
+# Run On-Demand Refresh Materialized Lake View
+resp = fcc.run_on_demand_refresh_materialized_lake_view(workspace_id=workspace_id, lakehouse_id=lakehouse_id)
+
+# Create Refresh Materialized Lake View Schedule
+configuration = {
+    "startDateTime": "2025-04-28T00:00:00",
+    "endDateTime": "2025-04-30T23:59:00",
+    "localTimeZoneId": "Central Standard Time",
+    "type": "Cron",
+    "interval": 10
+  }
+resp = fcc.create_refresh_materialized_lake_view_schedule(workspace_id=workspace_id, lakehouse_id=lakehouse_id, enabled=True, configuration=configuration)
+
+# Delete Refresh Materialized Lake View Schedule
+resp = fcc.delete_refresh_materialized_lake_view_schedule(workspace_id=workspace_id, lakehouse_id=lakehouse_id, schedule_id="a2xxxxxxxxxxxx")
+
+# Update Refresh Materialized Lake View Schedule
+resp = fcc.update_refresh_materialized_lake_view_schedule(workspace_id=workspace_id, lakehouse_id=lakehouse_id, schedule_id="a2xxxxxxxxxxxx",
+                                                           enabled=False, configuration=configuration)
+                                                           #
+
 ```
 ## Mirrored Azure Databricks Catalogs
 
@@ -761,6 +828,39 @@ tables = fcc.discover_mirrored_azure_databricks_catalog_tables(workspace_id=work
 status = fcc.refresh_mirrored_azure_databricks_catalog_metadata(workspace_id=workspace_id,
                                                         item_id= item_id, wait_for_completion=False)
 ```
+
+## Maps
+```python
+from msfabricpysdkcore import FabricClientCore
+
+fc = FabricClientCore()
+
+workspace_id = "05bbbbbbbbbbbbbbb3"
+item_id = "9dccccccccccccccccccc0"
+
+# Get Map Definition
+map_definition = fcc.get_map_definition(workspace_id=workspace_id, map_id=item_id)
+definition = map_definition["definition"]
+
+# Create Map
+map_new = fcc.create_map(workspace_id=workspace_id, display_name="asdfs", definition=definition)
+
+# Get Map
+map_get = fcc.get_map(workspace_id=workspace_id, map_id=map_new.id)
+
+# List Maps
+maps = fcc.list_maps(workspace_id=workspace_id)
+
+# Update Map
+map_updated = fcc.update_map(workspace_id=workspace_id, map_id=map_new.id, display_name="asdfasdfasdf", return_item=True)
+
+# Update Map Definition
+map_updated = fcc.update_map_definition(workspace_id=workspace_id, map_id=map_new.id, definition=definition)
+
+resp = fcc.delete_map(workspace_id=workspace_id, map_id=map.id)
+
+```
+
 ## Mirrored Database
 
 ```python
@@ -858,6 +958,63 @@ ml_model2 = fc.update_ml_model(workspace_id, ml_model_id=ml_model.id, display_na
 
 # Delete ML Model
 fc.delete_ml_model(workspace_id, ml_model.id)
+
+## Endpoints
+
+workspace_id = "123123"
+model_id = "123123"
+
+# Activate ML Model Endpoint Version
+resp = fcc.activate_ml_model_endpoint_version(workspace_id=workspace_id, model_id=model_id, name="1")
+
+# Deactivate all ML Model Endpoint Versions
+resp = fcc.deactivate_all_ml_model_endpoint_versions(workspace_id=workspace_id, model_id=model_id)
+
+# Deactivate ML Model Endpoint Version
+resp = fcc.deactivate_ml_model_endpoint_version(workspace_id=workspace_id, model_id=model_id, name="1")
+
+# Get ML Model Endpoint
+resp = fcc.get_ml_model_endpoint(workspace_id=workspace_id, model_id=model_id)
+
+# Get ML Model Endpoint Version
+resp = fcc.get_ml_model_endpoint_version(workspace_id=workspace_id, model_id=model_id, name="1")
+
+# List ML Model Endpoint Versions
+resp = fcc.list_ml_model_endpoint_versions(workspace_id=workspace_id, model_id=model_id)
+
+# Score ML Model Endpoint
+format_type= "dataframe"
+orientation= "values"
+inputs= [
+    [
+      -0.00188201652779,
+      -0.04464163650698,
+      -0.0514740612388,
+      -0.0263275281478529,
+      -0.00844872411121,
+      -0.01916333974822,
+      0.07441156407875721,
+      -0.03949338287409329,
+      -0.0683315470939731,
+      -0.092204049626824
+    ]]
+resp = fcc.score_ml_model_endpoint(workspace_id=workspace_id, model_id=model_id, format_type=format_type, orientation=orientation, inputs=inputs)
+
+
+# Score ML Model Endpoint Version
+resp = fcc.score_ml_model_endpoint_version(workspace_id=workspace_id, model_id=model_id, name="1", format_type=format_type, orientation=orientation, inputs=inputs)
+
+
+# Update ML Model Endpoint
+defaultVersionAssignmentBehavior = "StaticallyConfigured"
+defaultVersionName = "1"
+resp = fcc.update_ml_model_endpoint(workspace_id=workspace_id, model_id=model_id,
+                             default_version_assignment_behavior=defaultVersionAssignmentBehavior,
+                             default_version_name=defaultVersionName)
+
+# Update ML Model Endpoint Version
+resp = fcc.update_ml_model_endpoint_version(workspace_id=workspace_id, model_id=model_id, name="1", scale_rule="AllowScaleToZero")
+
 
 ```
 
@@ -1046,6 +1203,17 @@ fc.update_semantic_model_definition(workspace_id="1232", semantic_model_id="sema
 # Delete Semantic Model
 fc.delete_semantic_model(workspace_id="1232", semantic_model_id="semantic_model.id")
 
+# Bind Semantic Model Connection
+connection_binding = {
+    "id": "0xxxxxxxxxxxxxxxxxx",
+    "connectivityType": "OnPremisesDataGateway",
+    "connectionDetails": {
+      "type": "SQL",
+      "path": "contoso.database.windows.net;sales"
+    }
+  }
+fc.bind_semantic_model_connection(workspace_id="workspace_id", semantic_model_id="semantic_model_id", connection_binding=connection_binding)
+
 ```
 
 ## Spark Livy Sessions
@@ -1200,6 +1368,28 @@ list_sql_endpoints = fc.list_sql_endpoints(workspace_id)
 # Refresh SQL Endpoint Metadata
 sql_endpoint_id = "123123"
 resp = fc.refresh_sql_endpoint_metadata(workspace_id, sql_endpoint_id, preview = True, timeout = None, wait_for_completion = False):
+
+# Get SQL Endpoint Audit Settings
+audit_settings = fcc.get_sql_endpoint_audit_settings(workspace_id=workspace_id, sql_endpoint_id=sql_endpoint_id)
+
+# Update SQL Endpoint Audit Settings
+respo = fcc.update_sql_endpoint_audit_settings(workspace_id=workspace_id, sql_endpoint_id=sql_endpoint_id,
+                                        state="Enabled", retention_days=10)
+
+# Set SQL Endpoint Audit Actions and Groups
+actionsandgroups = ["SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP",  "FAILED_DATABASE_AUTHENTICATION_GROUP",  "BATCH_COMPLETED_GROUP"]
+respo = fcc.set_sql_endpoint_audit_actions_and_groups(workspace_id=workspace_id, sql_endpoint_id=sql_endpoint_id,
+                                              set_audit_actions_and_groups_request=actionsandgroups)
+
+# Get connection string
+connection_string = fcc.get_sql_endpoint_connection_string(workspace_id=workspace_id, sql_endpoint_id=sql_endpoint_id)
+
+# Optional parameters for get connection string
+guestTenantId="6------------------2"
+privateLinkType="Workspace"
+connection_string = fcc.get_sql_endpoint_connection_string(workspace_id=workspace_id, sql_endpoint_id=sql_endpoint_id,
+                                                    guest_tenant_id=guestTenantId, private_link_type=privateLinkType)
+
 ```
 
 ## Variable Libraries
@@ -1258,16 +1448,50 @@ workspace_id = workspace.id
 warehouses = fc.list_warehouses(workspace_id)
 
 # Create Warehouse
-warehouse = fc.create_warehouse(workspace_id, display_name="wh1")
+warehouse = fc.create_warehouse(workspace_id=workspace_id, display_name="wh1")
 
 # Get Warehouse
-warehouse = fc.get_warehouse(workspace_id, warehouse_name="wh1")
+warehouse = fc.get_warehouse(workspace_id=workspace_id, warehouse_id="123123")
 
 # Update Warehouse
-warehouse2 = fc.update_warehouse(workspace_id, warehouse.id, display_name="wh2", return_item=True)
+warehouse2 = fc.update_warehouse(workspace_id=workspace_id, warehouse_id=warehouse.id, display_name="wh2", return_item=True)
 
 # Delete Warehouse
-fc.delete_warehouse(workspace_id, warehouse.id)
+fc.delete_warehouse(workspace_id=workspace_id, warehouse_id=warehouse.id)
+
+# Get Warehouse Connection String
+resp = fcc.get_warehouse_connection_string(workspace_id=workspace_id, warehouse_id=item_id)
+
+# List Warehouse Restore Points
+resp = fcc.list_warehouse_restore_points(workspace_id=workspace_id, warehouse_id=item_id)
+
+# Create Warehouse Restore Point
+resp = fcc.create_warehouse_restore_point(workspace_id=workspace_id, warehouse_id=item_id, "my second restore point", wait_for_completion=False)
+
+# Get Warehouse Restore Point
+resp = fcc.get_warehouse_restore_point(workspace_id=workspace_id, warehouse_id=item_id, "1760452482000")
+
+# Update Warehouse Restore Point
+resp = fcc.update_warehouse_restore_point(workspace_id=workspace_id, warehouse_id=item_id, rp_to_delete, description="updated description")
+
+# Delete Warehouse Restore Point
+resp = fcc.delete_warehouse_restore_point(workspace_id=workspace_id, warehouse_id=item_id, rp_to_delete)
+
+# Restore Warehouse to Restore Point
+resp = fcc.restore_warehouse_to_restore_point(workspace_id=workspace_id, warehouse_id=item_id, "1760452482000")
+
+# Get Warehouse SQL Audit Settings
+audit_settings = fcc.get_warehouse_sql_audit_settings(workspace_id=workspace_id, warehouse_id=item_id)
+
+# Update Warehouse SQL Audit Settings
+respo = fcc.update_warehouse_sql_audit_settings(workspace_id=workspace_id, warehouse_id=item_id,
+                                        state="Enabled", retention_days=10)
+
+# Set Warehouse SQL Audit Actions and Groups
+actionsandgroups = ["SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP",  "FAILED_DATABASE_AUTHENTICATION_GROUP",  "BATCH_COMPLETED_GROUP"]
+
+respo = fcc.set_warehouse_audit_actions_and_groups(workspace_id=workspace_id, warehouse_id=item_id,
+                                              set_audit_actions_and_groups_request=actionsandgroups)
 
 ```
 

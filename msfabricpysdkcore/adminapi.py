@@ -67,7 +67,7 @@ class FabricClientAdmin(FabricClient):
 
         return response.status_code
     
-    def create_domain(self, display_name, description = None, parent_domain_id = None):
+    def create_domain(self, display_name, description = None, parent_domain_id = None, preview="false"):
         """Method to create a domain
         
         Args:
@@ -79,7 +79,7 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.domain import Domain
 
-        url = "https://api.fabric.microsoft.com/v1/admin/domains"
+        url = f"https://api.fabric.microsoft.com/v1/admin/domains?preview={preview}"
         body = {
             "displayName": display_name
         }
@@ -110,8 +110,8 @@ class FabricClientAdmin(FabricClient):
                                                           return_format="response")
 
         return response.status_code
-    
-    def get_domain_by_id(self, domain_id):
+
+    def get_domain_by_id(self, domain_id, preview="false"):
         """Method to get a domain by ID
         
         Args:
@@ -121,14 +121,14 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.domain import Domain
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}"
+        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}?preview={preview}"
 
         domain_dict = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429], error_message = "Error getting domain",
                                            return_format="json")
         domain = Domain.from_dict(domain_dict, self)
         return domain
 
-    def get_domain_by_name(self, domain_name):
+    def get_domain_by_name(self, domain_name, preview="false"):
         """Method to get a domain by name
         
         Args:
@@ -139,10 +139,10 @@ class FabricClientAdmin(FabricClient):
         domains = self.list_domains()
         domains = [domain for domain in domains if domain.display_name == domain_name]
         if len(domains) > 0:
-            return self.get_domain_by_id(domains[0].id)
+            return self.get_domain_by_id(domains[0].id, preview=preview)
         raise ValueError("Domain not found")
     
-    def get_domain(self, domain_id = None, domain_name = None):
+    def get_domain(self, domain_id = None, domain_name = None, preview="false"):
         """Get a domain by ID or name
         
         Args:
@@ -152,9 +152,9 @@ class FabricClientAdmin(FabricClient):
             Domain: The Domain object
         """
         if domain_id:
-            return self.get_domain_by_id(domain_id)
+            return self.get_domain_by_id(domain_id, preview=preview)
         if domain_name:
-            return self.get_domain_by_name(domain_name)
+            return self.get_domain_by_name(domain_name, preview=preview)
         raise ValueError("Either domain_id or domain_name must be provided")
     
     def list_domain_workspaces(self, domain_id, workspace_objects = False):
@@ -179,7 +179,7 @@ class FabricClientAdmin(FabricClient):
 
         return workspaces
     
-    def list_domains(self, nonEmptyOnly=False):
+    def list_domains(self, nonEmptyOnly=False, preview="false"):
         """List all domains in the tenant
         
         Args:
@@ -188,7 +188,7 @@ class FabricClientAdmin(FabricClient):
             list: List of Domain objects"""
         from msfabricpysdkcore.domain import Domain
 
-        url = "https://api.fabric.microsoft.com/v1/admin/domains"
+        url = f"https://api.fabric.microsoft.com/v1/admin/domains?preview={preview}"
         if nonEmptyOnly:
             url = f"{url}?nonEmptyOnly=True"
 
@@ -198,6 +198,23 @@ class FabricClientAdmin(FabricClient):
 
         domains = [Domain.from_dict(i, self) for i in domains]
         return domains
+    
+    # GET https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/roleAssignments?continuationToken={continuationToken}
+    def list_role_assignments(self, domain_id):
+        """List role assignments in a domain
+        
+        Args:
+            domain_id (str): The ID of the domain
+        Returns:
+            list: The list of role assignments
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/roleAssignments"
+
+        items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
+                                           error_message = "Error listing role assignments",
+                                           return_format="value_json", paging=True)
+
+        return items
 
     def role_assignments_bulk_assign(self, domain_id, type, principals):
         """Assign a role to principals in bulk
@@ -243,6 +260,27 @@ class FabricClientAdmin(FabricClient):
                                                            return_format="response")
 
         return response.status_code
+    
+    # POST https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/roleAssignments/syncToSubdomains
+    def sync_role_assignments_to_subdomains(self, domain_id, role):
+        """Sync role assignments to subdomains
+        
+        Args:
+            domain_id (str): The ID of the domain
+            role (str): The role to sync
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/roleAssignments/syncToSubdomains"
+        body = {
+            "role": role
+        }
+
+        response:requests.Response = self.calling_routine(url = url, operation = "POST", body = body, response_codes = [200, 429],
+                                                          error_message = "Error syncing role assignments to subdomains",
+                                                          return_format="response")
+
+        return response.status_code
 
     def unassign_all_domain_workspaces(self, domain_id):
         """Unassign all workspaces from a domain
@@ -279,7 +317,7 @@ class FabricClientAdmin(FabricClient):
 
         return response.status_code
     
-    def update_domain(self, domain_id, description = None, display_name = None, contributors_scope = None, return_item = False):
+    def update_domain(self, domain_id, description = None, display_name = None, contributors_scope = None, return_item = False, preview="false"):
         """Method to update a domain
         
         Args:
@@ -287,7 +325,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             Domain: The Domain object
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}"
+        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}?preview={preview}"
         body = {}
         if description:
             body["description"] = description

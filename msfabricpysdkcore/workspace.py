@@ -104,7 +104,13 @@ class Workspace:
             int: The status code of the response"""
         return self.core_client.deprovision_identity(workspace_id=self.id)
 
-    
+    def get_network_communication_policy(self):
+        """Get the network communication policy for the workspace
+        Returns:
+            dict: The network communication policy
+        """
+        return self.core_client.get_network_communication_policy(workspace_id=self.id)
+
     def get_role_assignment(self, workspace_role_assignment_id):
         """Get a role assignment from the workspace
         Args:
@@ -399,8 +405,8 @@ class Workspace:
                                                conflict_resolution=conflict_resolution,
                                                options=options, workspace_head=workspace_head)
     
-    def update_my_git_credentials(self, git_credentials):
-        return self.core_client.update_my_git_credentials(workspace_id=self.id, git_credentials=git_credentials)
+    def update_my_git_credentials(self, source, connection_id = None):
+        return self.core_client.update_my_git_credentials(workspace_id=self.id, source=source, connection_id=connection_id)
 
     # Managed Private Endpoints:
 
@@ -442,9 +448,6 @@ class Workspace:
     
     def list_datamarts(self):
         return self.core_client.list_datamarts(workspace_id=self.id)
-
-    def list_sql_endpoints(self):
-        return self.core_client.list_sql_endpoints(workspace_id=self.id)
     
     def list_mirrored_warehouses(self):
         return self.core_client.list_mirrored_warehouses(workspace_id=self.id)
@@ -475,6 +478,84 @@ class Workspace:
     def update_apache_airflow_job_definition(self, apache_airflow_job_id, definition, update_metadata = None):
         return self.core_client.update_apache_airflow_job_definition(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
                                                                      definition=definition, update_metadata=update_metadata)
+
+    # anomaly detectors
+    def create_anomaly_detector(self, display_name, definition = None, description = None, folder_id = None):
+        """Create an anomaly detector in the workspace
+        Args:
+            display_name (str): The display name of the anomaly detector
+            definition (dict): The definition of the anomaly detector
+            description (str): The description of the anomaly detector
+            folder_id (str): The ID of the folder to create the anomaly detector in
+        Returns:
+            AnomalyDetector: The created anomaly detector object
+        """
+        return self.core_client.create_anomaly_detector(workspace_id=self.id, display_name=display_name, description=description,
+                                                        definition=definition, folder_id=folder_id)
+    
+    def delete_anomaly_detector(self, anomaly_detector_id):
+        """Delete an anomaly detector from the workspace
+        Args:
+            anomaly_detector_id (str): The ID of the anomaly detector
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_anomaly_detector(workspace_id=self.id, anomaly_detector_id=anomaly_detector_id)
+    
+    def get_anomaly_detector(self, anomaly_detector_id = None, anomaly_detector_name = None):
+        """Get an anomaly detector from the workspace
+        Args:
+            anomaly_detector_id (str): The ID of the anomaly detector
+            anomaly_detector_name (str): The name of the anomaly detector
+        Returns:
+            AnomalyDetector: The anomaly detector object
+        """
+        return self.core_client.get_anomaly_detector(workspace_id=self.id, anomaly_detector_id=anomaly_detector_id,
+                                                     anomaly_detector_name=anomaly_detector_name)
+
+    def get_anomaly_detector_definition(self, anomaly_detector_id, format = None):
+        """Get the definition of an anomaly detector
+        Args:
+            anomaly_detector_id (str): The ID of the anomaly detector
+            format (str): The format of the definition
+        Returns:
+            dict: The anomaly detector definition
+        """
+        return self.core_client.get_anomaly_detector_definition(workspace_id=self.id, anomaly_detector_id=anomaly_detector_id, format=format)
+    
+    def list_anomaly_detectors(self, with_properties = False):
+        """List anomaly detectors in the workspace
+        Args:
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of anomaly detectors
+        """
+        return self.core_client.list_anomaly_detectors(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_anomaly_detector(self, anomaly_detector_id, display_name = None, description = None, return_item=False):
+        """Update an anomaly detector in the workspace
+        Args:
+            anomaly_detector_id (str): The ID of the anomaly detector
+            display_name (str): The display name of the anomaly detector
+            description (str): The description of the anomaly detector
+            return_item (bool): Whether to return the item object
+        Returns:
+            dict: The updated anomaly detector or AnomalyDetector object if return_item is True
+        """
+        return self.core_client.update_anomaly_detector(workspace_id=self.id, anomaly_detector_id=anomaly_detector_id,
+                                                        display_name=display_name, description=description, return_item=return_item)
+    
+    def update_anomaly_detector_definition(self, anomaly_detector_id, definition, update_metadata = None):
+        """Update the definition of an anomaly detector
+        Args:
+            anomaly_detector_id (str): The ID of the anomaly detector
+            definition (dict): The definition of the anomaly detector
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated anomaly detector definition
+        """
+        return self.core_client.update_anomaly_detector_definition(workspace_id=self.id, anomaly_detector_id=anomaly_detector_id,
+                                                                   definition=definition, update_metadata=update_metadata)
 
     # copy jobs
 
@@ -564,6 +645,9 @@ class Workspace:
     
     def delete_dataflow(self, dataflow_id):
         return self.core_client.delete_dataflow(workspace_id=self.id, dataflow_id=dataflow_id)
+    
+    def discover_dataflow_parameters(self, dataflow_id):
+        return self.core_client.discover_dataflow_parameters(workspace_id=self.id, dataflow_id=dataflow_id)
     
     def get_dataflow(self, dataflow_id = None, dataflow_name = None):
         return self.core_client.get_dataflow(workspace_id=self.id, dataflow_id=dataflow_id, dataflow_name=dataflow_name)
@@ -1055,6 +1139,53 @@ class Workspace:
         """Get a lakehouse livy session from a workspace"""
         return self.core_client.get_lakehouse_livy_session(workspace_id=self.id, lakehouse_id=lakehouse_id, livy_id=livy_id)
     
+    def create_refresh_materialized_lake_view_schedule(self, lakehouse_id, enabled, configuration):
+        """Create a refresh materialized lake view schedule
+        Args:
+            lakehouse_id (str): The ID of the lakehouse
+            enabled (bool): Whether the schedule is enabled
+            configuration (dict): The configuration of the schedule
+        Returns:
+            dict: The created schedule
+        """
+        return self.core_client.create_refresh_materialized_lake_view_schedule(workspace_id=self.id, lakehouse_id=lakehouse_id,
+                                                                               enabled=enabled, configuration=configuration)
+    
+    def delete_refresh_materialized_lake_view_schedule(self, lakehouse_id, schedule_id):
+        """Delete a refresh materialized lake view schedule
+        Args:
+            lakehouse_id (str): The ID of the lakehouse
+            schedule_id (str): The ID of the schedule
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_refresh_materialized_lake_view_schedule(workspace_id=self.id, lakehouse_id=lakehouse_id,
+                                                                               schedule_id=schedule_id)
+
+    def run_on_demand_refresh_materialized_lake_view(self, lakehouse_id, job_type="RefreshMaterializedLakeViews"):
+        """Run refresh materialized lake view
+        Args:
+            lakehouse_id (str): The ID of the lakehouse
+            job_type (str): The job type
+        Returns:
+            dict: The operation result or response value
+        """
+        return self.core_client.run_on_demand_refresh_materialized_lake_view(workspace_id=self.id, lakehouse_id=lakehouse_id, job_type=job_type)
+
+    def update_refresh_materialized_lake_view_schedule(self, lakehouse_id, schedule_id, enabled, configuration):
+        """Update a refresh materialized lake view schedule
+        Args:
+            lakehouse_id (str): The ID of the lakehouse
+            schedule_id (str): The ID of the schedule
+            enabled (bool): Whether the schedule is enabled
+            configuration (dict): The configuration of the schedule
+        Returns:
+            dict: The updated schedule
+        """
+        return self.core_client.update_refresh_materialized_lake_view_schedule(workspace_id=self.id, lakehouse_id=lakehouse_id,
+                                                                               schedule_id=schedule_id, enabled=enabled,
+                                                                               configuration=configuration)
+
     # mirroredDatabases
 
     def create_mirrored_database(self, display_name, description = None, definition = None):
@@ -1139,6 +1270,197 @@ class Workspace:
         """Update an ml model in a workspace"""
         return self.core_client.update_ml_model(workspace_id=self.id, ml_model_id=ml_model_id, display_name=display_name, description=description)
     
+    def activate_ml_model_endpoint_version(self, model_id, name, wait_for_completion = False):
+        """Activate an ml model endpoint version
+        Args:
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            dict: The activated endpoint version
+        """
+
+        return self.core_client.activate_ml_model_endpoint_version(workspace_id=self.id, model_id=model_id, name=name, wait_for_completion=wait_for_completion)
+
+    def deactivate_all_ml_model_endpoint_versions(self, model_id, wait_for_completion = False):
+        """Deactivate all ml model endpoint versions
+        Args:
+            model_id (str): The ID of the ml model
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            Response: The operation result
+        """
+        return self.core_client.deactivate_all_ml_model_endpoint_versions(workspace_id=self.id, model_id=model_id, wait_for_completion=wait_for_completion)
+
+    def deactivate_ml_model_endpoint_version(self, model_id, name, wait_for_completion = False):
+        """Deactivate an ml model endpoint version
+        Args:
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            Response: The operation result
+        """
+        return self.core_client.deactivate_ml_model_endpoint_version(workspace_id=self.id,
+                                                                     model_id=model_id, name=name,
+                                                                     wait_for_completion=wait_for_completion)
+
+    def get_ml_model_endpoint(self, model_id):
+        """Get the ml model endpoint
+        Args:
+            model_id (str): The ID of the ml model
+        Returns:
+            dict: The ml model endpoint
+        """
+        return self.core_client.get_ml_model_endpoint(workspace_id=self.id, model_id=model_id)
+
+    def get_ml_model_endpoint_version(self, model_id, name):
+        """Get an ml model endpoint version
+        Args:
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+        Returns:
+            dict: The ml model endpoint version
+        """
+        return self.core_client.get_ml_model_endpoint_version(workspace_id=self.id, model_id=model_id, name=name)
+
+    def list_ml_model_endpoint_versions(self, model_id):
+        """List all ml model endpoint versions
+        Args:
+            model_id (str): The ID of the ml model
+        Returns:
+            list: The list of ml model endpoint versions
+        """
+        return self.core_client.list_ml_model_endpoint_versions(workspace_id=self.id, model_id=model_id)
+
+    def score_ml_model_endpoint(self, model_id, inputs, format_type = None, orientation = None):
+        """Score an ml model endpoint
+        Args:
+            model_id (str): The ID of the ml model
+            inputs (list): The inputs to score
+            format_type (str): The format type
+            orientation (str): The orientation
+        Returns:
+            dict: The scoring result
+        """
+        return self.core_client.score_ml_model_endpoint(workspace_id=self.id, model_id=model_id, inputs=inputs,
+                                                        format_type=format_type, orientation=orientation)
+
+    def score_ml_model_endpoint_version(self, model_id, name, inputs, format_type = None, orientation = None):
+        """Score an ml model endpoint version
+        Args:
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+            inputs (list): The inputs to score
+            format_type (str): The format type
+            orientation (str): The orientation
+        Returns:
+            dict: The scoring result
+        """
+        return self.core_client.score_ml_model_endpoint_version(workspace_id=self.id, model_id=model_id, name=name,
+                                                               inputs=inputs, format_type=format_type, orientation=orientation)                                
+
+    def update_ml_model_endpoint(self, model_id, default_version_assignment_behavior, default_version_name):
+        """Update an ml model endpoint
+        Args:
+            model_id (str): The ID of the ml model
+            default_version_assignment_behavior (str): The default version assignment behavior
+            default_version_name (str): The default version name
+        Returns:
+            dict: The updated endpoint
+        """
+        return self.core_client.update_ml_model_endpoint(workspace_id=self.id, model_id=model_id,
+                                                        default_version_assignment_behavior=default_version_assignment_behavior,
+                                                        default_version_name=default_version_name)
+
+    def update_ml_model_endpoint_version(self, model_id, name, scale_rule):
+        """Update an ml model endpoint version
+        Args:
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+            scale_rule (str): The scale rule
+        Returns:
+            dict: The updated endpoint version
+        """
+        return self.core_client.update_ml_model_endpoint_version(workspace_id=self.id, model_id=model_id, name=name, scale_rule=scale_rule)
+
+    # maps
+    def create_map(self, display_name, definition = None, description = None, folder_id = None):
+        """Create a map in the workspace
+        Args:
+            display_name (str): The display name of the map
+            definition (dict): The definition of the map
+            description (str): The description of the map
+            folder_id (str): The ID of the folder to create the map in
+        Returns:
+            Map: The created map object
+        """
+        return self.core_client.create_map(workspace_id=self.id, display_name=display_name, description=description,
+                                          definition=definition, folder_id=folder_id)
+    
+    def delete_map(self, map_id):
+        """Delete a map from the workspace
+        Args:
+            map_id (str): The ID of the map
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_map(workspace_id=self.id, map_id=map_id)
+    
+    def get_map(self, map_id = None, map_name = None):
+        """Get a map from the workspace
+        Args:
+            map_id (str): The ID of the map
+            map_name (str): The name of the map
+        Returns:
+            Map: The map object
+        """
+        return self.core_client.get_map(workspace_id=self.id, map_id=map_id, map_name=map_name)
+
+    def get_map_definition(self, map_id, format = None):
+        """Get the definition of a map
+        Args:
+            map_id (str): The ID of the map
+            format (str): The format of the definition
+        Returns:
+            dict: The map definition
+        """
+        return self.core_client.get_map_definition(workspace_id=self.id, map_id=map_id, format=format)
+    
+    def list_maps(self, with_properties = False):
+        """List maps in the workspace
+        Args:
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of maps
+        """
+        return self.core_client.list_maps(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_map(self, map_id, display_name = None, description = None, return_item=False):
+        """Update a map in the workspace
+        Args:
+            map_id (str): The ID of the map
+            display_name (str): The display name of the map
+            description (str): The description of the map
+            return_item (bool): Whether to return the item object
+        Returns:
+            dict: The updated map or Map object if return_item is True
+        """
+        return self.core_client.update_map(workspace_id=self.id, map_id=map_id,
+                                          display_name=display_name, description=description, return_item=return_item)
+    
+    def update_map_definition(self, map_id, definition, update_metadata = None):
+        """Update the definition of a map
+        Args:
+            map_id (str): The ID of the map
+            definition (dict): The definition of the map
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated map definition
+        """
+        return self.core_client.update_map_definition(workspace_id=self.id, map_id=map_id,
+                                                     definition=definition, update_metadata=update_metadata)
+
     # mounted data factory
 
     def create_mounted_data_factory(self, display_name, description = None, definition = None):
@@ -1285,6 +1607,11 @@ class Workspace:
 
     # semanticModels
 
+    def bind_semantic_model_connection(self, semantic_model_id, connection_binding):
+        """Bind a connection to a semantic model in a workspace"""
+        return self.core_client.bind_semantic_model_connection(workspace_id=self.id, semantic_model_id=semantic_model_id,
+                                                              connection_binding=connection_binding)
+
     def list_semantic_models(self, with_properties = False):
         """List semantic models in a workspace"""
         return self.core_client.list_semantic_models(workspace_id=self.id, with_properties=with_properties)
@@ -1405,10 +1732,34 @@ class Workspace:
         return self.core_client.get_spark_job_definition_livy_session(workspace_id=self.id, spark_job_definition_id=spark_job_definition_id, livy_id=livy_id)
 
     # sql endpoint
+
+    def get_sql_endpoint_connection_string(self, sql_endpoint_id, guest_tenant_id = None, private_link_type = None):
+        return self.core_client.get_sql_endpoint_connection_string(workspace_id=self.id,
+                                                                   sql_endpoint_id=sql_endpoint_id,
+                                                                   guest_tenant_id=guest_tenant_id,
+                                                                   private_link_type=private_link_type)
+
+    def list_sql_endpoints(self):
+        return self.core_client.list_sql_endpoints(workspace_id=self.id)
+    
     def refresh_sql_endpoint_metadata(self, sql_endpoint_id, preview = True, timeout = None, wait_for_completion = False):
         """Refresh the metadata of a sql endpoint in a workspace"""
         return self.core_client.refresh_sql_endpoint_metadata(workspace_id=self.id, sql_endpoint_id=sql_endpoint_id,
                                                               preview=preview, timeout=timeout, wait_for_completion=wait_for_completion)
+
+    def get_sql_endpoint_audit_settings(self, sql_endpoint_id):
+        """Get the audit settings of a sql endpoint in a workspace"""
+        return self.core_client.get_sql_endpoint_audit_settings(workspace_id=self.id, sql_endpoint_id=sql_endpoint_id)
+    
+    def set_sql_endpoint_audit_actions_and_groups(self, sql_endpoint_id, set_audit_actions_and_groups_request):
+        """Set the audit settings of a sql endpoint in a workspace"""
+        return self.core_client.set_sql_endpoint_audit_actions_and_groups(workspace_id=self.id, sql_endpoint_id=sql_endpoint_id,
+                                                                          set_audit_actions_and_groups_request=set_audit_actions_and_groups_request)
+
+    def update_sql_endpoint_audit_settings(self, sql_endpoint_id, retention_days, state):
+        """Update the audit settings of a sql endpoint in a workspace"""
+        return self.core_client.update_sql_endpoint_audit_settings(workspace_id=self.id, sql_endpoint_id=sql_endpoint_id,
+                                                                   retention_days=retention_days, state=state)
 
     # sql databases
 
@@ -1447,6 +1798,11 @@ class Workspace:
         """Get a warehouse from a workspace"""
         return self.core_client.get_warehouse(workspace_id=self.id, warehouse_id=warehouse_id, warehouse_name=warehouse_name)
     
+    def get_warehouse_connection_string(self, warehouse_id, guest_tenant_id = None, private_link_type = None):
+        """Get the connection string of a warehouse from a workspace"""
+        return self.core_client.get_warehouse_connection_string(workspace_id=self.id, warehouse_id=warehouse_id,
+                                                               guest_tenant_id=guest_tenant_id, private_link_type=private_link_type)
+    
     def delete_warehouse(self, warehouse_id):
         """Delete a warehouse from a workspace"""
         return self.core_client.delete_warehouse(workspace_id=self.id, warehouse_id=warehouse_id)
@@ -1454,6 +1810,120 @@ class Workspace:
     def update_warehouse(self, warehouse_id, display_name = None, description = None):
         """Update a warehouse in a workspace"""
         return self.core_client.update_warehouse(workspace_id=self.id, warehouse_id=warehouse_id, display_name=display_name, description=description)    
+
+    # warehouse restore points
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints
+    def create_warehouse_restore_point(self, warehouse_id, display_name = None, description = None, wait_for_completion = False):
+        """Create a restore point for a warehouse
+        Args:
+            warehouse_id (str): The ID of the warehouse
+            display_name (str): The display name of the restore point
+            description (str): The description of the restore point
+            wait_for_completion (bool): Whether to wait for the restore point creation to complete
+        Returns:
+            dict: The created restore point
+        """
+        return self.core_client.create_warehouse_restore_point(workspace_id=self.id, warehouse_id=warehouse_id,
+                                                              display_name=display_name, description=description,
+                                                              wait_for_completion=wait_for_completion)
+
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}
+    def delete_warehouse_restore_point(self, warehouse_id, restore_point_id):
+        """Delete a restore point for a warehouse
+        Args:
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_warehouse_restore_point(workspace_id=self.id, warehouse_id=warehouse_id,
+                                                              restore_point_id=restore_point_id)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}
+    def get_warehouse_restore_point(self, warehouse_id, restore_point_id):
+        """Get a restore point for a warehouse
+        Args:
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+        Returns:
+            dict: The restore point
+        """
+        return self.core_client.get_warehouse_restore_point(workspace_id=self.id, warehouse_id=warehouse_id,
+                                                           restore_point_id=restore_point_id)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints?continuationToken={continuationToken}
+    def list_warehouse_restore_points(self, warehouse_id):
+        """List restore points for a warehouse
+        Args:
+                warehouse_id (str): The ID of the warehouse
+        Returns:
+            list: The list of restore points
+        """
+        return self.core_client.list_warehouse_restore_points(workspace_id=self.id, warehouse_id=warehouse_id)
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}/restore
+    def restore_warehouse_to_restore_point(self, warehouse_id, restore_point_id, wait_for_completion = False):
+        """Restore a warehouse to a restore point
+        Args:
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+            wait_for_completion (bool): Whether to wait for the restore operation to complete
+        Returns:
+            response: The response of the restore operation
+        """
+        return self.core_client.restore_warehouse_to_restore_point(workspace_id=self.id, warehouse_id=warehouse_id,
+                                                                  restore_point_id=restore_point_id,
+                                                                  wait_for_completion=wait_for_completion)
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}
+    def update_warehouse_restore_point(self, warehouse_id, restore_point_id, display_name = None, description = None):
+        """Update a restore point for a warehouse
+        Args:
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+            display_name (str): The display name of the restore point
+            description (str): The description of the restore point
+        Returns:
+            dict: The updated restore point
+        """
+        return self.core_client.update_warehouse_restore_point(workspace_id=self.id, warehouse_id=warehouse_id,
+                                                              restore_point_id=restore_point_id,
+                                                              display_name=display_name, description=description)
+
+    # warehouse sql audit settings
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{itemId}/settings/sqlAudit
+    def get_warehouse_sql_audit_settings(self, warehouse_id):
+        """Get the audit settings of a warehouse
+        Args:
+            warehouse_id (str): The ID of the warehouse
+        Returns:
+            dict: The audit settings of the warehouse
+        """
+
+        return self.get_sql_endpoint_audit_settings(warehouse_id)
+
+    def set_warehouse_audit_actions_and_groups(self, warehouse_id, set_audit_actions_and_groups_request):
+        """Set the audit actions and groups of a warehouse
+        Args:
+            warehouse_id (str): The ID of the warehouse
+            set_audit_actions_and_groups_request (list): The list of audit actions and groups
+        Returns:
+            dict: The updated audit settings of the warehouse
+        """
+        return self.set_sql_endpoint_audit_actions_and_groups(warehouse_id, set_audit_actions_and_groups_request)
+
+    def update_warehouse_sql_audit_settings(self, warehouse_id, retention_days, state):
+        """Update the audit settings of a warehouse
+        Args:
+            warehouse_id (str): The ID of the warehouse
+            retention_days (int): The number of days to retain the audit logs
+            state (str): The state of the audit settings
+        Returns:
+            dict: The updated audit settings of the warehouse
+        """
+        return self.update_sql_endpoint_audit_settings(warehouse_id, retention_days, state)
+
+
 
     def create_warehouse_snapshot(self, display_name, creation_payload, description = None, folder_id = None):
         return self.core_client.create_warehouse_snapshot(workspace_id=self.id, display_name=display_name,

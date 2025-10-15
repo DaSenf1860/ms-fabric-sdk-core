@@ -1,6 +1,6 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of June 25, 2025).
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of October 10, 2025).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
@@ -192,6 +192,16 @@ print(result["applicationId"]))
 
 # Deprovision Identity
 fc.deprovision_identity(workspace_id=ws.id)
+
+# Get network communication policy
+policy = fc.get_network_communication_policy(workspace_id=ws.id)
+
+# Set network communication policy
+inbound = {'publicAccessRules': {'defaultAction': 'Allow'}}
+outbound = {'publicAccessRules': {'defaultAction': 'Allow'}}
+
+resp = fc.set_network_communication_policy(workspace_id=ws.id, inbound=inbound, outbound=outbound)
+
 
 ```
 
@@ -670,7 +680,8 @@ ws.git_get_status()
 git_credentials = fc.get_my_git_credentials(workspace_id="123123")
 
 # Update my credentials
-fc.update_my_git_credentials(workspace_id = "1232", git_credentials={"source": "Automatic"})
+fc.update_my_git_credentials(workspace_id = "1232", source = "Automatic")
+fc.update_my_git_credentials(workspace_id = "1232", source = "ConfiguredConnection", connection_id = "3f2504e0aasdfasdf")
 
 # Update from git
 fc.update_from_git(workspace_id="workspaceid", remote_commit_hash="commit_hash", 
@@ -1181,6 +1192,15 @@ status_code = fca.role_assignments_bulk_unassign(domain.id, "Contributors", [pri
 
 # Delete domain
 status_code = fca.delete_domain(domain.id)
+
+# List role assignments
+resp = fca.list_role_assignments(domain_id=domain.id)
+
+# Sync role assignments to subdomains
+resp = fca.sync_role_assignments_to_subdomains(domain_id=domain.id, role="Contributor")
+
+
+
 ```
 
 ### Admin API for External Data Shares

@@ -1,5 +1,25 @@
 from msfabricpysdkcore.item import Item
 
+class AnomalyDetector(Item):
+    """Class to represent an anomaly detector in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return AnomalyDetector(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self, format=None):
+        """Method to get the definition of the anomaly detector"""
+        return super().get_definition(type="anomalydetectors", format=format)
+    
+    def update_definition(self, definition, update_metadata=None):
+        """Method to update the definition of the anomaly detector"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="anomalydetectors",
+                                                       update_metadata=update_metadata)
+
 class ApacheAirflowJob(Item):
     """Class to represent a ApacheAirflowJob in Microsoft Fabric"""
      
@@ -32,7 +52,10 @@ class Dataflow(Item):
         return Dataflow(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
-    
+
+    def discover_parameters(self):
+        return self.core_client.discover_dataflow_parameters(workspace_id=self.workspace_id, dataflow_id=self.id)
+
 class DataPipeline(Item):
     """Class to represent a spark job definition in Microsoft Fabric"""
      
@@ -158,6 +181,66 @@ class Warehouse(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
     
+    def get_connection_string(self, guest_tenant_id = None, private_link_type = None):
+        return self.core_client.get_warehouse_connection_string(workspace_id=self.workspace_id, warehouse_id=self.id,
+                                                               guest_tenant_id=guest_tenant_id, private_link_type=private_link_type)
+    
+    def create_restore_point(self, display_name = None, description = None):
+        return self.core_client.create_warehouse_restore_point(workspace_id=self.workspace_id, warehouse_id=self.id,
+                                                               display_name=display_name, description=description)
+    
+    def delete_restore_point(self, restore_point_id):
+        return self.core_client.delete_warehouse_restore_point(workspace_id=self.workspace_id, warehouse_id=self.id,
+                                                               restore_point_id=restore_point_id)
+    
+    def get_restore_point(self, restore_point_id):
+        return self.core_client.get_warehouse_restore_point(workspace_id=self.workspace_id, warehouse_id=self.id,
+                                                            restore_point_id=restore_point_id)
+    
+    def list_restore_points(self):
+        return self.core_client.list_warehouse_restore_points(workspace_id=self.workspace_id, warehouse_id=self.id)
+    
+    def restore_to_restore_point(self, restore_point_id, wait_for_completion = False):
+        return self.core_client.restore_warehouse_to_restore_point(workspace_id=self.workspace_id, warehouse_id=self.id,
+                                                                  restore_point_id=restore_point_id,
+                                                                  wait_for_completion=wait_for_completion)
+    
+    def update_restore_point(self, restore_point_id, display_name = None, description = None):
+        return self.core_client.update_warehouse_restore_point(workspace_id=self.workspace_id, warehouse_id=self.id,
+                                                               restore_point_id=restore_point_id,
+                                                               display_name=display_name, description=description)
+
+    def get_sql_audit_settings(self):
+        """Get the audit settings of a warehouse
+        Returns:
+            dict: The audit settings of the warehouse
+        """
+
+        return self.core_client.get_warehouse_sql_audit_settings(self.workspace_id, self.id)
+
+    def set_warehouse_audit_actions_and_groups(self, set_audit_actions_and_groups_request):
+        """Set the audit actions and groups of a warehouse
+        Args:
+            set_audit_actions_and_groups_request (list): The list of audit actions and groups
+        Returns:
+            dict: The updated audit settings of the warehouse
+        """
+        return self.core_client.set_warehouse_audit_actions_and_groups(workspace_id=self.workspace_id,
+                                                                       warehouse_id=self.id,
+                                                                       set_audit_actions_and_groups_request=set_audit_actions_and_groups_request)
+
+    def update_warehouse_sql_audit_settings(self, retention_days, state):
+        """Update the audit settings of a warehouse
+        Args:
+            retention_days (int): The number of days to retain the audit logs
+            state (str): The state of the audit settings
+        Returns:
+            dict: The updated audit settings of the warehouse
+        """
+        return self.core_client.update_warehouse_sql_audit_settings(self.workspace_id, self.id,
+                                                                    retention_days, state)
+
+
 class WarehouseSnapshot(Item):
     """Class to represent a warehouse snapshot in Microsoft Fabric"""
      
@@ -296,6 +379,133 @@ class MLModel(Item):
         return MLModel(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+        
+    def activate_ml_model_endpoint_version(self, name, wait_for_completion = False):
+        """Activate an ml model endpoint version
+        Args:
+            name (str): The name of the endpoint version    
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            dict: The activated endpoint version
+        """
+
+        return self.core_client.activate_ml_model_endpoint_version(workspace_id=self.workspace_id, model_id=self.id,
+                                                                   name=name, wait_for_completion=wait_for_completion)
+
+    def deactivate_all_ml_model_endpoint_versions(self, wait_for_completion = False):
+        """Deactivate all ml model endpoint versions
+        Args:
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            Response: The operation result
+        """
+        return self.core_client.deactivate_all_ml_model_endpoint_versions(workspace_id=self.workspace_id, model_id=self.id,
+                                                                          wait_for_completion=wait_for_completion)
+
+    def deactivate_ml_model_endpoint_version(self, name, wait_for_completion = False):
+        """Deactivate an ml model endpoint version
+        Args:
+            name (str): The name of the endpoint version
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            Response: The operation result
+        """
+        return self.core_client.deactivate_ml_model_endpoint_version(workspace_id=self.workspace_id, model_id=self.id,
+                                                                     name=name, wait_for_completion=wait_for_completion)
+
+    def get_ml_model_endpoint(self):
+        """Get the ml model endpoint
+        Returns:
+            dict: The ml model endpoint
+        """
+        return self.core_client.get_ml_model_endpoint(workspace_id=self.workspace_id, model_id=self.id)
+
+    def get_ml_model_endpoint_version(self, name):
+        """Get an ml model endpoint version
+        Args:
+            name (str): The name of the endpoint version
+        Returns:
+            dict: The ml model endpoint version
+        """
+        return self.core_client.get_ml_model_endpoint_version(workspace_id=self.workspace_id, model_id=self.id, name=name)
+
+    def list_ml_model_endpoint_versions(self):
+        """List all ml model endpoint versions
+        
+        Returns:
+            list: The list of ml model endpoint versions
+        """
+        return self.core_client.list_ml_model_endpoint_versions(workspace_id=self.workspace_id, model_id=self.id)
+
+    def score_ml_model_endpoint(self, inputs, format_type = None, orientation = None):
+        """Score an ml model endpoint
+        Args:
+            inputs (list): The inputs to score
+            format_type (str): The format type
+            orientation (str): The orientation
+        Returns:
+            dict: The scoring result
+        """
+        return self.core_client.score_ml_model_endpoint(workspace_id=self.workspace_id, model_id=self.id, inputs=inputs,
+                                                        format_type=format_type, orientation=orientation)
+
+    def score_ml_model_endpoint_version(self, name, inputs, format_type = None, orientation = None):
+        """Score an ml model endpoint version
+        Args:
+            name (str): The name of the endpoint version    
+            inputs (list): The inputs to score
+            format_type (str): The format type
+            orientation (str): The orientation
+        Returns:
+            dict: The scoring result
+        """
+        return self.core_client.score_ml_model_endpoint_version(workspace_id=self.workspace_id, model_id=self.id, name=name,
+                                                               inputs=inputs, format_type=format_type, orientation=orientation)                                
+
+    def update_ml_model_endpoint(self, default_version_assignment_behavior, default_version_name):
+        """Update an ml model endpoint
+        Args:
+            default_version_assignment_behavior (str): The default version assignment behavior
+            default_version_name (str): The default version name
+        Returns:
+            dict: The updated endpoint
+        """
+        return self.core_client.update_ml_model_endpoint(workspace_id=self.workspace_id, model_id=self.id,
+                                                        default_version_assignment_behavior=default_version_assignment_behavior,
+                                                        default_version_name=default_version_name)
+
+    def update_ml_model_endpoint_version(self, name, scale_rule):
+        """Update an ml model endpoint version
+        Args:
+            name (str): The name of the endpoint version
+            scale_rule (str): The scale rule
+        Returns:
+            dict: The updated endpoint version
+        """
+        return self.core_client.update_ml_model_endpoint_version(workspace_id=self.workspace_id, model_id=self.id,
+                                                                 name=name, scale_rule=scale_rule)
+
+
+class Map(Item):
+    """Class to represent a map in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return Map(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self, format=None):
+        """Method to get the definition of the map"""
+        return super().get_definition(type="Maps", format=format)
+    
+    def update_definition(self, definition, update_metadata=None):
+        """Method to update the definition of the map"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="Maps",
+                                                       update_metadata=update_metadata)
 
 class MountedDataFactory(Item):
     """Class to represent a mounted data factory in Microsoft Fabric"""
@@ -392,6 +602,11 @@ class SemanticModel(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
     
+    def bind_connection(self, connection_binding):
+        """Bind a connection to the semantic model"""
+        return self.core_client.bind_semantic_model_connection(workspace_id=self.workspace_id, semantic_model_id=self.id,
+                                                               connection_binding=connection_binding)
+
     def get_definition(self, format=None):
         """Method to get the definition of the semantic model"""
         return super().get_definition(type="semanticModels", format=format)

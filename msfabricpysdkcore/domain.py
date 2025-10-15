@@ -4,7 +4,7 @@ from msfabricpysdkcore.adminapi import FabricClientAdmin
 class Domain:
     """Class to represent a domain in Microsoft Fabric"""
 
-    def __init__(self, id, display_name, description, parent_domain_id, contributors_scope, core_client: FabricClientAdmin):
+    def __init__(self, id, display_name, description, parent_domain_id, default_label_id, contributors_scope, core_client: FabricClientAdmin):
         """Constructor for the Domain class
         
         Args:
@@ -12,6 +12,7 @@ class Domain:
             display_name (str): The display name of the domain
             description (str): The description of the domain
             parent_domain_id (str): The parent domain ID of the domain
+            default_label_id (str): The default label ID of the domain
             contributors_scope (str): The contributors scope of the domain
         Returns:
             Domain: The Domain object created"""
@@ -20,6 +21,7 @@ class Domain:
         self.display_name = display_name
         self.description = description
         self.parent_domain_id = parent_domain_id
+        self.default_label_id = default_label_id
         self.contributors_scope = contributors_scope
 
         self.core_client = core_client
@@ -35,6 +37,7 @@ class Domain:
             'display_name': self.display_name,
             'description': self.description,
             'parent_domain_id': self.parent_domain_id,
+            'default_label_id': self.default_label_id,
             'contributors_scope': self.contributors_scope
         }
         return json.dumps(dic, indent=2)
@@ -59,10 +62,20 @@ class Domain:
             else:
                 dic["parent_domain_id"] = None
         if "contributors_scope" not in dic:
-            dic["contributors_scope"] = dic["contributorsScope"]
+            if "contributorsScope" in dic:
+                dic["contributors_scope"] = dic["contributorsScope"]
+            else:
+                dic["contributors_scope"] = None
+        
+        if "default_label_id" not in dic:
+            if "defaultLabelId" in dic:
+                dic["default_label_id"] = dic["defaultLabelId"]
+            else:
+                dic["default_label_id"] = None
+        
         return Domain(id=dic['id'], display_name=dic['display_name'],
-                      description=dic['description'], parent_domain_id=dic['parent_domain_id'], 
-                      contributors_scope=dic['contributors_scope'], core_client=core_client)
+                      description=dic['description'], parent_domain_id=dic['parent_domain_id'], default_label_id=dic.get('default_label_id', None),
+                      contributors_scope=dic.get('contributors_scope', None), core_client=core_client)
 
     def list_domain_workspaces(self, workspace_objects = False):
         """Method to list the workspaces in the domain
@@ -180,3 +193,21 @@ class Domain:
             int: The status code of the response
         """
         return self.core_client.unassign_domain_workspaces_by_ids(self.id, workspace_ids)
+    
+    def list_role_assignments(self):
+        """Method to list role assignments in the domain
+        
+        Returns:
+            list: The list of role assignments in the domain
+        """
+        return self.core_client.list_role_assignments(domain_id=self.id)
+    
+    def sync_role_assignments_to_subdomains(self, role):
+        """Method to sync role assignments to subdomains
+        
+        Args:
+            role (str): The role to sync
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.sync_role_assignments_to_subdomains(self.id, role)

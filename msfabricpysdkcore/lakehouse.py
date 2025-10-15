@@ -33,3 +33,47 @@ class Lakehouse(Item):
     def get_livy_session(self, livy_id):
         """Get a livy session in the lakehouse"""
         return self.core_client.get_lakehouse_livy_session(self.workspace_id, self.id, livy_id)
+    
+    def create_refresh_materialized_lake_view_schedule(self, enabled, configuration):
+        """Create a refresh materialized lake view schedule
+        Args:
+            enabled (bool): Whether the schedule is enabled
+            configuration (dict): The configuration of the schedule
+        Returns:
+            dict: The created schedule
+        """
+        return self.core_client.create_refresh_materialized_lake_view_schedule(workspace_id=self.workspace_id, lakehouse_id=self.id,
+                                                                               enabled=enabled, configuration=configuration)
+    
+    def delete_refresh_materialized_lake_view_schedule(self, schedule_id):
+        """Delete a refresh materialized lake view schedule
+        Args:
+            schedule_id (str): The ID of the schedule
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_refresh_materialized_lake_view_schedule(workspace_id=self.workspace_id, lakehouse_id=self.id,
+                                                                               schedule_id=schedule_id)
+
+    def run_on_demand_refresh_materialized_lake_view(self, job_type="RefreshMaterializedLakeViews"):
+        """Run refresh materialized lake view
+        Args:
+            job_type (str): The job type
+        Returns:
+            dict: The operation result or response value
+        """
+        return self.core_client.run_on_demand_refresh_materialized_lake_view(workspace_id=self.workspace_id, lakehouse_id=self.id, job_type=job_type)
+
+    def update_refresh_materialized_lake_view_schedule(self, schedule_id, enabled, configuration):
+        """Update a refresh materialized lake view schedule
+        Args:
+            schedule_id (str): The ID of the schedule
+            schedule_id (str): The ID of the schedule
+            enabled (bool): Whether the schedule is enabled
+            configuration (dict): The configuration of the schedule
+        Returns:
+            dict: The updated schedule
+        """
+        return self.core_client.update_refresh_materialized_lake_view_schedule(workspace_id=self.workspace_id, lakehouse_id=self.id,
+                                                                               schedule_id=schedule_id, enabled=enabled,
+                                                                               configuration=configuration)

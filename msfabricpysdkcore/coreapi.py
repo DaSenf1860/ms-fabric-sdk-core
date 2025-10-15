@@ -1253,17 +1253,21 @@ class FabricClientCore(FabricClient):
 
         return response.status_code
 
-    def update_my_git_credentials(self, workspace_id, git_credentials):
+    def update_my_git_credentials(self, workspace_id, source, connection_id = None):
         #PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/git/myGitCredentials
         """Update my git credentials
         Args:
-            git_credentials (dict): The git provider details
+            source (str): The git provider source
+            connection_id (str): The connection ID
         Returns:
             dict: The response object
         """
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/myGitCredentials"
 
-        body = git_credentials
+        body = {"source": source}
+
+        if connection_id:
+            body['connectionId'] = connection_id
 
         response = self.calling_routine(url=url, operation="PATCH", body=body,
                                         response_codes=[200, 429],
@@ -1301,6 +1305,8 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.item import Item
 
+        if item_dict["type"] == "AnomalyDetector":
+            return self.get_anomaly_detector(workspace_id, item_dict["id"])
         if item_dict["type"] == "ApacheAirflowJob":
             return self.get_apache_airflow_job(workspace_id, item_dict["id"])
         if item_dict["type"] == "CopyJob":
@@ -1327,6 +1333,8 @@ class FabricClientCore(FabricClient):
             return self.get_kql_queryset(workspace_id, item_dict["id"])
         if item_dict["type"] == "Lakehouse":
             return self.get_lakehouse(workspace_id, item_dict["id"])
+        if item_dict["type"] == "Map":
+            return self.get_map(workspace_id, item_dict["id"])
         if item_dict["type"] == "MirroredAzureDatabricksCatalog":
             return self.get_mirrored_azure_databricks_catalog(workspace_id, item_dict["id"])
         if item_dict["type"] == "MirroredDatabase":
@@ -1397,7 +1405,8 @@ class FabricClientCore(FabricClient):
         if folder_id:
             body['folderId'] = folder_id
 
-        if type in ["ApacheAirflowJobs",
+        if type in ["anomalydetectors",
+                    "ApacheAirflowJobs",
                     "copyJobs",
                     "VariableLibraries",
                     "dataflows",
@@ -1412,6 +1421,7 @@ class FabricClientCore(FabricClient):
                     "kqlDashboards",
                     "kqlQuerysets",
                     "lakehouses",
+                    "Maps",
                     "mirroredAzureDatabricksCatalogs",
                     "mirroredDatabases",
                     "mlExperiments", 
@@ -1446,7 +1456,8 @@ class FabricClientCore(FabricClient):
             item = None
             i = 0
 
-            type_mapping = {"ApacheAirflowJobs": "ApacheAirflowJob",
+            type_mapping = {"anomalydetectors": "AnomalyDetector",
+                            "ApacheAirflowJobs": "ApacheAirflowJob",
                             "copyJobs": "CopyJob",
                             "VariableLibraries": "VariableLibrary",
                             "dataflows": "Dataflow",
@@ -1461,6 +1472,7 @@ class FabricClientCore(FabricClient):
                             "kqlDatabases": "KQLDatabase",
                             "kqlQuerysets": "KQLQueryset",
                             "lakehouses": "Lakehouse",
+                            "Maps": "Map",
                             "mirroredAzureDatabricksCatalogs": "MirroredAzureDatabricksCatalog",
                             "mirroredDatabases": "MirroredDatabase",
                             "mlExperiments": "MLExperiment",
@@ -1506,33 +1518,6 @@ class FabricClientCore(FabricClient):
         Raises:
             Exception: If item_id or the combination item_name + item_type is required
         """
-        if item_type:
-            if item_type.lower() == "datapipeline":
-                return self.get_data_pipeline(workspace_id, item_id, item_name)
-            if item_type.lower() == "eventstream":
-                return self.get_eventstream(workspace_id, item_id, item_name)
-            if item_type.lower() == "kqldashboard":
-                return self.get_kql_dashboard(workspace_id, item_id, item_name)
-            if item_type.lower() == "kqldatabase":
-                return self.get_kql_database(workspace_id, item_id, item_name)
-            if item_type.lower() == "kqlqueryset":
-                return self.get_kql_queryset(workspace_id, item_id, item_name)
-            if item_type.lower() == "lakehouse":
-                return self.get_lakehouse(workspace_id, item_id, item_name)
-            if item_type.lower() == "mlmodel":
-                return self.get_ml_model(workspace_id, item_id, item_name)
-            if item_type.lower() == "mlexperiment":
-                return self.get_ml_experiment(workspace_id, item_id, item_name)
-            if item_type.lower() == "notebook":
-                return self.get_notebook(workspace_id, item_id, item_name)
-            if item_type.lower() == "report":
-                return self.get_report(workspace_id, item_id, item_name)
-            if item_type.lower() == "semanticmodel":
-                return self.get_semantic_model(workspace_id, item_id, item_name)
-            if item_type.lower() == "sparkjobdefinition":
-                return self.get_spark_job_definition(workspace_id, item_id, item_name)
-            if item_type.lower() == "warehouse":
-                return self.get_warehouse(workspace_id, item_id, item_name)
                 
         if item_id is None and item_name is not None and item_type is not None:
             return self.get_item_by_name(workspace_id, item_name, item_type)
@@ -2311,6 +2296,21 @@ class FabricClientCore(FabricClient):
         response = self.calling_routine(url, operation="POST", response_codes=[200, 201, 202, 429], error_message="Error deprovisioning identity", return_format="response")
 
         return response
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/communicationPolicy
+    def get_network_communication_policy(self, workspace_id):
+        """Get the network communication policy for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The network communication policy
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/communicationPolicy"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error getting network communication policy", return_format="json")
+
+        return response_json
 
     def get_workspace(self, id = None, name = None, return_item=True):
         """Get workspace by id or name
@@ -2413,6 +2413,35 @@ class FabricClientCore(FabricClient):
         response = self.calling_routine(url, operation="POST", response_codes=[200, 201, 202, 429], error_message="Error provisioning identity", return_format="response")
         return response
     
+    # PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/communicationPolicy
+    def set_network_communication_policy(self, workspace_id, inbound, outbound, if_match = None):
+        """Set the network communication policy for a workspace to allow all traffic
+        Args:
+            workspace_id (str): The ID of the workspace
+            inbound (list): The list of inbound rules
+            outbound (list): The list of outbound rules
+            if_match (str): The ETag value to match
+        Returns:
+            dict: The updated network communication policy
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/communicationPolicy"
+
+        headers = self.auth.get_headers()
+        if if_match:
+            headers['If-Match'] = if_match
+
+        body = {
+            "inbound": inbound,
+            "outbound": outbound,
+        }
+
+        response = self.calling_routine(url, operation="PUT", body=body, headers=headers,
+                                             response_codes=[200, 429], error_message="Error setting network communication policy",
+                                             return_format="response")
+
+        return response
+    
+    
     def unassign_from_capacity(self, workspace_id, wait_for_completion = True):        
         """Unassign a workspace from a capacity
         Args:
@@ -2480,10 +2509,6 @@ class FabricClientCore(FabricClient):
     def list_datamarts(self, workspace_id):
         """List datamarts in a workspace"""
         return self.list_items(workspace_id, type="datamarts")
-
-    def list_sql_endpoints(self, workspace_id):
-        """List sql endpoints in a workspace"""
-        return self.list_items(workspace_id, type="sqlEndpoints")
 
     def list_mirrored_warehouses(self, workspace_id):
         """List mirrored warehouses in a workspace"""
@@ -2597,6 +2622,115 @@ class FabricClientCore(FabricClient):
             dict: The updated Apache Airflow job definition
         """
         return self.update_item_definition(workspace_id, apache_airflow_job_id, type="ApacheAirflowJobs", definition=definition, update_metadata=update_metadata)
+
+    # Anomaly Detectors
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors
+    def create_anomaly_detector(self, workspace_id, display_name, definition = None, description = None, folder_id = None):
+        """Create an anomaly detector in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the anomaly detector
+            definition (dict): The definition of the anomaly detector
+            description (str): The description of the anomaly detector
+            folder_id (str): The ID of the folder to create the anomaly detector in
+        Returns:
+            AnomalyDetector: The created anomaly detector object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "anomalydetectors",
+                                definition = definition,
+                                description = description, folder_id=folder_id)
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors/{anomalyDetectorId}
+    def delete_anomaly_detector(self, workspace_id, anomaly_detector_id):
+        """Delete an anomaly detector from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            anomaly_detector_id (str): The ID of the anomaly detector
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=anomaly_detector_id, type="anomalydetectors")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors/{anomalyDetectorId}
+    def get_anomaly_detector(self, workspace_id, anomaly_detector_id = None, anomaly_detector_name = None):
+        """Get an anomaly detector from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            anomaly_detector_id (str): The ID of the anomaly detector
+            anomaly_detector_name (str): The name of the anomaly detector
+        Returns:
+            AnomalyDetector: The anomaly detector object
+        """
+        from msfabricpysdkcore.otheritems import AnomalyDetector
+
+        if anomaly_detector_id is None and anomaly_detector_name is not None:
+            anomaly_detectors = self.list_anomaly_detectors(workspace_id)
+            ads = [ad for ad in anomaly_detectors if ad.display_name == anomaly_detector_name]
+            if len(ads) == 0:
+                raise Exception(f"Anomaly detector with name {anomaly_detector_name} not found")
+            anomaly_detector_id = ads[0].id
+        elif anomaly_detector_id is None:
+            raise Exception("anomaly_detector_id or the anomaly_detector_name is required")
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/anomalydetectors/{anomaly_detector_id}"
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting anomaly detector", return_format="json")
+        ad = AnomalyDetector.from_dict(item_dict, core_client=self)
+        ad.get_definition()
+        return ad
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors/{anomalyDetectorId}/getDefinition
+    def get_anomaly_detector_definition(self, workspace_id, anomaly_detector_id, format = None):
+        """Get the definition of an anomaly detector
+        Args:
+            workspace_id (str): The ID of the workspace
+            anomaly_detector_id (str): The ID of the anomaly detector
+            format (str): The format of the definition
+        Returns:
+            dict: The anomaly detector definition
+        """
+        return self.get_item_definition(workspace_id, anomaly_detector_id, type="anomalydetectors", format=format)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors
+    def list_anomaly_detectors(self, workspace_id, with_properties = False):
+        """List anomaly detectors in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of anomaly detectors
+        """
+        return self.list_items(workspace_id, type="anomalydetectors", with_properties=with_properties)
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors/{anomalyDetectorId}
+    def update_anomaly_detector(self, workspace_id, anomaly_detector_id,
+                                    display_name = None, description = None, return_item=False):
+        """Update an anomaly detector in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            anomaly_detector_id (str): The ID of the anomaly detector
+            display_name (str): The display name of the anomaly detector
+            description (str): The description of the anomaly detector
+            return_item (bool): Whether to return the item object
+        Returns:
+            dict: The updated anomaly detector or AnomalyDetector object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=anomaly_detector_id, display_name=display_name, description=description, type="anomalydetectors",
+                                return_item=return_item)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors/{anomalyDetectorId}/updateDefinition
+    def update_anomaly_detector_definition(self, workspace_id, anomaly_detector_id, definition, update_metadata = None):
+        """Update the definition of an anomaly detector
+        Args:
+            workspace_id (str): The ID of the workspace
+            anomaly_detector_id (str): The ID of the anomaly detector
+            definition (dict): The definition of the anomaly detector
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated anomaly detector definition
+        """
+        return self.update_item_definition(workspace_id, anomaly_detector_id, type="anomalydetectors", definition=definition, update_metadata=update_metadata)
 
     # copyJobs
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/copyJobs
@@ -2834,6 +2968,24 @@ class FabricClientCore(FabricClient):
         """
         return self.delete_item(workspace_id, item_id=dataflow_id, type="dataflows")
     
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}/parameters?continuationToken={continuationToken}
+    def discover_dataflow_parameters(self, workspace_id, dataflow_id):
+        """List parameters for a dataflow in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+        Returns:
+            list: The list of dataflow parameters
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/parameters"
+
+        parameters = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                                error_message="Error listing dataflow parameters", return_format = "value_json",
+                                                paging = True)
+
+        return parameters
+
+
     # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}
     def get_dataflow(self, workspace_id, dataflow_id = None, dataflow_name = None):
         """Get a dataflow from a workspace
@@ -4788,6 +4940,89 @@ class FabricClientCore(FabricClient):
 
         return items
 
+    # Materialized view
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses/{lakehouseId}/jobs/RefreshMaterializedLakeViews/schedules
+    def create_refresh_materialized_lake_view_schedule(self, workspace_id, lakehouse_id, enabled, configuration):
+        """Create a refresh materialized lake view schedule
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+            enabled (bool): Whether the schedule is enabled
+            configuration (dict): The configuration of the schedule
+        Returns:
+            dict: The created schedule
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules"
+
+        body = {
+                "enabled": enabled,
+                "configuration": configuration
+              }
+        
+        item_dict = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 201, 429],
+                                         error_message="Error creating refresh materialized lake view schedule", return_format="json")
+
+        return item_dict
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses/{lakehouseId}/jobs/RefreshMaterializedLakeViews/schedules/{scheduleId}
+    def delete_refresh_materialized_lake_view_schedule(self, workspace_id, lakehouse_id, schedule_id):
+        """Delete a refresh materialized lake view schedule
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+            schedule_id (str): The ID of the schedule
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules/{schedule_id}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 204, 429],
+                                        error_message="Error deleting refresh materialized lake view schedule", return_format="response")
+
+        return response.status_code
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses/{lakehouseId}/jobs/instances?jobType={jobType}
+    def run_on_demand_refresh_materialized_lake_view(self, workspace_id, lakehouse_id, job_type="RefreshMaterializedLakeViews"):
+        """Run refresh materialized lake view
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+            job_type (str): The job type
+        Returns:
+            dict: The operation result or response value
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/instances?jobType={job_type}"
+
+    
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                                        error_message="Error running refresh materialized lake view",
+                                                        return_format="response")
+
+        return response
+
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses/{lakehouseId}/jobs/RefreshMaterializedLakeViews/schedules/{scheduleId}
+    def update_refresh_materialized_lake_view_schedule(self, workspace_id, lakehouse_id, schedule_id, enabled, configuration):
+        """Update a refresh materialized lake view schedule
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+            schedule_id (str): The ID of the schedule
+            enabled (bool): Whether the schedule is enabled
+            configuration (dict): The configuration of the schedule
+        Returns:
+            dict: The updated schedule
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules/{schedule_id}"
+
+        body = {}
+        body["enabled"] = enabled
+        body["configuration"] = configuration
+
+        item_dict = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                         error_message="Error updating refresh materialized lake view schedule", return_format="json")
+
+        return item_dict
 
     # mirrored_database
 
@@ -5089,6 +5324,295 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item(workspace_id, ml_model_id, display_name = display_name, description = description,
                                 type="mlModels", return_item=return_item)
+
+    # MLmodel endpoint
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint/versions/{name}/activate
+    def activate_ml_model_endpoint_version(self, workspace_id, model_id, name, wait_for_completion = False):
+        """Activate an ml model endpoint version
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+        Returns:
+            dict: The activated endpoint version
+        """
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/activate"
+        return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                     error_message="Error activating ml model endpoint version", return_format="json", wait_for_completion=wait_for_completion)
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint/versions/deactivateAll
+    def deactivate_all_ml_model_endpoint_versions(self, workspace_id, model_id, wait_for_completion = False):
+        """Deactivate all ml model endpoint versions
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+        Returns:
+            Response: The operation result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/deactivateAll"
+        return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                     error_message="Error deactivating all ml model endpoint versions", return_format="response", wait_for_completion=wait_for_completion)
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint/versions/{name}/deactivate
+    def deactivate_ml_model_endpoint_version(self, workspace_id, model_id, name, wait_for_completion = False):
+        """Deactivate an ml model endpoint version
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+        Returns:
+            Response: The operation result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/deactivate"
+        return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                     error_message="Error deactivating ml model endpoint version", return_format="response", wait_for_completion=wait_for_completion)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint
+    def get_ml_model_endpoint(self, workspace_id, model_id):
+        """Get the ml model endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+        Returns:
+            dict: The ml model endpoint
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint"
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                     error_message="Error getting ml model endpoint", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint/versions/{name}
+    def get_ml_model_endpoint_version(self, workspace_id, model_id, name):
+        """Get an ml model endpoint version
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+        Returns:
+            dict: The ml model endpoint version
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}"
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                     error_message="Error getting ml model endpoint version", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint/versions?continuationToken={continuationToken}
+    def list_ml_model_endpoint_versions(self, workspace_id, model_id):
+        """List all ml model endpoint versions
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+        Returns:
+            list: The list of ml model endpoint versions
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions"
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                     error_message="Error listing ml model endpoint versions", return_format="value_json", paging=True)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlModels/{modelId}/endpoint/score
+    def score_ml_model_endpoint(self, workspace_id, model_id, inputs, format_type = None, orientation = None):
+        """Score an ml model endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+            inputs (list): The inputs to score
+            format_type (str): The format type
+            orientation (str): The orientation
+        Returns:
+            dict: The scoring result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlModels/{model_id}/endpoint/score"
+
+        body = {
+                "inputs": inputs
+              }
+
+        if format_type:
+            body["formatType"] = format_type
+        if orientation:
+            body["orientation"] = orientation
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                     error_message="Error scoring ml model endpoint", return_format="json")
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint/versions/{name}/score
+    def score_ml_model_endpoint_version(self, workspace_id, model_id, name, inputs, format_type = None, orientation = None):
+        """Score an ml model endpoint version
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+            inputs (list): The inputs to score
+            format_type (str): The format type
+            orientation (str): The orientation
+        Returns:
+            dict: The scoring result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/score"
+
+        body = {
+                "inputs": inputs
+              }
+
+        if format_type:
+            body["formatType"] = format_type
+        if orientation:
+            body["orientation"] = orientation
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                     error_message="Error scoring ml model endpoint version", return_format="json")                                    
+
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint
+    def update_ml_model_endpoint(self, workspace_id, model_id, default_version_assignment_behavior, default_version_name):
+        """Update an ml model endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+            default_version_assignment_behavior (str): The default version assignment behavior
+            default_version_name (str): The default version name
+        Returns:
+            dict: The updated endpoint
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint"
+
+        body = {
+                "defaultVersionAssignmentBehavior": default_version_assignment_behavior,
+                "defaultVersionName": default_version_name
+              }
+
+        return self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                     error_message="Error updating ml model endpoint", return_format="json")
+
+
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mlmodels/{modelId}/endpoint/versions/{name}
+    def update_ml_model_endpoint_version(self, workspace_id, model_id, name, scale_rule):
+        """Update an ml model endpoint version
+        Args:
+            workspace_id (str): The ID of the workspace
+            model_id (str): The ID of the ml model
+            name (str): The name of the endpoint version    
+            scale_rule (str): The scale rule
+        Returns:
+            dict: The updated endpoint version
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}"
+
+        body = {
+                "scaleRule": scale_rule
+              }
+
+        return self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                     error_message="Error updating ml model endpoint version", return_format="json")
+
+
+
+    # Maps
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/Maps
+    def create_map(self, workspace_id, display_name, definition = None, description = None, folder_id = None):
+        """Create a map in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the map
+            definition (dict): The definition of the map
+            description (str): The description of the map
+            folder_id (str): The ID of the folder to create the map in
+        Returns:
+            Map: The created map object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "Maps",
+                                definition = definition,
+                                description = description, folder_id=folder_id)
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/Maps/{MapId}
+    def delete_map(self, workspace_id, map_id):
+        """Delete a map from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            map_id (str): The ID of the map
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=map_id, type="Maps")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/Maps/{MapId}
+    def get_map(self, workspace_id, map_id = None, map_name = None):
+        """Get a map from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            map_id (str): The ID of the map
+            map_name (str): The name of the map
+        Returns:
+            Map: The map object
+        """
+        from msfabricpysdkcore.otheritems import Map
+
+        if map_id is None and map_name is not None:
+            maps = self.list_maps(workspace_id)
+            maps_filtered = [m for m in maps if m.display_name == map_name]
+            if len(maps_filtered) == 0:
+                raise Exception(f"Map with name {map_name} not found")
+            map_id = maps_filtered[0].id
+        elif map_id is None:
+            raise Exception("map_id or the map_name is required")
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/Maps/{map_id}"
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting map", return_format="json")
+        map_obj = Map.from_dict(item_dict, core_client=self)
+        map_obj.get_definition()
+        return map_obj
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/Maps/{MapId}/getDefinition
+    def get_map_definition(self, workspace_id, map_id, format = None):
+        """Get the definition of a map
+        Args:
+            workspace_id (str): The ID of the workspace
+            map_id (str): The ID of the map
+            format (str): The format of the definition
+        Returns:
+            dict: The map definition
+        """
+        return self.get_item_definition(workspace_id, map_id, type="Maps", format=format)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/Maps
+    def list_maps(self, workspace_id, with_properties = False):
+        """List maps in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of maps
+        """
+        return self.list_items(workspace_id, type="Maps", with_properties=with_properties)
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/Maps/{MapId}
+    def update_map(self, workspace_id, map_id, display_name = None, description = None, return_item=False):
+        """Update a map in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            map_id (str): The ID of the map
+            display_name (str): The display name of the map
+            description (str): The description of the map
+            return_item (bool): Whether to return the item object
+        Returns:
+            dict: The updated map or Map object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=map_id, display_name=display_name, description=description, type="Maps",
+                                return_item=return_item)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/Maps/{MapId}/updateDefinition
+    def update_map_definition(self, workspace_id, map_id, definition, update_metadata = None):
+        """Update the definition of a map
+        Args:
+            workspace_id (str): The ID of the workspace
+            map_id (str): The ID of the map
+            definition (dict): The definition of the map
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated map definition
+        """
+        return self.update_item_definition(workspace_id, map_id, type="Maps", definition=definition, update_metadata=update_metadata)
 
     # mounted data factory
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/mountedDataFactories
@@ -5523,6 +6047,25 @@ class FabricClientCore(FabricClient):
         return self.update_item_definition(workspace_id, report_id, definition, type="reports")
 
     # semanticModels
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/semanticModels/{semanticModelId}/bindConnection
+    def bind_semantic_model_connection(self, workspace_id, semantic_model_id, connection_binding):
+        """Bind a connection to a semantic model
+        Args:
+            workspace_id (str): The ID of the workspace
+            semantic_model_id (str): The ID of the semantic model
+            connection_binding (dict): The connection binding
+        Returns:
+            dict: The updated semantic model
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/semanticModels/{semantic_model_id}/bindConnection"
+
+        body = {
+                "connectionBinding": connection_binding
+              }
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                     error_message="Error binding connection to semantic model", return_format="response")
 
     def create_semantic_model(self, workspace_id, display_name, definition = None, description = None):
         """Create a semantic model in a workspace
@@ -6000,6 +6543,37 @@ class FabricClientCore(FabricClient):
                                 type="SQLDatabases", return_item=return_item)
     
     # SQL endpoints
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sqlEndpoints/{sqlEndpointId}/connectionString?guestTenantId={guestTenantId}&privateLinkType={privateLinkType}
+    def get_sql_endpoint_connection_string(self, workspace_id, sql_endpoint_id, guest_tenant_id = None, private_link_type = None):
+        """Get the connection string of a SQL endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_endpoint_id (str): The ID of the SQL endpoint
+            guest_tenant_id (str): The guest tenant ID
+            private_link_type (str): The private link type
+        Returns:
+            dict: The connection string of the SQL endpoint
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/connectionString"
+        params = ""
+        if guest_tenant_id is not None:
+            params += f"?guestTenantId={guest_tenant_id}"
+        if private_link_type is not None:
+            if params:
+                params += f"&privateLinkType={private_link_type}"
+            else:
+                params += f"?privateLinkType={private_link_type}"
+
+        response_dict = self.calling_routine(url, operation="GET", params=params, response_codes=[200, 429],
+                                            error_message="Error getting SQL endpoint connection string", return_format="json")
+
+        return response_dict
+
+    def list_sql_endpoints(self, workspace_id):
+        """List sql endpoints in a workspace"""
+        return self.list_items(workspace_id, type="sqlEndpoints")
+
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sqlEndpoints/{sqlEndpointId}/refreshMetadata?preview={preview}
     def refresh_sql_endpoint_metadata(self, workspace_id, sql_endpoint_id, preview = True, timeout = None, wait_for_completion = False):
         """Refresh the metadata of a SQL endpoint
@@ -6020,6 +6594,64 @@ class FabricClientCore(FabricClient):
                                              error_message="Error refreshing SQL endpoint metadata", return_format="response",
                                              wait_for_completion=wait_for_completion)
         
+        return response
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sqlEndpoints/{itemId}/settings/sqlAudit
+    def get_sql_endpoint_audit_settings(self, workspace_id, sql_endpoint_id):
+        """Get the audit settings of a SQL endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_endpoint_id (str): The ID of the SQL endpoint
+        Returns:
+            dict: The audit settings of the SQL endpoint
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit"
+
+        response_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                            error_message="Error getting SQL endpoint audit settings", return_format="json")
+
+        return response_dict
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sqlEndpoints/{itemId}/settings/sqlAudit/setAuditActionsAndGroups
+    def set_sql_endpoint_audit_actions_and_groups(self, workspace_id, sql_endpoint_id, set_audit_actions_and_groups_request):
+        """Set the audit actions and groups of a SQL endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_endpoint_id (str): The ID of the SQL endpoint
+            set_audit_actions_and_groups_request (list): The list of audit actions and groups
+        Returns:
+            dict: The updated audit settings of the SQL endpoint
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit/setAuditActionsAndGroups"
+
+        body = set_audit_actions_and_groups_request
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                            error_message="Error setting SQL endpoint audit actions and groups", return_format="response")
+
+        return response
+
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sqlEndpoints/{itemId}/settings/sqlAudit
+    def update_sql_endpoint_audit_settings(self, workspace_id, sql_endpoint_id, retention_days, state):
+        """Update the audit settings of a SQL endpoint
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_endpoint_id (str): The ID of the SQL endpoint
+            retention_days (int): The number of days to retain the audit logs
+            state (str): The state of the audit settings
+        Returns:
+            dict: The updated audit settings of the SQL endpoint
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit"
+
+        body = {
+            "retentionDays": retention_days,
+            "state": state
+        }
+
+        response = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                            error_message="Error updating SQL endpoint audit settings", return_format="response")
+
         return response
 
     # warehouses
@@ -6044,6 +6676,34 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
         return self.delete_item(workspace_id, warehouse_id, type="warehouses")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/connectionString?guestTenantId={guestTenantId}&privateLinkType={privateLinkType}
+    def get_warehouse_connection_string(self, workspace_id, warehouse_id, guest_tenant_id=None, private_link_type=None):
+        """Get the connection string of a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+            guest_tenant_id (str): The guest tenant ID
+            private_link_type (str): The private link type
+        Returns:
+            dict: The connection string of the warehouse
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/connectionString"
+        params = ""
+        if guest_tenant_id is not None:
+            params += f"?guestTenantId={guest_tenant_id}"
+        if private_link_type is not None:
+            if params:
+                params += f"&privateLinkType={private_link_type}"
+            else:
+                params += f"?privateLinkType={private_link_type}"
+        
+        url += params
+
+        response_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                            error_message="Error getting warehouse connection string", return_format="json")
+
+        return response_dict
     
     def get_warehouse(self, workspace_id, warehouse_id = None, warehouse_name = None):
         """Get a warehouse from a workspace
@@ -6094,6 +6754,167 @@ class FabricClientCore(FabricClient):
         return self.update_item(workspace_id, warehouse_id, display_name = display_name, description = description, 
                                 type="warehouses", return_item=return_item)
     
+    # warehouse restore points
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints
+    def create_warehouse_restore_point(self, workspace_id, warehouse_id, display_name = None, description = None, wait_for_completion = False):
+        """Create a restore point for a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+            display_name (str): The display name of the restore point
+            description (str): The description of the restore point
+            wait_for_completion (bool): Whether to wait for the restore point creation to complete
+        Returns:
+            dict: The created restore point
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints"
+
+        body = {}
+        if display_name is not None:
+            body["displayName"] = display_name
+        if description is not None:
+            body["description"] = description
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[201,202, 429],
+                                         error_message="Error creating warehouse restore point", return_format="json"
+                                         , wait_for_completion=wait_for_completion)
+
+        return response
+
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}
+    def delete_warehouse_restore_point(self, workspace_id, warehouse_id, restore_point_id):
+        """Delete a restore point for a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
+                                        error_message="Error deleting warehouse restore point", return_format="response")
+
+        return response.status_code
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}
+    def get_warehouse_restore_point(self, workspace_id, warehouse_id, restore_point_id):
+        """Get a restore point for a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+        Returns:
+            dict: The restore point
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
+
+        response_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                            error_message="Error getting warehouse restore point", return_format="json")
+
+        return response_dict
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints?continuationToken={continuationToken}
+    def list_warehouse_restore_points(self, workspace_id, warehouse_id):
+        """List restore points for a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+        Returns:
+            list: The list of restore points
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints"
+
+        items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                     error_message="Error listing warehouse restore points", return_format="value_json", paging=True)
+        
+        return items
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}/restore
+    def restore_warehouse_to_restore_point(self, workspace_id, warehouse_id, restore_point_id, wait_for_completion = False):
+        """Restore a warehouse to a restore point
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+            wait_for_completion (bool): Whether to wait for the restore operation to complete
+        Returns:
+            response: The response of the restore operation
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}/restore"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                        error_message="Error restoring warehouse to restore point", return_format="response",
+                                        wait_for_completion=wait_for_completion)
+
+        return response
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{warehouseId}/restorePoints/{restorePointId}
+    def update_warehouse_restore_point(self, workspace_id, warehouse_id, restore_point_id, display_name = None, description = None):
+        """Update a restore point for a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace 
+            warehouse_id (str): The ID of the warehouse
+            restore_point_id (str): The ID of the restore point
+            display_name (str): The display name of the restore point
+            description (str): The description of the restore point
+        Returns:
+            dict: The updated restore point
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
+
+        body = {}
+        if display_name is not None:
+            body["displayName"] = display_name
+        if description is not None:
+            body["description"] = description
+
+        if not body:
+            return None
+
+        response_dict = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                            error_message="Error updating warehouse restore point", return_format="json")
+
+        return response_dict
+
+    # warehouse sql audit settings
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehouses/{itemId}/settings/sqlAudit
+    def get_warehouse_sql_audit_settings(self, workspace_id, warehouse_id):
+        """Get the audit settings of a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+        Returns:
+            dict: The audit settings of the warehouse
+        """
+
+        return self.get_sql_endpoint_audit_settings(workspace_id, warehouse_id)
+    
+    def set_warehouse_audit_actions_and_groups(self, workspace_id, warehouse_id, set_audit_actions_and_groups_request):
+        """Set the audit actions and groups of a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+            set_audit_actions_and_groups_request (list): The list of audit actions and groups
+        Returns:
+            dict: The updated audit settings of the warehouse
+        """
+        return self.set_sql_endpoint_audit_actions_and_groups(workspace_id, warehouse_id, set_audit_actions_and_groups_request)
+
+    def update_warehouse_sql_audit_settings(self, workspace_id, warehouse_id, retention_days, state):
+        """Update the audit settings of a warehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            warehouse_id (str): The ID of the warehouse
+            retention_days (int): The number of days to retain the audit logs
+            state (str): The state of the audit settings
+        Returns:
+            dict: The updated audit settings of the warehouse
+        """
+        return self.update_sql_endpoint_audit_settings(workspace_id, warehouse_id, retention_days, state)
+
+
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/warehousesnapshots
     def create_warehouse_snapshot(self, workspace_id, display_name, creation_payload, description = None, folder_id = None):
         """Create a snapshot of a warehouse

@@ -1,5 +1,18 @@
 # Release Notes
 
+## 0.2.10 
+### New Features
+- Anomaly Detectors: CRUDL, Get/Update Definition
+- Maps: CRUDL, Get/Update Definition
+- Domains: list role assignments, sync role assignments to subdomains
+- Semantic Model: Bind connection
+- Workspaces: Get/Set network communication policy
+- SQL Endpoint: Get connection string, Get/Update SQL Audit Settings, set Audit Actions And Groups
+- Dataflow: Discover Parameters
+- Warehouse: Get connection string, CRUDL Restore Points, Get/Update SQL Audit Settings, set Audit Actions And Groups
+- ML Model Endpoint: Activate/Deactivate Endpoint Version, Score Endpoint/Version, Get/List Endpoint Versions, Update Endpoint/Version
+- Materialized Lake View: Create/Update/Delete Refresh Schedule, Run on demand refresh
+
 ## 0.2.9
 ### New Features
 - Bulk creation of shortcuts in an item
