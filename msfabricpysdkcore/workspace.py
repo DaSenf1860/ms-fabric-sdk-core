@@ -425,6 +425,10 @@ class Workspace:
         return self.core_client.get_workspace_managed_private_endpoint(workspace_id=self.id,
                                                                       managed_private_endpoint_id=managed_private_endpoint_id)
 
+    def list_managed_private_endpoint_fqdns(self, managed_private_endpoint_id):
+        return self.core_client.list_managed_private_endpoint_fqdns(workspace_id=self.id,
+                                           managed_private_endpoint_id=managed_private_endpoint_id)
+
     def list_workspace_managed_private_endpoints(self):
         return self.core_client.list_workspace_managed_private_endpoints(workspace_id=self.id)
 
@@ -441,6 +445,14 @@ class Workspace:
     def list_data_access_roles(self, item_id):
         return self.core_client.list_data_access_roles(workspace_id=self.id, item_id=item_id)
     
+    # One Lake settings
+
+    def get_onelake_settings(self):
+        return self.core_client.get_onelake_settings(workspace_id=self.id)
+
+    def modify_onelake_settings(self, status, destination=None, wait_for_completion=False):
+        return self.core_client.modify_onelake_settings(workspace_id=self.id, status=status,
+                                                        destination=destination, wait_for_completion=wait_for_completion)
     # List other items
 
     def list_dashboards(self):
@@ -729,67 +741,122 @@ class Workspace:
 
     # environments
 
-    def list_environments(self, with_properties = False):
-        """List environments in a workspace"""
-        return self.core_client.list_environments(workspace_id=self.id, with_properties=with_properties)
-    
-    def create_environment(self, display_name, description = None):
+    def cancel_publish(self, environment_id):
+        return self.core_client.cancel_publish(workspace_id=self.id, environment_id=environment_id)
+
+    def cancel_publish_environment(self, workspace_id, environment_id):
+        return self.core_client.cancel_publish_environment(workspace_id=workspace_id, environment_id=environment_id)
+
+    def create_environment(self, display_name, definition = None, description = None, folder_id = None):
         """Create an environment in a workspace"""
-        return self.core_client.create_environment(workspace_id=self.id, display_name=display_name, description=description)
+        return self.core_client.create_environment(workspace_id=self.id, display_name=display_name,
+                                                   definition=definition, description=description,
+                                                   folder_id=folder_id)
     
+    def delete_environment(self, environment_id):
+        """Delete an environment from a workspace"""
+        return self.core_client.delete_environment(workspace_id=self.id, environment_id=environment_id)
+
     def get_environment(self, environment_id = None, environment_name = None):
         """Get an environment from a workspace"""
         return self.core_client.get_environment(workspace_id=self.id, environment_id=environment_id,
                                                 environment_name=environment_name)
     
-    def delete_environment(self, environment_id):
-        """Delete an environment from a workspace"""
-        return self.core_client.delete_environment(workspace_id=self.id, environment_id=environment_id)
+    def get_environment_definition(self, environment_id, format = None):
+        """Get the definition of an environment from a workspace"""
+        return self.core_client.get_environment_definition(workspace_id=self.id, environment_id=environment_id, format=format)
+
+    def list_environments(self, with_properties = False):
+        """List environments in a workspace"""
+        return self.core_client.list_environments(workspace_id=self.id, with_properties=with_properties)
+    
+    def publish_environment(self, environment_id, preview="false"):
+        return self.core_client.publish_environment(workspace_id=self.id, environment_id=environment_id, preview=preview)
     
     def update_environment(self, environment_id, display_name = None, description = None):
         """Update an environment in a workspace"""
         return self.core_client.update_environment(workspace_id=self.id, environment_id=environment_id,
                                                    display_name=display_name, description=description)
     
-    # environment spark compute
+    def update_environment_definition(self, workspace_id, environment_id, definition, update_metadata = None):
+        """Update the definition of an environment in a workspace"""
+        return self.core_client.update_environment_definition(workspace_id=workspace_id, environment_id=environment_id,
+                                                             definition=definition, update_metadata=update_metadata)
 
+    # published
+    def export_published_external_libraries(self, environment_id):
+        return self.core_client.export_published_external_libraries(workspace_id=self.id, environment_id=environment_id)
+   
+    def get_published_spark_compute(self, environment_id):
+        return self.core_client.get_published_spark_compute(workspace_id=self.id, environment_id=environment_id)
+   
     def get_published_settings(self, environment_id):
         return self.core_client.get_published_settings(workspace_id=self.id, environment_id=environment_id)
     
-    def get_staging_settings(self, environment_id):
-        return self.core_client.get_staging_settings(workspace_id=self.id, environment_id=environment_id)
+    def list_published_libraries(self, environment_id, preview="false"):
+        return self.core_client.list_published_libraries(workspace_id=self.id, environment_id=environment_id, preview=preview)
+   
+    def get_published_libraries(self, environment_id, preview="false"):
+        return self.core_client.get_published_libraries(workspace_id=self.id, environment_id=environment_id, preview=preview)
+
+    # staging
+    def delete_custom_library(self, environment_id, library_name):
+        return self.core_client.delete_custom_library(workspace_id=self.id, environment_id=environment_id, library_name=library_name)
     
+    def delete_staging_library(self, environment_id, library_to_delete):
+        return self.core_client.delete_staging_library(workspace_id=self.id, environment_id=environment_id, library_to_delete=library_to_delete)
+        
+
+    def export_staging_external_libraries(self, environment_id):
+        return self.core_client.export_staging_external_libraries(workspace_id=self.id, environment_id=environment_id)
+
+    def get_staging_spark_compute(self, workspace_id, environment_id, preview="false"):
+        return self.core_client.get_staging_spark_compute(workspace_id=workspace_id, environment_id=environment_id, preview=preview)
+
+    def get_staging_settings(self, environment_id, preview="false"):
+        return self.core_client.get_staging_settings(workspace_id=self.id, environment_id=environment_id, preview=preview)
+    
+    def import_external_libraries_to_staging(self, environment_id, file_path):
+        return self.core_client.import_external_libraries_to_staging(workspace_id=self.id, environment_id=environment_id, file_path=file_path)
+    
+    def list_staging_libraries(self, environment_id, preview="false"):
+        return self.core_client.list_staging_libraries(workspace_id=self.id, environment_id=environment_id, preview=preview)
+
+    def get_staging_libraries(self, environment_id, preview="false"):
+        return self.core_client.get_staging_libraries(workspace_id=self.id, environment_id=environment_id, preview=preview)
+
+    def remove_external_library(self, environment_id, name, version):
+        return self.core_client.remove_external_library(workspace_id=self.id, environment_id=environment_id,
+                                                        name=name, version=version)
+
+    def update_staging_spark_compute(self, environment_id, driver_cores = None, driver_memory = None,
+                                     dynamic_executor_allocation = None, executor_cores = None, executor_memory = None,
+                                     instance_pool = None, runtime_version = None, spark_properties = None, preview="false"):
+        return self.core_client.update_staging_spark_compute(workspace_id=self.id, environment_id=environment_id,
+                                                            driver_cores=driver_cores, driver_memory=driver_memory,
+                                                            dynamic_executor_allocation=dynamic_executor_allocation,
+                                                            executor_cores=executor_cores, executor_memory=executor_memory,
+                                                            instance_pool=instance_pool, runtime_version=runtime_version,
+                                                            spark_properties=spark_properties, preview=preview)
+
     def update_staging_settings(self, environment_id,
                                 driver_cores = None, driver_memory = None, dynamic_executor_allocation = None,
                                 executor_cores = None, executor_memory = None, instance_pool = None,
-                                runtime_version = None, spark_properties = None):
+                                runtime_version = None, spark_properties = None, preview="false"):
         return self.core_client.update_staging_settings(workspace_id=self.id, environment_id=environment_id,
                                                        driver_cores=driver_cores, driver_memory=driver_memory,
                                                        dynamic_executor_allocation=dynamic_executor_allocation,
                                                        executor_cores=executor_cores, executor_memory=executor_memory,
                                                        instance_pool=instance_pool, runtime_version=runtime_version,
-                                                       spark_properties=spark_properties)
+                                                       spark_properties=spark_properties, preview=preview)
 
-    # environment spark libraries
 
-    def get_published_libraries(self, environment_id):
-        return self.core_client.get_published_libraries(workspace_id=self.id, environment_id=environment_id)
-    
-    def get_staging_libraries(self, environment_id):
-        return self.core_client.get_staging_libraries(workspace_id=self.id, environment_id=environment_id)
-    
+    def upload_custom_library(self, environment_id, library_name, file_path):
+        return self.core_client.upload_custom_library(workspace_id=self.id, environment_id=environment_id,
+                                                      library_name=library_name, file_path=file_path)
     def upload_staging_library(self, environment_id, file_path):
         return self.core_client.upload_staging_library(workspace_id=self.id, environment_id=environment_id, file_path=file_path) 
-    
-    def publish_environment(self, environment_id):
-        return self.core_client.publish_environment(workspace_id=self.id, environment_id=environment_id)
-    
-    def delete_staging_library(self, environment_id, library_to_delete):
-        return self.core_client.delete_staging_library(workspace_id=self.id, environment_id=environment_id, library_to_delete=library_to_delete)
-        
-    def cancel_publish(self, environment_id):
-        return self.core_client.cancel_publish(workspace_id=self.id, environment_id=environment_id)
-    
+
     # eventhouses
 
     def list_eventhouses(self, with_properties = False):
@@ -1947,6 +2014,42 @@ class Workspace:
         """Update a warehouse snapshot in a workspace"""
         return self.core_client.update_warehouse_snapshot(workspace_id=self.id, warehouse_snapshot_id=warehouse_snapshot_id,
                                                           display_name=display_name, description=description)
+
+
+    # user data functions
+    def create_user_data_function(self, display_name, definition = None, description = None):
+        """Create a user data function in a workspace"""
+        return self.core_client.create_user_data_function(workspace_id=self.id, display_name=display_name,
+                                                          definition=definition, description=description)
+    
+    def delete_user_data_function(self, user_data_function_id):
+        """Delete a user data function from a workspace"""
+        return self.core_client.delete_user_data_function(workspace_id=self.id, user_data_function_id=user_data_function_id)
+    
+    def get_user_data_function(self, user_data_function_id = None, user_data_function_name = None):
+        """Get a user data function from a workspace"""
+        return self.core_client.get_user_data_function(workspace_id=self.id, user_data_function_id=user_data_function_id,
+                                                      user_data_function_name=user_data_function_name)
+    
+    def get_user_data_function_definition(self, user_data_function_id, format = None):
+        """Get the definition of a user data function from a workspace"""
+        return self.core_client.get_user_data_function_definition(workspace_id=self.id,
+                                                                  user_data_function_id=user_data_function_id,
+                                                                  format=format)
+
+    def list_user_data_functions(self, with_properties = False):
+        """List user data functions in a workspace"""
+        return self.core_client.list_user_data_functions(workspace_id=self.id, with_properties=with_properties)
+    
+    def update_user_data_function(self, user_data_function_id, display_name = None, description = None):
+        """Update a user data function in a workspace"""
+        return self.core_client.update_user_data_function(workspace_id=self.id, user_data_function_id=user_data_function_id,
+                                                          display_name=display_name, description=description)
+    
+    def update_user_data_function_definition(self, user_data_function_id, definition):
+        """Update the definition of a user data function in a workspace"""
+        return self.core_client.update_user_data_function_definition(workspace_id=self.id, user_data_function_id=user_data_function_id,
+                                                                    definition=definition)
 
     # variable libraries
 

@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.2.11
+### New Features
+- Managed Private Endpoints: List FQDNs, Create, Delete, Get
+- One Lake Settings/Diagnostics: Get, Modify
+- Environment APIs - Updated APIs including renaming and new APIs:
+- User Data Functions: CRUDL, Get/Update Definition
+
 ## 0.2.10 
 ### New Features
 - Anomaly Detectors: CRUDL, Get/Update Definition

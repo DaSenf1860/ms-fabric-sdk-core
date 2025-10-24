@@ -1,6 +1,6 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of October 10, 2025).
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of October 22, 2025).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
@@ -61,6 +61,7 @@ Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and
   - [Managed Private Endpoints](#managed-private-endpoints)
   - [Long Running Operations](#long-running-operations)
   - [OneLakeDataAccessSecurity](#one-lake-data-access-security)
+  - [One Lake Settings / Diagnostics](#one-lake-settings--diagnostics)
   - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
   - [Tags](#tags)
   - [Workspaces](#working-with-workspaces)
@@ -725,6 +726,26 @@ ws.git_disconnect()
 
 ``` 	
 
+### One Lake Settings / Diagnostics
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+workspace_id = "cc------------e"
+# Get one lake settings
+resp = fcc.get_onelake_settings(workspace_id)
+
+# Modify one lake settings
+status= 'Enabled'
+destination= {'lakehouse': {'itemId': 'a---------------b',
+    'referenceType': 'ById',
+    'workspaceId': '12---------------c5'},
+   'type': 'Lakehouse'}
+resp = fcc.modify_onelake_settings(workspace_id, status=status, destination=destination)
+
+```
+
 ### Working with one lake shortcuts
 
 ```python
@@ -943,6 +964,8 @@ status_code = fc.delete_workspace_managed_private_endpoint(workspace_id='53b',
 # Get workspace managed private endpoint
 mpe2 = fc.get_workspace_managed_private_endpoint(workspace_id='5355fb', 
                                                  managed_private_endpoint_id="mpeid")
+
+fqdns = fc.list_managed_private_endpoint_fqdns(workspace_id = 'c---------e', managed_private_endpoint_id='123123')
 
 # List workspace managed private endpoints
 mpes = fc.list_workspace_managed_private_endpoints(workspace_id='53b')

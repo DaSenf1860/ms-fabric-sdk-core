@@ -1351,6 +1351,8 @@ class FabricClientCore(FabricClient):
             return self.get_semantic_model(workspace_id, item_dict["id"])
         if item_dict["type"] == "SparkJobDefinition":
             return self.get_spark_job_definition(workspace_id, item_dict["id"])
+        if item_dict["type"] == "UserDataFunction":
+            return self.get_user_data_function(workspace_id, item_dict["id"])
         if item_dict["type"] == "Warehouse":
             return self.get_warehouse(workspace_id, item_dict["id"])
         if item_dict["type"] == "WarehouseSnapshot":
@@ -1433,6 +1435,7 @@ class FabricClientCore(FabricClient):
                     "semanticModels", 
                     "sparkJobDefinitions",
                     "SQLDatabases",
+                    "UserDataFunctions",
                     "warehouses",
                     "warehousesnapshots"]:
                         
@@ -1484,6 +1487,7 @@ class FabricClientCore(FabricClient):
                             "semanticModels": "SemanticModel",
                             "sparkJobDefinitions": "SparkJobDefinition",
                             "SQLDatabases": "SQLDatabase",
+                            "UserDataFunctions": "UserDataFunction",
                             "warehouses": "Warehouse",
                             "warehousesnapshots": "WarehouseSnapshot"
                             }
@@ -1912,6 +1916,22 @@ class FabricClientCore(FabricClient):
 
         return response_json
     
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/managedPrivateEndpoints/{managedPrivateEndpointId}/targetFQDNs
+    def list_managed_private_endpoint_fqdns(self, workspace_id, managed_private_endpoint_id):
+        """List FQDNs of a managed private endpoint in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            managed_private_endpoint_id (str): The ID of the managed private endpoint
+        Returns:
+            list: The list of FQDNs
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/managedPrivateEndpoints/{managed_private_endpoint_id}/targetFQDNs"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error listing FQDNs", return_format="value_json", paging=True)
+
+        return response_json
+
     def list_workspace_managed_private_endpoints(self, workspace_id):
         """List managed private endpoints in a workspace
         Args:
@@ -1965,6 +1985,47 @@ class FabricClientCore(FabricClient):
         items, etag = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error listing data access roles", return_format="value_json+etag")
         return items, etag
     
+    # one lake diagnostics
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/onelake/settings
+    def get_onelake_settings(self, workspace_id):
+        """Get OneLake settings for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The OneLake settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/onelake/settings"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error getting OneLake settings", return_format="json")
+
+        return response_json
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/onelake/settings/modifyDiagnostics
+    def modify_onelake_settings(self, workspace_id, status, destination=None, wait_for_completion=False):
+        """Modify OneLake settings for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            status (str): The status of the diagnostics ("Enabled" or "Disabled")
+            destination (str): The destination of the diagnostics
+        Returns:
+            Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/onelake/settings/modifyDiagnostics"
+
+        body = {
+            "status": status
+        }
+        if destination:
+            body["destination"] = destination
+
+        response = self.calling_routine(url, operation="POST", body=body,
+                                             response_codes=[200, 202, 429], error_message="Error modifying OneLake settings",
+                                             return_format="response+operation_result",
+                                                wait_for_completion=wait_for_completion)
+        return response
+
     # ShortCuts
 
     def create_shortcut(self, workspace_id, item_id, path, name, target):
@@ -2836,6 +2897,117 @@ class FabricClientCore(FabricClient):
         return self.update_item_definition(workspace_id, copy_job_id, type="copyJobs", definition=definition, update_metadata=update_metadata)
 
 
+    # user data functions
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/UserDataFunctions
+    def create_user_data_function(self, workspace_id, display_name, definition = None, description = None):
+        """Create a user data function in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the user data function
+            definition (dict): The definition of the user data function
+            description (str): The description of the user data function
+        Returns:
+            UserDataFunction: The created user data function object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name = display_name,
+                                type = "UserDataFunctions",
+                                definition = definition,
+                                description = description)
+    
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/UserDataFunctions/{UserDataFunctionId}
+    def delete_user_data_function(self, workspace_id, user_data_function_id):
+        """Delete a user data function from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            user_data_function_id (str): The ID of the user data function
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=user_data_function_id, type="UserDataFunctions")
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/UserDataFunctions/{UserDataFunctionId}
+    def get_user_data_function(self, workspace_id, user_data_function_id = None, user_data_function_name = None):
+        """Get a user data function from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            user_data_function_id (str): The ID of the user data function
+            user_data_function_name (str): The name of the user data function
+        Returns:
+            UserDataFunction: The user data function object
+        """
+        from msfabricpysdkcore.otheritems import UserDataFunction
+
+        if user_data_function_id is None and user_data_function_name is not None:
+            user_data_functions = self.list_user_data_functions(workspace_id)
+            udfs = [udf for udf in user_data_functions if udf.display_name == user_data_function_name]
+            if len(udfs) == 0:
+                raise Exception(f"User data function with name {user_data_function_name} not found")
+            user_data_function_id = udfs[0].id
+        elif user_data_function_id is None:
+            raise Exception("user_data_function_id or the user_data_function_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/UserDataFunctions/{user_data_function_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting user data function", return_format="json")
+
+        udf = UserDataFunction.from_dict(item_dict, core_client=self)
+        udf.get_definition()
+        return udf
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/UserDataFunctions/{UserDataFunctionId}/getDefinition
+    def get_user_data_function_definition(self, workspace_id, user_data_function_id, format = None):
+        """Get the definition of an user data function
+        Args:
+            workspace_id (str): The ID of the workspace
+            user_data_function_id (str): The ID of the user data function
+            format (str): The format of the definition
+        Returns:
+            dict: The user data function definition
+        """
+        return self.get_item_definition(workspace_id, user_data_function_id, type="UserDataFunctions", format=format)
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/UserDataFunctions
+    def list_user_data_functions(self, workspace_id, with_properties = False):
+        """List user data functions in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of user data functions
+        """
+        return self.list_items(workspace_id, type="UserDataFunctions", with_properties=with_properties)
+    
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/UserDataFunctions/{UserDataFunctionId}
+    def update_user_data_function(self, workspace_id, user_data_function_id, display_name = None, description = None):
+        """Update a user data function in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            user_data_function_id (str): The ID of the user data function
+            display_name (str): The display name of the user data function
+            description (str): The description of the user data function
+        Returns:
+            dict: The updated user data function
+        """
+        return self.update_item(workspace_id, item_id=user_data_function_id, display_name=display_name, description=description, type="UserDataFunctions")
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/UserDataFunctions/{UserDataFunctionId}/updateDefinition?updateMetadata={updateMetadata}
+    def update_user_data_function_definition(self, workspace_id, user_data_function_id, definition,
+                                             update_metadata = None):
+        """Update the definition of an user data function
+        Args:
+            workspace_id (str): The ID of the workspace
+            user_data_function_id (str): The ID of the user data function
+            definition (dict): The definition of the user data function
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated user data function definition
+        """
+        return self.update_item_definition(workspace_id, user_data_function_id, type="UserDataFunctions", definition=definition, update_metadata=update_metadata)
+
+
+
     # variable libary
     def create_variable_library(self, workspace_id, display_name, definition = None, description = None):
         """Create a copy job in a workspace
@@ -3450,12 +3622,31 @@ class FabricClientCore(FabricClient):
         return self.update_item_definition(workspace_id, digital_twin_builder_flow_id, type="DigitalTwinBuilderFlows", definition=definition, update_metadata=update_metadata)
 
     # environments
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/cancelPublish
+    def cancel_publish(self, workspace_id, environment_id):
+        logger.warning("cancel_publish is deprecated. Use cancel_publish_environment instead.")
+        print("WARNING: cancel_publish is deprecated. Use cancel_publish_environment instead.")
+        self.cancel_publish_environment(workspace_id, environment_id)
 
-    def create_environment(self, workspace_id, display_name, description = None):
+    def cancel_publish_environment(self, workspace_id, environment_id):
+        """Cancel the publishing of the staging settings and libraries of the environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+        Returns:
+            dict: The operation result or response value
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/cancelPublish"
+
+        resp_dict = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error canceling publish", return_format="json")
+        return resp_dict
+    
+    def create_environment(self, workspace_id, display_name, definition = None, description = None, folder_id = None):
         """Create an environment in a workspace
         Args:
             workspace_id (str): The ID of the workspace
             display_name (str): The display name of the environment
+            definition (dict): The definition of the environment
             description (str): The description of the environment
         Returns:
             dict: The created environment
@@ -3463,8 +3654,9 @@ class FabricClientCore(FabricClient):
         return self.create_item(workspace_id=workspace_id,
                                 display_name = display_name,
                                 type = "environments",
-                                definition = None,
-                                description = description)
+                                definition = definition,
+                                description = description,
+                                folder_id = folder_id)
     
     def delete_environment(self, workspace_id, environment_id):
         """Delete an environment from a workspace
@@ -3499,7 +3691,20 @@ class FabricClientCore(FabricClient):
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting environment", return_format="json")
         env = Environment.from_dict(item_dict, core_client=self)
+        env.get_definition()
         return env
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/getDefinition
+    def get_environment_definition(self, workspace_id, environment_id, format = None):
+        """Get the definition of an environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            format (str): The format of the definition
+        Returns:
+            dict: The environment definition
+        """
+        return self.get_item_definition(workspace_id, environment_id, type="environments", format=format)
 
     def list_environments(self, workspace_id, with_properties = False):
         """List environments in a workspace
@@ -3510,6 +3715,23 @@ class FabricClientCore(FabricClient):
             list: The list of environments
         """
         return self.list_items(workspace_id, type="environments", with_properties=with_properties)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/publish?preview={preview}
+    def publish_environment(self, workspace_id, environment_id, preview="false"):
+        """Publish the staging settings and libraries of the environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            preview (bool): Whether to publish as a preview
+        Returns:
+            dict: The operation result or response value
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/publish?preview={preview}"
+
+        resp_dict = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error publishing staging",
+                                         return_format="json+operation_result")
+
+        return resp_dict
     
     def update_environment(self, workspace_id, environment_id, display_name = None, description = None, return_item=False):
         """Update an environment in a workspace
@@ -3524,54 +3746,222 @@ class FabricClientCore(FabricClient):
         return self.update_item(workspace_id, item_id=environment_id, display_name=display_name, description=description, 
                                 type="environments", return_item=return_item)
 
-    # environmentSparkCompute
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/updateDefinition?updateMetadata={updateMetadata}
+    def update_environment_definition(self, workspace_id, environment_id, definition, update_metadata = None):
+        """Update the definition of an environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            definition (dict): The definition of the environment
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated environment definition
+        """
+        return self.update_item_definition(workspace_id, environment_id, type="environments",
+                                           definition=definition, update_metadata=update_metadata)
 
-    def get_published_settings(self, workspace_id, environment_id):
-        """Get the published settings of the environment
+    # Published
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/libraries/exportExternalLibraries
+    def export_published_external_libraries(self, workspace_id, environment_id):
+        """Export the external libraries of the published environment
         Args:
             workspace_id (str): The ID of the workspace
             environment_id (str): The ID of the environment
         Returns:
-            dict: The published settings
+            dict: The exported external libraries
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/sparkcompute"
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/libraries/exportExternalLibraries"
 
-        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting published settings", return_format="json")     
-        return resp_json
-
-    def get_staging_settings(self, workspace_id, environment_id):
-        """Get the staging settings of the environment
+        headers = self.auth.get_headers()
+        headers["Content-Type"] = "application/octet-stream"
+        response = self.calling_routine(url, headers=headers, operation="GET", response_codes=[200, 429],
+                                         error_message="Error exporting external libraries", return_format="response")
+        return response
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/sparkcompute?preview={preview}
+    def get_published_spark_compute(self, workspace_id, environment_id, preview = "false"):
+        """Get the spark compute settings of the environment
         Args:
             workspace_id (str): The ID of the workspace
             environment_id (str): The ID of the environment
+            preview (str): Whether to get the preview settings
         Returns:
-            dict: The staging settings
+            dict: The spark compute settings
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute"
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/sparkcompute?preview={preview}"
 
-        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting staging settings", return_format="json")       
+        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting spark compute settings", return_format="json")     
         return resp_json
     
-    def update_staging_settings(self, workspace_id, environment_id,
-                                driver_cores = None, driver_memory = None, dynamic_executor_allocation = None,
-                                executor_cores = None, executor_memory = None, instance_pool = None,
-                                runtime_version = None, spark_properties = None):
-        """Update the staging settings of the environment
+    def get_published_settings(self, workspace_id, environment_id, preview = "false"):
+        logger.warning("get_published_settings is deprecated. Use get_spark_compute with preview='false' instead.")
+        print("WARNING: get_published_settings is deprecated. Use get_spark_compute with preview='false' instead.")
+        return self.get_published_spark_compute(workspace_id, environment_id, preview=preview)
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/libraries?preview={preview}
+    def list_published_libraries(self, workspace_id, environment_id, preview="false"):
+        """List the libraries of the environment
         Args:
             workspace_id (str): The ID of the workspace
             environment_id (str): The ID of the environment
-            driver_cores (int): The number of driver cores
-            driver_memory (str): The memory for the driver
-            dynamic_executor_allocation (bool): Whether to dynamically allocate executors
-            executor_cores (int): The number of executor cores
-            executor_memory (str): The memory for the executor
-            instance_pool (str): The instance pool
-            runtime_version (str): The runtime version
-            spark_properties (dict): The spark properties
+            preview (str): Whether to get the preview libraries
         Returns:
-            dict: The updated staging settings
+            dict: The libraries
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute"
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/libraries?preview={preview}"
+
+        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error listing libraries", return_format="json")
+        return resp_json
+    
+    def get_published_libraries(self, workspace_id, environment_id, preview="false"):
+        logger.warning("get_published_libraries is deprecated. Use list_libraries with preview='false' instead.")
+        print("WARNING: get_published_libraries is deprecated. Use list_libraries with preview='false' instead.")
+        return self.list_published_libraries(workspace_id, environment_id, preview=preview)
+    
+    
+
+    # Staging
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries/{libraryName}
+    def delete_custom_library(self, workspace_id, environment_id, library_name):
+        """Delete a custom library from the published libraries of the environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            library_name (str): The name of the library to delete
+            preview (str): Whether to delete from the preview libraries
+        Returns:
+            requests.Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/{library_name}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
+                                        error_message="Error deleting staging library", return_format="response")
+
+        return response
+
+
+    def delete_staging_library(self, workspace_id, environment_id, library_to_delete):
+        """Delete a library from the staging libraries of the environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            library_to_delete (str): The library to delete
+        Returns:
+            requests.Response: The response object
+        """
+        logger.warning("delete_staging_library is deprecated. Use delete_custom_library instead.")
+        print("WARNING: delete_staging_library is deprecated. Use delete_custom_library instead.")
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries?libraryToDelete={library_to_delete}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], error_message="Error deleting staging library", return_format="response")
+
+        return response
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries/exportExternalLibraries
+    def export_staging_external_libraries(self, workspace_id, environment_id):
+        """Export the external libraries of the staging environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+        Returns:
+            dict: The exported external libraries
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/exportExternalLibraries"
+
+        headers = self.auth.get_headers()
+        headers["Content-Type"] = "application/octet-stream"
+        response = self.calling_routine(url, headers=headers, operation="GET", response_codes=[200, 429],
+                                         error_message="Error exporting staging external libraries", return_format="response")
+        return response
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/sparkcompute?preview={preview}
+    def get_staging_spark_compute(self, workspace_id, environment_id, preview="false"):
+        """Get the spark compute settings of the staging environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            preview (str): Whether to get the preview settings
+        Returns:
+            dict: The spark compute settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute?preview={preview}"
+
+        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting staging spark compute settings", return_format="json")       
+        return resp_json
+    
+    def get_staging_settings(self, workspace_id, environment_id, preview="false"):
+        logger.warning("get_staging_settings is deprecated. Use get_staging_spark_compute with preview='false' instead.")
+        print("WARNING: get_staging_settings is deprecated. Use get_staging_spark_compute with preview='false' instead.")
+        return self.get_staging_spark_compute(workspace_id, environment_id, preview=preview)
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries/importExternalLibraries
+    def import_external_libraries_to_staging(self, workspace_id, environment_id, file_path):
+        """Import external libraries to the staging environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            file_path (str): The file path to import
+        Returns:
+            requests.Response: The response object
+        """
+        headers = self.auth.get_headers()
+        headers["Content-Type"] = "application/octet-stream"
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/importExternalLibraries"
+        response = self.calling_routine(url, headers=headers, operation="POST", file_path=file_path, response_codes=[200, 429],
+                                        error_message="Error importing external libraries to staging", return_format="response")
+        return response
+    
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries?preview={preview}&continuationToken={continuationToken}
+    def list_staging_libraries(self, workspace_id, environment_id, preview="false"):
+        """List the staging libraries of the environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            preview (str): Whether to get the preview libraries
+        Returns:
+            dict: The staging libraries
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries?preview={preview}"
+
+        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], paging=True,
+                                         error_message="Error listing staging libraries", return_format="libraries")
+        return resp_json
+    
+    def get_staging_libraries(self, workspace_id, environment_id, preview="false"):
+        logger.warning("get_staging_libraries is deprecated. Use list_staging_libraries instead.")
+        print("WARNING: get_staging_libraries is deprecated. Use list_staging_libraries instead.")
+        return self.list_staging_libraries(workspace_id, environment_id, preview=preview)
+    
+
+    
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries/removeExternalLibrary
+
+    def remove_external_library(self, workspace_id, environment_id, name, version):
+        """Remove an external library from the staging environment
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            name (str): The name of the library
+            version (str): The version of the library
+        Returns:
+            Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/removeExternalLibrary"
+        body = {
+            "name": name,
+            "version": version
+        }
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                        error_message="Error removing external library from staging", return_format="response")
+        return response
+
+
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/sparkcompute?preview={preview}
+    def update_staging_spark_compute(self, workspace_id, environment_id,
+                                       driver_cores=None, driver_memory=None, dynamic_executor_allocation=None,
+                                       executor_cores=None, executor_memory=None, instance_pool=None,
+                                       runtime_version=None, spark_properties=None, preview="false"):
+        """Update the staging spark compute settings of the environment"""
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute?preview={preview}"
         body = {}
         if driver_cores is not None:
             body['driverCores'] = driver_cores
@@ -3591,82 +3981,41 @@ class FabricClientCore(FabricClient):
             body['sparkProperties'] = spark_properties
 
         respone_json = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
-                                            error_message="Error updating staging settings", return_format="json")
+                                            error_message="Error updating staging spark compute settings", return_format="json")
 
         return respone_json
 
+    def update_staging_settings(self, workspace_id, environment_id,
+                                driver_cores = None, driver_memory = None, dynamic_executor_allocation = None,
+                                executor_cores = None, executor_memory = None, instance_pool = None,
+                                runtime_version = None, spark_properties = None, preview="false"):
+        logger.warning("update_staging_settings is deprecated. Use update_staging_spark_compute instead.")
+        print("WARNING: update_staging_settings is deprecated. Use update_staging_spark_compute instead.")
+        return self.update_staging_spark_compute(workspace_id, environment_id,
+                                                 driver_cores=driver_cores, driver_memory=driver_memory,
+                                                    dynamic_executor_allocation=dynamic_executor_allocation,
+                                                    executor_cores=executor_cores, executor_memory=executor_memory,
+                                                    instance_pool=instance_pool, runtime_version=runtime_version,
+                                                    spark_properties=spark_properties, preview=preview)
 
-    # environmentSparkLibraries
-    
-    def cancel_publish(self, workspace_id, environment_id):
-        """Cancel the publishing of the staging settings and libraries of the environment
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/environments/{environmentId}/staging/libraries/{libraryName}
+    def upload_custom_library(self, workspace_id, environment_id, library_name, file_path):
+        """Upload a custom library to the staging environment
         Args:
             workspace_id (str): The ID of the workspace
             environment_id (str): The ID of the environment
-        Returns:
-            dict: The operation result or response value
-        """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/cancelPublish"
-
-        resp_dict = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error canceling publish", return_format="json")
-        return resp_dict
-    
-    def delete_staging_library(self, workspace_id, environment_id, library_to_delete):
-        """Delete a library from the staging libraries of the environment
-        Args:
-            workspace_id (str): The ID of the workspace
-            environment_id (str): The ID of the environment
-            library_to_delete (str): The library to delete
+            library_name (str): The name of the library to upload
+            file_path (str): The file path to upload
         Returns:
             requests.Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries?libraryToDelete={library_to_delete}"
-
-        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], error_message="Error deleting staging library", return_format="response")
-
+        headers = self.auth.get_headers()
+        headers["Content-Type"] = "application/octet-stream"
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/{library_name}"
+        response = self.calling_routine(url, headers=headers, operation="POST", file_path=file_path, response_codes=[200, 429],
+                                        error_message="Error uploading custom library", return_format="response")
         return response
-    
-    def get_published_libraries(self, workspace_id, environment_id):
-        """Get the published libraries of the environment
-        Args:
-            workspace_id (str): The ID of the workspace
-            environment_id (str): The ID of the environment
-        Returns:
-            dict: The published libraries
-        """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/libraries"
 
-        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting published libraries", return_format="json")
-        return resp_json
-    
-    def get_staging_libraries(self, workspace_id, environment_id):
-        """Get the staging libraries of the environment
-        Args:
-            workspace_id (str): The ID of the workspace
-            environment_id (str): The ID of the environment
-        Returns:
-            dict: The staging libraries
-        """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries"
-
-        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting staging libraries", return_format="json")
-        return resp_json
-    
-    def publish_environment(self, workspace_id, environment_id):
-        """Publish the staging settings and libraries of the environment
-        Args:
-            workspace_id (str): The ID of the workspace
-            environment_id (str): The ID of the environment
-        Returns:
-            dict: The operation result or response value
-        """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/publish"
-
-        resp_dict = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error publishing staging",
-                                         return_format="json+operation_result")
-
-        return resp_dict
-    
     def upload_staging_library(self, workspace_id, environment_id, file_path):
         """Update staging libraries for an environment
         Args:
@@ -3676,6 +4025,8 @@ class FabricClientCore(FabricClient):
         Returns:
             requests.Response: The response object
         """
+        logger.warning("upload_staging_library is deprecated. Use upload_custom_library instead.")
+        print("WARNING: upload_staging_library is deprecated. Use upload_custom_library instead.")
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries"
         response = self.calling_routine(url, operation="POST", file_path=file_path, response_codes=[200, 429],
                                         error_message="Error uploading staging library", return_format="response")

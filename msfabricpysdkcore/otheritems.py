@@ -170,6 +170,26 @@ class SparkJobDefinition(Item):
         """Get a livy session in the spark job definition"""
         return self.core_client.get_spark_job_definition_livy_session(self.workspace_id, self.id, livy_id)
 
+class UserDataFunction(Item):
+    """Class to represent a user data function in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return UserDataFunction(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self, format=None):
+        """Method to get the definition of the user data function"""
+        return super().get_definition(type="UserDataFunctions", format=format)
+    
+    def update_definition(self, definition, update_metadata=None):
+        """Method to update the definition of the user data function"""
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="UserDataFunctions",
+                                                       update_metadata=update_metadata)
+
 class Warehouse(Item):
     """Class to represent a warehouse in Microsoft Fabric"""
      

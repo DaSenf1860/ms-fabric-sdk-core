@@ -33,6 +33,7 @@ Go to:
 - [Spark Job Definitions](#spark-job-definitions)
 - [SQL Databases](#sql-databases)
 - [SQL Endpoints](#sql-endpoints)
+- [User Data Functions](#user-data-functions)
 - [Variable Libraries](#variable-libraries)
 - [Warehouses](#warehouses)
 - [Warehouse Snapshots](#warehouse-snapshots)
@@ -363,62 +364,82 @@ status_code = fcc.delete_digital_twin_builder_flow(workspace_id=workspace_id, di
 from msfabricpysdkcore import FabricClientCore
 fc = FabricClientCore()
 workspace_id = 'd8asd'
+env_id = "4hb"
 
-# Create environment
-environment1 = fc.create_environment(workspace_id, display_name="environment1")
+# Create Environment
+environment1 = fcc.create_environment(workspace_id, display_name="environment1", description="My first environment")
 
-# List environments
-environments = fc.list_environments(workspace_id)
-environment_names = [env.display_name for env in environments]
+# Get Environment
+env = fcc.get_environment(workspace_id, environment_id=env_id)
 
-# Get environment
-env = fc.get_environment(workspace_id, environment_name="environment1")
+# Get Environment Definition
+env = fcc.get_environment_definition(workspace_id, environment_id=env_id)
 
-# Update environment
-env2 = fc.update_environment(workspace_id, env.id, display_name="environment2", return_item=True)
+# List Environments
+environments = fcc.list_environments(workspace_id)
 
-# Delete environment
-status_code = fc.delete_environment(workspace_id, env.id)
+# Update Environment
+env2 = fcc.update_environment(workspace_id, env_id, display_name="environment2", return_item=True)
 
+# Update Environment Definition
+definition= {
+    "parts": [
+      {
+        "path": "Libraries/PublicLibraries/environment.yml",
+        "payload": "ZTAK",
+        "payloadType": "I64"
+      },
+      {..},
+      {..}]
+  }
 
-# Get published settings
-workspace_id = 'asdf5'
-environment_id = 'asdf6f'
-published_settings = fc.get_published_settings(workspace_id=workspace_id, environment_id=environment_id)
+env2 = fcc.update_environment_definition(workspace_id, env_id, definition=definition)
 
-# Get staging settings
-staging_settings = fc.get_staging_settings(workspace_id=workspace_id, environment_id=environment_id)
+# Delete Environment
+status_code = fc.delete_environment(workspace_id, env_id)
 
-# Update staging settings
-driver_cores = 4
-updated_settings = fc.update_staging_settings(workspace_id=workspace_id, 
-                                              environment_id=environment_id, 
-                                              driver_cores=driver_cores)
+# Publish Environment
+resp = fcc.publish_environment(workspace_id, environment_id=env_id)
 
+# Cancel Publish Environment
+resp = fcc.cancel_publish_environment(workspace_id, environment_id=env_id)
 
-# Environment libraries
+# Export Staging External Libraries
+resp = fcc.export_staging_external_libraries(workspace_id, environment_id=env_id)
 
+# Import External Libraries to Staging
+resp = fcc.import_external_libraries_to_staging(workspace_id, environment_id=env_id,
+                                                file_path="blubb.yml")
 
-workspace_id = 'affdg'
-environment_id = 'bfdgfg'
+# Remove External Library                                                
+resp = fcc.remove_external_library(workspace_id, environment_id=env_id, name="msfabricpysdkcore", version="0.2.9")
 
-# Get published libraries
-resp = fc.get_published_libraries(workspace_id, environment_id)
+# List Staging Libraries
+resp = fcc.list_staging_libraries(workspace_id, environment_id=env_id)
 
-# Upload staging library
-resp = fc.upload_staging_library(workspace_id, environment_id, file_path='dummy.whl')
+# Get Staging Spark Compute
+resp = fcc.get_staging_spark_compute(workspace_id, environment_id=env_id)
 
-# Get staging libraries
-resp = fc.get_staging_libraries(workspace_id, environment_id)
+# Update Staging Spark Compute
+resp = fcc.update_staging_spark_compute(workspace_id, environment_id=env_id, driver_cores=4)
 
-# Publish environment
-resp = fc.publish_environment(workspace_id, environment_id)
+# Upload Custom Library
+resp = fcc.upload_custom_library(workspace_id, environment_id=env_id, library_name="msfabricpysdkcore.whl", file_path="msfabricpysdkcore-0.2.10-py3-none-any.whl")
 
-# Cancel publish
-resp = fc.cancel_publish(workspace_id, environment_id)
+# Delete Custom Library
+resp = fcc.delete_custom_library(workspace_id, environment_id=env_id, library_name="msfabricpysdkcore.whl")
 
-# Delete staging library
-resp = fc.delete_staging_library(workspace_id, environment_id, 'dummy.whl')
+# Get Published Spark Compute
+resp = fcc.get_published_spark_compute(workspace_id, environment_id=env_id)
+
+# List Published Libraries
+resp = fcc.list_published_libraries(workspace_id, environment_id=env_id)
+
+# Export Published External Libraries
+resp = fcc.export_published_external_libraries(workspace_id, environment_id=env_id)
+
+# Get Published Spark Compute
+resp = fcc.get_published_spark_compute(workspace_id, environment_id=env_id)
 
 ```
 
@@ -1389,6 +1410,49 @@ guestTenantId="6------------------2"
 privateLinkType="Workspace"
 connection_string = fcc.get_sql_endpoint_connection_string(workspace_id=workspace_id, sql_endpoint_id=sql_endpoint_id,
                                                     guest_tenant_id=guestTenantId, private_link_type=privateLinkType)
+
+```
+
+## User Data Functions
+```python
+from msfabricpysdkcore import FabricClientCore
+fc = FabricClientCore()
+
+workspace = fc.get_workspace_by_name("testitems")
+workspace_id = workspace.id
+item_id = "08-----------ec"
+
+# Create User Data Function
+resp = fcc.create_user_data_function(
+    workspace_id=workspace_id, display_name="MyFunction",
+    definition=resp["definition"],
+    description="Created via SDK")
+  
+# Delete User Data Function
+udf_id = resp.id
+resp = fcc.delete_user_data_function(workspace_id=workspace_id, user_data_function_id=udf_id)
+
+# Get User Data Function
+resp = fcc.get_user_data_function(workspace_id, item_id)
+
+# Get User Data Function Definition
+resp = fcc.get_user_data_function_definition(workspace_id, item_id)
+
+# List User Data Functions
+resp = fcc.list_user_data_functions(workspace_id=workspace_id)
+
+# Update User Data Function
+resp = fcc.update_user_data_function(workspace_id=workspace_id, user_data_function_id=udf_id, display_name="MyFunctionUpdated")
+
+# Update User Data Function Definition
+definition = {'parts': [{'path': 'definition.json',
+    'payload': 'ew0KICAiJHNjaGVtYSI6ICJodHRwczovL2RldmVsb3Blci5taWNyb3NvZnQuY29tL2pzb24tc2NoZW1hcy9mYWJyaWMvaXRlbS91c2VyRGF0YUZ1bmN0aW9uL2RlZmluaXRpb24vMS4xLjAvc2NoZW1hLmpzb24iLA0KICAicnVudGltZSI6ICJQWVRIT04iLA0KICAiY29ubmVjdGVkRGF0YVNvdXJjZXMiOiBbXSwNCiAgImZ1bmN0aW9ucyI6IFtdLA0KICAibGlicmFyaWVzIjogew0KICAgICJwdWJsaWMiOiBbXSwNCiAgICAicHJpdmF0ZSI6IFtdDQogIH0NCn0=',
+    'payloadType': 'InlineBase64'},
+   {'path': '.platform',
+    'payload': 'ewogICIkc2NoZW1hIjogImh0dHBzOi8vZGV2ZWxvcGVyLm1pY3Jvc29mdC5jb20vanNvbi1zY2hlbWFzL2ZhYnJpYy9naXRJbnRlZ3JhdGlvbi9wbGF0Zm9ybVByb3BlcnRpZXMvMi4wLjAvc2NoZW1hLmpzb24iLAogICJtZXRhZGF0YSI6IHsKICAgICJ0eXBlIjogIlVzZXJEYXRhRnVuY3Rpb24iLAogICAgImRpc3BsYXlOYW1lIjogIlVzZXJEYXRhRnVuY3Rpb25fMSIKICB9LAogICJjb25maWciOiB7CiAgICAidmVyc2lvbiI6ICIyLjAiLAogICAgImxvZ2ljYWxJZCI6ICIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiCiAgfQp9',
+    'payloadType': 'InlineBase64'}]}
+
+resp = fcc.update_user_data_function_definition(workspace_id=workspace_id, user_data_function_id=udf_id, definition=definition)
 
 ```
 

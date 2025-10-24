@@ -95,10 +95,16 @@ class FabricClient():
                 if body is not None:
                     response = requests.post(url=url, headers=headers, json=body)
                 elif file_path is not None:
-                    headers.pop('Content-Type')
-                    with open(file_path, 'rb') as f:
-                        files = {"file": f}
-                        response = requests.post(url=url, files=files, headers=headers)
+                    if headers.get('Content-Type', None) == 'application/octet-stream':
+                        headers['Content-Disposition'] = f'attachment; filename="{file_path}"'
+                        with open(file_path, 'rb') as f:
+                            file_content = f.read()
+                        response = requests.post(url, data=file_content, headers=headers)
+                    else:
+                        headers.pop('Content-Type')
+                        with open(file_path, 'rb') as f:
+                            files = {"file": f}
+                            response = requests.post(url=url, files=files, headers=headers)
                 else:
                     response = requests.post(url=url, headers=headers)
             elif operation == "PUT":
@@ -131,7 +137,7 @@ class FabricClient():
         if paging:
             resp_dict = json.loads(response.text)
 
-            if return_format in ["data", "itemEntities", "Overrides", "accessEntities", "workspaces"]:
+            if return_format in ["data", "itemEntities", "Overrides", "accessEntities", "workspaces","libraries"]:
                 items = resp_dict[return_format]
             else:
                 items = resp_dict["value"]
