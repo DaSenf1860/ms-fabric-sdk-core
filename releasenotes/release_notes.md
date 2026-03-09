@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.2.12
+### Bugfix
+- continuation token process seems to have changed. Fixed it for list_tables
+
 ## 0.2.11
 ### New Features
 - Managed Private Endpoints: List FQDNs, Create, Delete, Get

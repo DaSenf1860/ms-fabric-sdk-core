@@ -143,11 +143,12 @@ class FabricClient():
                 items = resp_dict["value"]
 
                 
-            if "continuationToken" in resp_dict and resp_dict["continuationToken"]:
-                continuation_token = resp_dict["continuationToken"]
-                items_next = self.calling_routine(url=original_url, operation=operation, body=body, headers=headers,
+            if "continuationUri" in resp_dict and resp_dict["continuationUri"]:
+                continuation_uri = resp_dict["continuationUri"]
+
+                items_next = self.calling_routine(url=continuation_uri, operation=operation, body=body, headers=headers,
                                                   response_codes=response_codes,
-                                                  error_message=error_message, continuation_token=continuation_token,
+                                                  error_message=error_message,
                                                   return_format=return_format, paging=True, wait_for_completion=wait_for_completion)
                 items.extend(items_next)
             if "etag" in return_format:
