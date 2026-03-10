@@ -1311,6 +1311,10 @@ class FabricClientCore(FabricClient):
             return self.get_apache_airflow_job(workspace_id, item_dict["id"])
         if item_dict["type"] == "CopyJob":
             return self.get_copy_job(workspace_id, item_dict["id"])
+        if item_dict["type"] == "CosmosDbDatabase":
+            return self.get_cosmos_db_database(workspace_id, item_dict["id"])
+        if item_dict["type"] == "DataAgent":
+            return self.get_data_agent(workspace_id, item_dict["id"])
         if item_dict["type"] == "VariableLibrary":
             return self.get_variable_library(workspace_id, item_dict["id"])
         if item_dict["type"] == "Dataflow":
@@ -1323,10 +1327,16 @@ class FabricClientCore(FabricClient):
             return self.get_digital_twin_builder_flow(workspace_id, item_dict["id"])
         if item_dict["type"] == "Eventstream":
             return self.get_eventstream(workspace_id, item_dict["id"])
+        if item_dict["type"] == "EventSchemaSet":
+            return self.get_event_schema_set(workspace_id, item_dict["id"])
         if item_dict["type"] == "Eventhouse":
             return self.get_eventhouse(workspace_id, item_dict["id"])
         if item_dict["type"] == "KQLDashboard":
             return self.get_kql_dashboard(workspace_id, item_dict["id"])
+        if item_dict["type"] == "GraphModel":
+            return self.get_graph_model(workspace_id, item_dict["id"])
+        if item_dict["type"] == "GraphQuerySet":
+            return self.get_graph_query_set(workspace_id, item_dict["id"])
         if item_dict["type"] == "KQLDatabase":
             return self.get_kql_database(workspace_id, item_dict["id"])
         if item_dict["type"] == "KQLQueryset":
@@ -1345,10 +1355,16 @@ class FabricClientCore(FabricClient):
             return self.get_ml_model(workspace_id, item_dict["id"])
         if item_dict["type"] == "Notebook":
             return self.get_notebook(workspace_id, item_dict["id"])
+        if item_dict["type"] == "Ontology":
+            return self.get_ontology(workspace_id, item_dict["id"])
+        if item_dict["type"] == "OperationsAgent":
+            return self.get_operations_agent(workspace_id, item_dict["id"])
         if item_dict["type"] == "Report":
             return self.get_report(workspace_id, item_dict["id"])
         if item_dict["type"] == "SemanticModel":
             return self.get_semantic_model(workspace_id, item_dict["id"])
+        if item_dict["type"] == "SnowflakeDatabase":
+            return self.get_snowflake_database(workspace_id, item_dict["id"])
         if item_dict["type"] == "SparkJobDefinition":
             return self.get_spark_job_definition(workspace_id, item_dict["id"])
         if item_dict["type"] == "UserDataFunction":
@@ -1410,6 +1426,11 @@ class FabricClientCore(FabricClient):
         if type in ["anomalydetectors",
                     "ApacheAirflowJobs",
                     "copyJobs",
+                    "cosmosDbDatabases",
+                    "DataAgents",
+                    "EventSchemaSets",
+                    "GraphModels",
+                    "GraphQuerySets",
                     "VariableLibraries",
                     "dataflows",
                     "dataPipelines",
@@ -1430,9 +1451,12 @@ class FabricClientCore(FabricClient):
                     "mlModels",
                     "mountedDataFactories", 
                     "notebooks",
+                    "ontologies",
+                    "OperationsAgents",
                     "reflexes", 
                     "reports", 
-                    "semanticModels", 
+                    "semanticModels",
+                    "snowflakeDatabases",
                     "sparkJobDefinitions",
                     "SQLDatabases",
                     "UserDataFunctions",
@@ -1462,6 +1486,11 @@ class FabricClientCore(FabricClient):
             type_mapping = {"anomalydetectors": "AnomalyDetector",
                             "ApacheAirflowJobs": "ApacheAirflowJob",
                             "copyJobs": "CopyJob",
+                            "cosmosDbDatabases": "CosmosDbDatabase",
+                            "DataAgents": "DataAgent",
+                            "EventSchemaSets": "EventSchemaSet",
+                            "GraphModels": "GraphModel",
+                            "GraphQuerySets": "GraphQuerySet",
                             "VariableLibraries": "VariableLibrary",
                             "dataflows": "Dataflow",
                             "digitaltwinbuilders": "DigitalTwinBuilder",
@@ -1482,9 +1511,12 @@ class FabricClientCore(FabricClient):
                             "mlModels": "MLModel", 
                             "mountedDataFactories": "MountedDataFactory",
                             "notebooks": "Notebook",
+                            "ontologies": "Ontology",
+                            "OperationsAgents": "OperationsAgent",
                             "reflexes": "Reflex",
                             "reports": "Report", 
                             "semanticModels": "SemanticModel",
+                            "snowflakeDatabases": "SnowflakeDatabase",
                             "sparkJobDefinitions": "SparkJobDefinition",
                             "SQLDatabases": "SQLDatabase",
                             "UserDataFunctions": "UserDataFunction",
@@ -1679,6 +1711,47 @@ class FabricClientCore(FabricClient):
                                         wait_for_completion=wait_for_completion)
         return response
 
+    def move_item(self, workspace_id, item_id, target_folder_id):
+        """Move an item to a different folder
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            target_folder_id (str): The ID of the target folder
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/move"
+
+        body = {
+            'targetFolderId': target_folder_id
+        }
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                        error_message="Error moving item", return_format="response")
+
+        return response.status_code
+
+    def bulk_move_items(self, workspace_id, items, target_folder_id):
+        """Move multiple items to a target folder in bulk
+        Args:
+            workspace_id (str): The ID of the workspace
+            items (list): List of dicts with 'id' (and optionally 'type') for each item to move
+            target_folder_id (str): The ID of the target folder
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/bulkMove"
+
+        body = {
+            'items': items,
+            'targetFolderId': target_folder_id
+        }
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                        error_message="Error bulk moving items", return_format="response")
+
+        return response.status_code
+
     # Job Scheduler
     
     def cancel_item_job_instance(self, workspace_id, item_id, job_instance_id):
@@ -1778,6 +1851,21 @@ class FabricClientCore(FabricClient):
 
         return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                     error_message="Error listing job schedules", return_format="value_json", paging=True)   
+
+    def delete_item_schedule(self, workspace_id, item_id, job_type, schedule_id):
+        """Delete the job schedule of the item
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            job_type (str): The type of the job
+            schedule_id (str): The ID of the schedule
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules/{schedule_id}"
+
+        return self.calling_routine(url=url, operation="DELETE", response_codes=[200, 429],
+                                    error_message="Error deleting job schedule", return_format="status_code")
 
     def run_on_demand_item_job(self, workspace_id, item_id, job_type, execution_data = None):
         """Run an on demand job on the item
@@ -1976,6 +2064,72 @@ class FabricClientCore(FabricClient):
         return response
     
     
+    # create or update single
+
+    def create_or_update_single_data_access_role(self, workspace_id, item_id, data_access_role, data_access_role_conflict_policy=None, etag_match=None):
+        """Create or update a single data access role
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            data_access_role (dict): The data access role to create or update
+            data_access_role_conflict_policy (str): The conflict policy (e.g. 'Abort', 'Overwrite')
+            etag_match (dict): The etag match condition
+        Returns:
+            Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/dataAccessRoles"
+
+        if data_access_role_conflict_policy:
+            url += f"?dataAccessRoleConflictPolicy={data_access_role_conflict_policy}"
+
+        headers = self.auth.get_headers()
+        if etag_match:
+            if 'If-Match' in etag_match:
+                headers['If-Match'] = etag_match['If-Match']
+            elif 'If-None-Match' in etag_match:
+                headers['If-None-Match'] = etag_match['If-None-Match']
+            else:
+                raise Exception("Etag match should include If-Match or If-None-Match")
+
+        body = {"value": data_access_role}
+
+        response = self.calling_routine(url, operation="PUT", body=body, headers=headers,
+                                        response_codes=[200, 201, 429], error_message="Error creating or updating single data access role", return_format="response")
+        return response
+
+    # get
+
+    def get_data_access_role(self, workspace_id, item_id, role_name):
+        """Get a specific data access role
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            role_name (str): The name of the data access role
+        Returns:
+            dict: The data access role
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/dataAccessRoles/{role_name}"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting data access role", return_format="json")
+
+    # delete
+
+    def delete_data_access_role(self, workspace_id, item_id, role_name):
+        """Delete a data access role
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            role_name (str): The name of the data access role
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/dataAccessRoles/{role_name}"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
+                                        error_message="Error deleting data access role", return_format="response")
+        return response.status_code
+
     # list 
     
     def list_data_access_roles(self, workspace_id, item_id):
@@ -2025,6 +2179,25 @@ class FabricClientCore(FabricClient):
                                              return_format="response+operation_result",
                                                 wait_for_completion=wait_for_completion)
         return response
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/onelake/settings/modifyImmutabilityPolicy
+    def modify_onelake_immutability_policy(self, workspace_id, retention_days, scope=None):
+        """Modify the OneLake immutability policy for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            retention_days (int): The retention days for the immutability policy
+            scope (str): The scope of the immutability policy
+        Returns:
+            dict: The response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/onelake/settings/modifyImmutabilityPolicy"
+
+        body = {"retentionDays": retention_days}
+        if scope:
+            body["scope"] = scope
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                    error_message="Error modifying OneLake immutability policy", return_format="json")
 
     # ShortCuts
 
@@ -2183,6 +2356,32 @@ class FabricClientCore(FabricClient):
 
     ### Tags
     # GET https://api.fabric.microsoft.com/v1/tags
+    ### Domains (Core)
+
+    def get_domain(self, domain_id):
+        """Get a domain by ID (core API)
+        Args:
+            domain_id (str): The ID of the domain
+        Returns:
+            dict: The domain
+        """
+        url = f"https://api.fabric.microsoft.com/v1/domains/{domain_id}"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting domain", return_format="json")
+
+    def list_domains(self):
+        """List all domains (core API)
+        Returns:
+            list: The list of domains
+        """
+        url = "https://api.fabric.microsoft.com/v1/domains"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing domains", return_format="value_json", paging=True)
+
+    ### Tags
+
     def list_tags(self):
         """List all tags
         Returns:
@@ -2502,6 +2701,99 @@ class FabricClientCore(FabricClient):
 
         return response
     
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/gitOutboundPolicy
+    def get_git_outbound_policy(self, workspace_id):
+        """Get the git outbound policy for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The git outbound policy
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/gitOutboundPolicy"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting git outbound policy", return_format="json")
+
+    # PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/gitOutboundPolicy
+    def set_git_outbound_policy(self, workspace_id, default_action):
+        """Set the git outbound policy for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            default_action (str): The default action for the policy
+        Returns:
+            dict: The updated git outbound policy
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/gitOutboundPolicy"
+
+        body = {"defaultAction": default_action}
+
+        return self.calling_routine(url, operation="PUT", body=body, response_codes=[200, 429],
+                                    error_message="Error setting git outbound policy", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/outboundCloudConnectionRules
+    def get_outbound_cloud_connection_rules(self, workspace_id):
+        """Get the outbound cloud connection rules for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The outbound cloud connection rules
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/outboundCloudConnectionRules"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting outbound cloud connection rules", return_format="json")
+
+    # PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/outboundCloudConnectionRules
+    def set_outbound_cloud_connection_rules(self, workspace_id, default_action, rules=None):
+        """Set the outbound cloud connection rules for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            default_action (str): The default action for the rules
+            rules (list): The list of rules
+        Returns:
+            dict: The updated outbound cloud connection rules
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/outboundCloudConnectionRules"
+
+        body = {"defaultAction": default_action}
+        if rules:
+            body["rules"] = rules
+
+        return self.calling_routine(url, operation="PUT", body=body, response_codes=[200, 429],
+                                    error_message="Error setting outbound cloud connection rules", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/outboundGatewayRules
+    def get_outbound_gateway_rules(self, workspace_id):
+        """Get the outbound gateway rules for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The outbound gateway rules
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/outboundGatewayRules"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting outbound gateway rules", return_format="json")
+
+    # PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/outboundGatewayRules
+    def set_outbound_gateway_rules(self, workspace_id, default_action, allowed_gateways=None):
+        """Set the outbound gateway rules for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            default_action (str): The default action for the rules
+            allowed_gateways (list): The list of allowed gateways
+        Returns:
+            dict: The updated outbound gateway rules
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/outboundGatewayRules"
+
+        body = {"defaultAction": default_action}
+        if allowed_gateways:
+            body["allowedGateways"] = allowed_gateways
+
+        return self.calling_routine(url, operation="PUT", body=body, response_codes=[200, 429],
+                                    error_message="Error setting outbound gateway rules", return_format="json")
+    
     
     def unassign_from_capacity(self, workspace_id, wait_for_completion = True):        
         """Unassign a workspace from a capacity
@@ -2517,7 +2809,39 @@ class FabricClientCore(FabricClient):
 
         return response.status_code
 
-        
+    def assign_to_domain(self, workspace_id, domain_id):
+        """Assign a workspace to a domain
+        Args:
+            workspace_id (str): The ID of the workspace
+            domain_id (str): The ID of the domain
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/assignToDomain"
+
+        body = {
+            'domainId': domain_id
+        }
+
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                        error_message="Error assigning workspace to domain", return_format="response")
+
+        return response.status_code
+
+    def unassign_from_domain(self, workspace_id):
+        """Unassign a workspace from a domain
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/unassignFromDomain"
+
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 429],
+                                        error_message="Error unassigning workspace from domain", return_format="response")
+
+        return response.status_code
+
     def update_workspace(self, workspace_id, display_name = None, description = None):
         """Update the workspace
         Args:
@@ -2683,6 +3007,231 @@ class FabricClientCore(FabricClient):
             dict: The updated Apache Airflow job definition
         """
         return self.update_item_definition(workspace_id, apache_airflow_job_id, type="ApacheAirflowJobs", definition=definition, update_metadata=update_metadata)
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{apacheAirflowJobId}/compute?beta=true
+    def get_apache_airflow_job_compute(self, workspace_id, apache_airflow_job_id):
+        """Get the compute configuration of an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+        Returns:
+            dict: The compute configuration
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/compute?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting Apache Airflow job compute", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{apacheAirflowJobId}/environment?beta=true
+    def get_apache_airflow_job_environment(self, workspace_id, apache_airflow_job_id):
+        """Get the environment of an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+        Returns:
+            dict: The environment configuration
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/environment?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting Apache Airflow job environment", return_format="json")
+
+    # PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}/files/{filePath}?beta=true
+    def create_or_update_apache_airflow_job_file(self, workspace_id, apache_airflow_job_id, file_path, file_contents):
+        """Create or update a file in an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            file_path (str): The path of the file
+            file_contents (str): The contents of the file
+        Returns:
+            dict: The created or updated file
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/files/{file_path}?beta=true"
+
+        body = {"fileContents": file_contents}
+
+        return self.calling_routine(url, operation="PUT", body=body, response_codes=[200, 201, 429],
+                                    error_message="Error creating or updating Apache Airflow job file", return_format="json")
+
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}/files/{filePath}?beta=true
+    def delete_apache_airflow_job_file(self, workspace_id, apache_airflow_job_id, file_path):
+        """Delete a file from an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            file_path (str): The path of the file
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/files/{file_path}?beta=true"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
+                                        error_message="Error deleting Apache Airflow job file", return_format="response")
+        return response.status_code
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}/files/{filePath}?beta=true
+    def get_apache_airflow_job_file(self, workspace_id, apache_airflow_job_id, file_path):
+        """Get a file from an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            file_path (str): The path of the file
+        Returns:
+            dict: The file details
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/files/{file_path}?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting Apache Airflow job file", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{ApacheAirflowJobId}/files?beta=true
+    def list_apache_airflow_job_files(self, workspace_id, apache_airflow_job_id, root_path=None, continuation_token=None):
+        """List files in an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            root_path (str): The root path to list files from
+            continuation_token (str): The continuation token for paging
+        Returns:
+            list: The list of files
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/files?beta=true"
+        if root_path:
+            url += f"&rootPath={root_path}"
+        if continuation_token:
+            url += f"&continuationToken={continuation_token}"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing Apache Airflow job files", return_format="json")
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/airflowPoolTemplates?beta=true
+    def create_airflow_pool_template(self, workspace_id, name, node_size, apache_airflow_job_version=None, compute_scalability=None):
+        """Create an Airflow pool template in a workspace (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            name (str): The name of the pool template
+            node_size (str): The node size of the pool template
+            apache_airflow_job_version (str): The Apache Airflow job version
+            compute_scalability (str): The compute scalability
+        Returns:
+            dict: The created pool template
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/airflowPoolTemplates?beta=true"
+
+        body = {"name": name, "nodeSize": node_size}
+        if apache_airflow_job_version:
+            body["apacheAirflowJobVersion"] = apache_airflow_job_version
+        if compute_scalability:
+            body["computeScalability"] = compute_scalability
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 201, 429],
+                                    error_message="Error creating Airflow pool template", return_format="json")
+
+    # DELETE https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/airflowPoolTemplates/{poolTemplateId}?beta=true
+    def delete_airflow_pool_template(self, workspace_id, pool_template_id):
+        """Delete an Airflow pool template from a workspace (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            pool_template_id (str): The ID of the pool template
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/airflowPoolTemplates/{pool_template_id}?beta=true"
+
+        response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
+                                        error_message="Error deleting Airflow pool template", return_format="response")
+        return response.status_code
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/airflowPoolTemplates/{poolTemplateId}?beta=true
+    def get_airflow_pool_template(self, workspace_id, pool_template_id):
+        """Get an Airflow pool template from a workspace (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            pool_template_id (str): The ID of the pool template
+        Returns:
+            dict: The pool template
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/airflowPoolTemplates/{pool_template_id}?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting Airflow pool template", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/airflowPoolTemplates?beta=true
+    def list_airflow_pool_templates(self, workspace_id, continuation_token=None):
+        """List Airflow pool templates in a workspace (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            continuation_token (str): The continuation token for paging
+        Returns:
+            list: The list of pool templates
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/airflowPoolTemplates?beta=true"
+        if continuation_token:
+            url += f"&continuationToken={continuation_token}"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing Airflow pool templates", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{apacheAirflowJobId}/libraries?beta=true
+    def list_apache_airflow_job_libraries(self, workspace_id, apache_airflow_job_id, continuation_token=None):
+        """List libraries of an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            continuation_token (str): The continuation token for paging
+        Returns:
+            list: The list of libraries
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/libraries?beta=true"
+        if continuation_token:
+            url += f"&continuationToken={continuation_token}"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing Apache Airflow job libraries", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ApacheAirflowJobs/{apacheAirflowJobId}/settings?beta=true
+    def get_apache_airflow_job_settings(self, workspace_id, apache_airflow_job_id):
+        """Get the settings of an Apache Airflow job (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+        Returns:
+            dict: The settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/settings?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting Apache Airflow job settings", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/airflowWorkspaceSettings?beta=true
+    def get_airflow_workspace_settings(self, workspace_id):
+        """Get the Airflow workspace settings (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The Airflow workspace settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/airflowWorkspaceSettings?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting Airflow workspace settings", return_format="json")
+
+    # PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/airflowWorkspaceSettings?beta=true
+    def update_airflow_workspace_settings(self, workspace_id, default_pool_template_id):
+        """Update the Airflow workspace settings (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            default_pool_template_id (str): The default pool template ID
+        Returns:
+            dict: The updated Airflow workspace settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/airflowWorkspaceSettings?beta=true"
+
+        body = {"defaultPoolTemplateId": default_pool_template_id}
+
+        return self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                    error_message="Error updating Airflow workspace settings", return_format="json")
 
     # Anomaly Detectors
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors
@@ -3318,6 +3867,25 @@ class FabricClientCore(FabricClient):
 
         return response_dict
 
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/dataflows/{dataflowId}/executeQuery
+    def execute_dataflow_query(self, workspace_id, dataflow_id, query_name, custom_mashup_document=None):
+        """Execute a query against a dataflow
+        Args:
+            workspace_id (str): The ID of the workspace
+            dataflow_id (str): The ID of the dataflow
+            query_name (str): The name of the query to execute
+            custom_mashup_document (str): The custom mashup document
+        Returns:
+            dict: The query result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/executeQuery"
+
+        body = {"queryName": query_name}
+        if custom_mashup_document:
+            body["customMashupDocument"] = custom_mashup_document
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                    error_message="Error executing dataflow query", return_format="json")
 
 
     # dataPipelines
@@ -4531,6 +5099,30 @@ class FabricClientCore(FabricClient):
         return self.update_item(workspace_id, graphql_api_id, display_name = display_name, description = description, 
                                 type= "GraphQLApis", return_item=return_item)
 
+    def get_graphql_api_definition(self, workspace_id, graphql_api_id, format = None):
+        """Get the definition of a graphql api
+
+        Args:
+            workspace_id (str): The ID of the workspace
+            graphql_api_id (str): The ID of the graphql api
+            format (str): The format of the definition
+        Returns:
+            dict: The graphql api definition
+        """
+        return self.get_item_definition(workspace_id, graphql_api_id, type="GraphQLApis", format=format)
+
+    def update_graphql_api_definition(self, workspace_id, graphql_api_id, definition, update_metadata = None):
+        """Update the definition of a graphql api
+        Args:
+            workspace_id (str): The ID of the workspace
+            graphql_api_id (str): The ID of the graphql api
+            definition (dict): The definition of the graphql api
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated definition of the graphql api
+        """
+        return self.update_item_definition(workspace_id, graphql_api_id, type="GraphQLApis", definition=definition, update_metadata=update_metadata)
+
     # kqlDashboard
     def create_kql_dashboard(self, workspace_id, display_name, description = None):
         """Create a kql dashboard in a workspace
@@ -4731,6 +5323,75 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item_definition(workspace_id, kql_database_id,
                                            type="kqlDatabases", definition=definition, update_metadata=update_metadata)
+
+    # KQL Database Table Shortcuts
+
+    def create_kql_database_shortcut(self, workspace_id, kql_database_id, name, target, enable_query_acceleration=None):
+        """Create a table shortcut in a KQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            kql_database_id (str): The ID of the KQL database
+            name (str): The name of the shortcut
+            target (dict): The target of the shortcut
+            enable_query_acceleration (bool): Whether to enable query acceleration
+        Returns:
+            dict: The created shortcut
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/kqlDatabases/{kql_database_id}/tableShortcuts"
+
+        body = {'name': name,
+                'target': target}
+        if enable_query_acceleration is not None:
+            body['enableQueryAcceleration'] = enable_query_acceleration
+
+        return self.calling_routine(url, operation="POST", body=body,
+                                    response_codes=[201, 429], error_message="Error creating KQL database table shortcut",
+                                    return_format="json")
+
+    def delete_kql_database_shortcut(self, workspace_id, kql_database_id, shortcut_name):
+        """Delete a table shortcut from a KQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            kql_database_id (str): The ID of the KQL database
+            shortcut_name (str): The name of the shortcut
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/kqlDatabases/{kql_database_id}/tableShortcuts/{shortcut_name}"
+
+        response = self.calling_routine(url, operation="DELETE",
+                                        response_codes=[200, 429], error_message="Error deleting KQL database table shortcut",
+                                        return_format="response")
+        return response.status_code
+
+    def get_kql_database_shortcut(self, workspace_id, kql_database_id, shortcut_name):
+        """Get a table shortcut from a KQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            kql_database_id (str): The ID of the KQL database
+            shortcut_name (str): The name of the shortcut
+        Returns:
+            dict: The shortcut
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/kqlDatabases/{kql_database_id}/tableShortcuts/{shortcut_name}"
+
+        return self.calling_routine(url, operation="GET",
+                                    response_codes=[200, 429], error_message="Error getting KQL database table shortcut",
+                                    return_format="json")
+
+    def list_kql_database_shortcuts(self, workspace_id, kql_database_id):
+        """List table shortcuts in a KQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            kql_database_id (str): The ID of the KQL database
+        Returns:
+            list: The list of shortcuts
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/kqlDatabases/{kql_database_id}/tableShortcuts"
+
+        return self.calling_routine(url, operation="GET",
+                                    response_codes=[200, 429], error_message="Error listing KQL database table shortcuts",
+                                    return_format="value_json", paging=True)
 
     # kqlQuerysets
 
@@ -5126,6 +5787,30 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item(workspace_id, item_id=lakehouse_id, display_name = display_name, description = description,
                                 type="lakehouses", return_item=return_item)
+
+    def get_lakehouse_definition(self, workspace_id, lakehouse_id, format = None):
+        """Get the definition of a lakehouse
+
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+            format (str): The format of the definition
+        Returns:
+            dict: The lakehouse definition
+        """
+        return self.get_item_definition(workspace_id, lakehouse_id, type="lakehouses", format=format)
+
+    def update_lakehouse_definition(self, workspace_id, lakehouse_id, definition, update_metadata = None):
+        """Update the definition of a lakehouse
+        Args:
+            workspace_id (str): The ID of the workspace
+            lakehouse_id (str): The ID of the lakehouse
+            definition (dict): The definition of the lakehouse
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated definition of the lakehouse
+        """
+        return self.update_item_definition(workspace_id, lakehouse_id, type="lakehouses", definition=definition, update_metadata=update_metadata)
 
 
     def list_tables(self, workspace_id, lakehouse_id):
@@ -6893,6 +7578,73 @@ class FabricClientCore(FabricClient):
         return self.update_item(workspace_id, sql_database_id, display_name = display_name, description = description,
                                 type="SQLDatabases", return_item=return_item)
     
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/SQLDatabases/{SQLDatabaseId}/getDefinition
+    def get_sql_database_definition(self, workspace_id, sql_database_id, format=None):
+        """Get the definition of a SQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_database_id (str): The ID of the SQL database
+            format (str): The format of the definition
+        Returns:
+            dict: The SQL database definition
+        """
+        return self.get_item_definition(workspace_id, sql_database_id, type="SQLDatabases", format=format)
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/SQLDatabases/{SQLDatabaseId}/updateDefinition
+    def update_sql_database_definition(self, workspace_id, sql_database_id, definition, update_metadata=None):
+        """Update the definition of a SQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_database_id (str): The ID of the SQL database
+            definition (dict): The definition of the SQL database
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated SQL database definition
+        """
+        return self.update_item_definition(workspace_id, sql_database_id, type="SQLDatabases", definition=definition, update_metadata=update_metadata)
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/SQLDatabases/{SQLDatabaseId}/revalidateCmk
+    def revalidate_sql_database_cmk(self, workspace_id, sql_database_id):
+        """Revalidate the customer-managed key for a SQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_database_id (str): The ID of the SQL database
+        Returns:
+            requests.Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/SQLDatabases/{sql_database_id}/revalidateCmk"
+
+        return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                    error_message="Error revalidating SQL database CMK", return_format="response")
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/SQLDatabases/{SQLDatabaseId}/startMirroring
+    def start_sql_database_mirroring(self, workspace_id, sql_database_id):
+        """Start mirroring for a SQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_database_id (str): The ID of the SQL database
+        Returns:
+            requests.Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/SQLDatabases/{sql_database_id}/startMirroring"
+
+        return self.calling_routine(url, operation="POST", response_codes=[200, 429],
+                                    error_message="Error starting SQL database mirroring", return_format="response")
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/SQLDatabases/{SQLDatabaseId}/stopMirroring
+    def stop_sql_database_mirroring(self, workspace_id, sql_database_id):
+        """Stop mirroring for a SQL database
+        Args:
+            workspace_id (str): The ID of the workspace
+            sql_database_id (str): The ID of the SQL database
+        Returns:
+            requests.Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/SQLDatabases/{sql_database_id}/stopMirroring"
+
+        return self.calling_routine(url, operation="POST", response_codes=[200, 429],
+                                    error_message="Error stopping SQL database mirroring", return_format="response")
+
     # SQL endpoints
     
     # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/sqlEndpoints/{sqlEndpointId}/connectionString?guestTenantId={guestTenantId}&privateLinkType={privateLinkType}
@@ -7339,3 +8091,924 @@ class FabricClientCore(FabricClient):
         """
         return self.update_item(workspace_id, warehouse_snapshot_id, display_name = display_name, description = description,
                                 type="warehousesnapshots", return_item=return_item, properties=properties)
+
+    # cosmosDbDatabases
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/cosmosDbDatabases
+    def create_cosmos_db_database(self, workspace_id, display_name, definition = None, description = None):
+        """Create a Cosmos DB database in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the Cosmos DB database
+            definition (dict): The definition of the Cosmos DB database
+            description (str): The description of the Cosmos DB database
+        Returns:
+            CosmosDbDatabase: The Cosmos DB database object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="cosmosDbDatabases",
+                                definition=definition,
+                                description=description)
+
+    def delete_cosmos_db_database(self, workspace_id, cosmos_db_database_id):
+        """Delete a Cosmos DB database from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=cosmos_db_database_id, type="cosmosDbDatabases")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/cosmosDbDatabases/{cosmosDbDatabaseId}
+    def get_cosmos_db_database(self, workspace_id, cosmos_db_database_id = None, cosmos_db_database_name = None):
+        """Get a Cosmos DB database from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            cosmos_db_database_name (str): The name of the Cosmos DB database
+        Returns:
+            CosmosDbDatabase: The Cosmos DB database object
+        """
+        from msfabricpysdkcore.otheritems import CosmosDbDatabase
+
+        if cosmos_db_database_id is None and cosmos_db_database_name is not None:
+            cosmos_db_databases = self.list_cosmos_db_databases(workspace_id)
+            filtered = [c for c in cosmos_db_databases if c.display_name == cosmos_db_database_name]
+            if len(filtered) == 0:
+                raise Exception(f"Cosmos DB database with name {cosmos_db_database_name} not found")
+            cosmos_db_database_id = filtered[0].id
+        elif cosmos_db_database_id is None:
+            raise Exception("cosmos_db_database_id or the cosmos_db_database_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/cosmosDbDatabases/{cosmos_db_database_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting Cosmos DB database", return_format="json")
+
+        obj = CosmosDbDatabase.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_cosmos_db_database_definition(self, workspace_id, cosmos_db_database_id, format = None):
+        """Get the definition of a Cosmos DB database
+        Args:
+            workspace_id (str): The ID of the workspace
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            format (str): The format of the definition
+        Returns:
+            dict: The Cosmos DB database definition
+        """
+        return self.get_item_definition(workspace_id, cosmos_db_database_id, type="cosmosDbDatabases", format=format)
+
+    def list_cosmos_db_databases(self, workspace_id, with_properties = False):
+        """List Cosmos DB databases in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of Cosmos DB databases
+        """
+        return self.list_items(workspace_id, type="cosmosDbDatabases", with_properties=with_properties)
+
+    def update_cosmos_db_database(self, workspace_id, cosmos_db_database_id, display_name = None, description = None, return_item=False):
+        """Update a Cosmos DB database in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            display_name (str): The display name of the Cosmos DB database
+            description (str): The description of the Cosmos DB database
+        Returns:
+            dict: The updated Cosmos DB database or CosmosDbDatabase object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=cosmos_db_database_id, display_name=display_name, description=description,
+                                type="cosmosDbDatabases", return_item=return_item)
+
+    def update_cosmos_db_database_definition(self, workspace_id, cosmos_db_database_id, definition, update_metadata = None):
+        """Update the definition of a Cosmos DB database
+        Args:
+            workspace_id (str): The ID of the workspace
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            definition (dict): The definition of the Cosmos DB database
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated Cosmos DB database definition
+        """
+        return self.update_item_definition(workspace_id, cosmos_db_database_id, type="cosmosDbDatabases", definition=definition, update_metadata=update_metadata)
+
+    # DataAgents
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/DataAgents
+    def create_data_agent(self, workspace_id, display_name, definition = None, description = None):
+        """Create a data agent in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the data agent
+            definition (dict): The definition of the data agent
+            description (str): The description of the data agent
+        Returns:
+            DataAgent: The data agent object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="DataAgents",
+                                definition=definition,
+                                description=description)
+
+    def delete_data_agent(self, workspace_id, data_agent_id):
+        """Delete a data agent from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            data_agent_id (str): The ID of the data agent
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=data_agent_id, type="DataAgents")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/DataAgents/{DataAgentId}
+    def get_data_agent(self, workspace_id, data_agent_id = None, data_agent_name = None):
+        """Get a data agent from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            data_agent_id (str): The ID of the data agent
+            data_agent_name (str): The name of the data agent
+        Returns:
+            DataAgent: The data agent object
+        """
+        from msfabricpysdkcore.otheritems import DataAgent
+
+        if data_agent_id is None and data_agent_name is not None:
+            data_agents = self.list_data_agents(workspace_id)
+            filtered = [d for d in data_agents if d.display_name == data_agent_name]
+            if len(filtered) == 0:
+                raise Exception(f"Data agent with name {data_agent_name} not found")
+            data_agent_id = filtered[0].id
+        elif data_agent_id is None:
+            raise Exception("data_agent_id or the data_agent_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/DataAgents/{data_agent_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting data agent", return_format="json")
+
+        obj = DataAgent.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_data_agent_definition(self, workspace_id, data_agent_id, format = None):
+        """Get the definition of a data agent
+        Args:
+            workspace_id (str): The ID of the workspace
+            data_agent_id (str): The ID of the data agent
+            format (str): The format of the definition
+        Returns:
+            dict: The data agent definition
+        """
+        return self.get_item_definition(workspace_id, data_agent_id, type="DataAgents", format=format)
+
+    def list_data_agents(self, workspace_id, with_properties = False):
+        """List data agents in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of data agents
+        """
+        return self.list_items(workspace_id, type="DataAgents", with_properties=with_properties)
+
+    def update_data_agent(self, workspace_id, data_agent_id, display_name = None, description = None, return_item=False):
+        """Update a data agent in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            data_agent_id (str): The ID of the data agent
+            display_name (str): The display name of the data agent
+            description (str): The description of the data agent
+        Returns:
+            dict: The updated data agent or DataAgent object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=data_agent_id, display_name=display_name, description=description,
+                                type="DataAgents", return_item=return_item)
+
+    def update_data_agent_definition(self, workspace_id, data_agent_id, definition, update_metadata = None):
+        """Update the definition of a data agent
+        Args:
+            workspace_id (str): The ID of the workspace
+            data_agent_id (str): The ID of the data agent
+            definition (dict): The definition of the data agent
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated data agent definition
+        """
+        return self.update_item_definition(workspace_id, data_agent_id, type="DataAgents", definition=definition, update_metadata=update_metadata)
+
+    # EventSchemaSets
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/EventSchemaSets
+    def create_event_schema_set(self, workspace_id, display_name, definition = None, description = None):
+        """Create an event schema set in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the event schema set
+            definition (dict): The definition of the event schema set
+            description (str): The description of the event schema set
+        Returns:
+            EventSchemaSet: The event schema set object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="EventSchemaSets",
+                                definition=definition,
+                                description=description)
+
+    def delete_event_schema_set(self, workspace_id, event_schema_set_id):
+        """Delete an event schema set from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            event_schema_set_id (str): The ID of the event schema set
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=event_schema_set_id, type="EventSchemaSets")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/EventSchemaSets/{EventSchemaSetId}
+    def get_event_schema_set(self, workspace_id, event_schema_set_id = None, event_schema_set_name = None):
+        """Get an event schema set from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            event_schema_set_id (str): The ID of the event schema set
+            event_schema_set_name (str): The name of the event schema set
+        Returns:
+            EventSchemaSet: The event schema set object
+        """
+        from msfabricpysdkcore.otheritems import EventSchemaSet
+
+        if event_schema_set_id is None and event_schema_set_name is not None:
+            event_schema_sets = self.list_event_schema_sets(workspace_id)
+            filtered = [e for e in event_schema_sets if e.display_name == event_schema_set_name]
+            if len(filtered) == 0:
+                raise Exception(f"Event schema set with name {event_schema_set_name} not found")
+            event_schema_set_id = filtered[0].id
+        elif event_schema_set_id is None:
+            raise Exception("event_schema_set_id or the event_schema_set_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/EventSchemaSets/{event_schema_set_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting event schema set", return_format="json")
+
+        obj = EventSchemaSet.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_event_schema_set_definition(self, workspace_id, event_schema_set_id, format = None):
+        """Get the definition of an event schema set
+        Args:
+            workspace_id (str): The ID of the workspace
+            event_schema_set_id (str): The ID of the event schema set
+            format (str): The format of the definition
+        Returns:
+            dict: The event schema set definition
+        """
+        return self.get_item_definition(workspace_id, event_schema_set_id, type="EventSchemaSets", format=format)
+
+    def list_event_schema_sets(self, workspace_id, with_properties = False):
+        """List event schema sets in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of event schema sets
+        """
+        return self.list_items(workspace_id, type="EventSchemaSets", with_properties=with_properties)
+
+    def update_event_schema_set(self, workspace_id, event_schema_set_id, display_name = None, description = None, return_item=False):
+        """Update an event schema set in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            event_schema_set_id (str): The ID of the event schema set
+            display_name (str): The display name of the event schema set
+            description (str): The description of the event schema set
+        Returns:
+            dict: The updated event schema set or EventSchemaSet object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=event_schema_set_id, display_name=display_name, description=description,
+                                type="EventSchemaSets", return_item=return_item)
+
+    def update_event_schema_set_definition(self, workspace_id, event_schema_set_id, definition, update_metadata = None):
+        """Update the definition of an event schema set
+        Args:
+            workspace_id (str): The ID of the workspace
+            event_schema_set_id (str): The ID of the event schema set
+            definition (dict): The definition of the event schema set
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated event schema set definition
+        """
+        return self.update_item_definition(workspace_id, event_schema_set_id, type="EventSchemaSets", definition=definition, update_metadata=update_metadata)
+
+    # GraphModels
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/GraphModels
+    def create_graph_model(self, workspace_id, display_name, definition = None, description = None):
+        """Create a graph model in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the graph model
+            definition (dict): The definition of the graph model
+            description (str): The description of the graph model
+        Returns:
+            GraphModel: The graph model object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="GraphModels",
+                                definition=definition,
+                                description=description)
+
+    def delete_graph_model(self, workspace_id, graph_model_id):
+        """Delete a graph model from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=graph_model_id, type="GraphModels")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/GraphModels/{GraphModelId}
+    def get_graph_model(self, workspace_id, graph_model_id = None, graph_model_name = None):
+        """Get a graph model from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+            graph_model_name (str): The name of the graph model
+        Returns:
+            GraphModel: The graph model object
+        """
+        from msfabricpysdkcore.otheritems import GraphModel
+
+        if graph_model_id is None and graph_model_name is not None:
+            graph_models = self.list_graph_models(workspace_id)
+            filtered = [g for g in graph_models if g.display_name == graph_model_name]
+            if len(filtered) == 0:
+                raise Exception(f"Graph model with name {graph_model_name} not found")
+            graph_model_id = filtered[0].id
+        elif graph_model_id is None:
+            raise Exception("graph_model_id or the graph_model_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/GraphModels/{graph_model_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting graph model", return_format="json")
+
+        obj = GraphModel.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_graph_model_definition(self, workspace_id, graph_model_id, format = None):
+        """Get the definition of a graph model
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+            format (str): The format of the definition
+        Returns:
+            dict: The graph model definition
+        """
+        return self.get_item_definition(workspace_id, graph_model_id, type="GraphModels", format=format)
+
+    def list_graph_models(self, workspace_id, with_properties = False):
+        """List graph models in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of graph models
+        """
+        return self.list_items(workspace_id, type="GraphModels", with_properties=with_properties)
+
+    def update_graph_model(self, workspace_id, graph_model_id, display_name = None, description = None, return_item=False):
+        """Update a graph model in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+            display_name (str): The display name of the graph model
+            description (str): The description of the graph model
+        Returns:
+            dict: The updated graph model or GraphModel object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=graph_model_id, display_name=display_name, description=description,
+                                type="GraphModels", return_item=return_item)
+
+    def update_graph_model_definition(self, workspace_id, graph_model_id, definition, update_metadata = None):
+        """Update the definition of a graph model
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+            definition (dict): The definition of the graph model
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated graph model definition
+        """
+        return self.update_item_definition(workspace_id, graph_model_id, type="GraphModels", definition=definition, update_metadata=update_metadata)
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/GraphModels/{GraphModelId}/jobs/instances?jobType=RefreshGraph
+    def run_on_demand_refresh_graph(self, workspace_id, graph_model_id, start_type=None, custom_start_date_time=None, wait_for_completion=True):
+        """Run an on-demand refresh graph job for a graph model
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+            start_type (str): The start type of the job
+            custom_start_date_time (str): The custom start date time
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            requests.Response: The response object
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/GraphModels/{graph_model_id}/jobs/instances?jobType=RefreshGraph"
+
+        body = {}
+        if start_type:
+            body["startType"] = start_type
+        if custom_start_date_time:
+            body["customStartDateTime"] = custom_start_date_time
+
+        response = self.calling_routine(url, operation="POST", body=body if body else None, response_codes=[200, 202, 429],
+                                        error_message="Error running on-demand refresh graph",
+                                        return_format="response", wait_for_completion=wait_for_completion)
+        return response
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/GraphModels/{GraphModelId}/executeQuery?beta=true
+    def execute_graph_model_query(self, workspace_id, graph_model_id, query):
+        """Execute a query against a graph model (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+            query (str): The query to execute
+        Returns:
+            dict: The query result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/GraphModels/{graph_model_id}/executeQuery?beta=true"
+
+        body = {"query": query}
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                    error_message="Error executing graph model query", return_format="json")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/GraphModels/{GraphModelId}/queryableGraphType?beta=true
+    def get_queryable_graph_type(self, workspace_id, graph_model_id):
+        """Get the queryable graph type of a graph model (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_model_id (str): The ID of the graph model
+        Returns:
+            dict: The queryable graph type
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/GraphModels/{graph_model_id}/queryableGraphType?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting queryable graph type", return_format="json")
+
+    # GraphQuerySets
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/GraphQuerySets
+    def create_graph_query_set(self, workspace_id, display_name, definition = None, description = None):
+        """Create a graph query set in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the graph query set
+            definition (dict): The definition of the graph query set
+            description (str): The description of the graph query set
+        Returns:
+            GraphQuerySet: The graph query set object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="GraphQuerySets",
+                                definition=definition,
+                                description=description)
+
+    def delete_graph_query_set(self, workspace_id, graph_query_set_id):
+        """Delete a graph query set from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_query_set_id (str): The ID of the graph query set
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=graph_query_set_id, type="GraphQuerySets")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/GraphQuerySets/{GraphQuerySetId}
+    def get_graph_query_set(self, workspace_id, graph_query_set_id = None, graph_query_set_name = None):
+        """Get a graph query set from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_query_set_id (str): The ID of the graph query set
+            graph_query_set_name (str): The name of the graph query set
+        Returns:
+            GraphQuerySet: The graph query set object
+        """
+        from msfabricpysdkcore.otheritems import GraphQuerySet
+
+        if graph_query_set_id is None and graph_query_set_name is not None:
+            graph_query_sets = self.list_graph_query_sets(workspace_id)
+            filtered = [g for g in graph_query_sets if g.display_name == graph_query_set_name]
+            if len(filtered) == 0:
+                raise Exception(f"Graph query set with name {graph_query_set_name} not found")
+            graph_query_set_id = filtered[0].id
+        elif graph_query_set_id is None:
+            raise Exception("graph_query_set_id or the graph_query_set_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/GraphQuerySets/{graph_query_set_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting graph query set", return_format="json")
+
+        obj = GraphQuerySet.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_graph_query_set_definition(self, workspace_id, graph_query_set_id, format = None):
+        """Get the definition of a graph query set
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_query_set_id (str): The ID of the graph query set
+            format (str): The format of the definition
+        Returns:
+            dict: The graph query set definition
+        """
+        return self.get_item_definition(workspace_id, graph_query_set_id, type="GraphQuerySets", format=format)
+
+    def list_graph_query_sets(self, workspace_id, with_properties = False):
+        """List graph query sets in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of graph query sets
+        """
+        return self.list_items(workspace_id, type="GraphQuerySets", with_properties=with_properties)
+
+    def update_graph_query_set(self, workspace_id, graph_query_set_id, display_name = None, description = None, return_item=False):
+        """Update a graph query set in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_query_set_id (str): The ID of the graph query set
+            display_name (str): The display name of the graph query set
+            description (str): The description of the graph query set
+        Returns:
+            dict: The updated graph query set or GraphQuerySet object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=graph_query_set_id, display_name=display_name, description=description,
+                                type="GraphQuerySets", return_item=return_item)
+
+    def update_graph_query_set_definition(self, workspace_id, graph_query_set_id, definition, update_metadata = None):
+        """Update the definition of a graph query set
+        Args:
+            workspace_id (str): The ID of the workspace
+            graph_query_set_id (str): The ID of the graph query set
+            definition (dict): The definition of the graph query set
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated graph query set definition
+        """
+        return self.update_item_definition(workspace_id, graph_query_set_id, type="GraphQuerySets", definition=definition, update_metadata=update_metadata)
+
+    # ontologies
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ontologies
+    def create_ontology(self, workspace_id, display_name, definition = None, description = None):
+        """Create an ontology in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the ontology
+            definition (dict): The definition of the ontology
+            description (str): The description of the ontology
+        Returns:
+            Ontology: The ontology object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="ontologies",
+                                definition=definition,
+                                description=description)
+
+    def delete_ontology(self, workspace_id, ontology_id):
+        """Delete an ontology from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            ontology_id (str): The ID of the ontology
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=ontology_id, type="ontologies")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/ontologies/{ontologyId}
+    def get_ontology(self, workspace_id, ontology_id = None, ontology_name = None):
+        """Get an ontology from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            ontology_id (str): The ID of the ontology
+            ontology_name (str): The name of the ontology
+        Returns:
+            Ontology: The ontology object
+        """
+        from msfabricpysdkcore.otheritems import Ontology
+
+        if ontology_id is None and ontology_name is not None:
+            ontologies = self.list_ontologies(workspace_id)
+            filtered = [o for o in ontologies if o.display_name == ontology_name]
+            if len(filtered) == 0:
+                raise Exception(f"Ontology with name {ontology_name} not found")
+            ontology_id = filtered[0].id
+        elif ontology_id is None:
+            raise Exception("ontology_id or the ontology_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ontologies/{ontology_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting ontology", return_format="json")
+
+        obj = Ontology.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_ontology_definition(self, workspace_id, ontology_id, format = None):
+        """Get the definition of an ontology
+        Args:
+            workspace_id (str): The ID of the workspace
+            ontology_id (str): The ID of the ontology
+            format (str): The format of the definition
+        Returns:
+            dict: The ontology definition
+        """
+        return self.get_item_definition(workspace_id, ontology_id, type="ontologies", format=format)
+
+    def list_ontologies(self, workspace_id, with_properties = False):
+        """List ontologies in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of ontologies
+        """
+        return self.list_items(workspace_id, type="ontologies", with_properties=with_properties)
+
+    def update_ontology(self, workspace_id, ontology_id, display_name = None, description = None, return_item=False):
+        """Update an ontology in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            ontology_id (str): The ID of the ontology
+            display_name (str): The display name of the ontology
+            description (str): The description of the ontology
+        Returns:
+            dict: The updated ontology or Ontology object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=ontology_id, display_name=display_name, description=description,
+                                type="ontologies", return_item=return_item)
+
+    def update_ontology_definition(self, workspace_id, ontology_id, definition, update_metadata = None):
+        """Update the definition of an ontology
+        Args:
+            workspace_id (str): The ID of the workspace
+            ontology_id (str): The ID of the ontology
+            definition (dict): The definition of the ontology
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated ontology definition
+        """
+        return self.update_item_definition(workspace_id, ontology_id, type="ontologies", definition=definition, update_metadata=update_metadata)
+
+    # OperationsAgents
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/OperationsAgents
+    def create_operations_agent(self, workspace_id, display_name, definition = None, description = None):
+        """Create an operations agent in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the operations agent
+            definition (dict): The definition of the operations agent
+            description (str): The description of the operations agent
+        Returns:
+            OperationsAgent: The operations agent object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="OperationsAgents",
+                                definition=definition,
+                                description=description)
+
+    def delete_operations_agent(self, workspace_id, operations_agent_id):
+        """Delete an operations agent from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            operations_agent_id (str): The ID of the operations agent
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=operations_agent_id, type="OperationsAgents")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/OperationsAgents/{OperationsAgentId}
+    def get_operations_agent(self, workspace_id, operations_agent_id = None, operations_agent_name = None):
+        """Get an operations agent from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            operations_agent_id (str): The ID of the operations agent
+            operations_agent_name (str): The name of the operations agent
+        Returns:
+            OperationsAgent: The operations agent object
+        """
+        from msfabricpysdkcore.otheritems import OperationsAgent
+
+        if operations_agent_id is None and operations_agent_name is not None:
+            operations_agents = self.list_operations_agents(workspace_id)
+            filtered = [o for o in operations_agents if o.display_name == operations_agent_name]
+            if len(filtered) == 0:
+                raise Exception(f"Operations agent with name {operations_agent_name} not found")
+            operations_agent_id = filtered[0].id
+        elif operations_agent_id is None:
+            raise Exception("operations_agent_id or the operations_agent_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/OperationsAgents/{operations_agent_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting operations agent", return_format="json")
+
+        obj = OperationsAgent.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_operations_agent_definition(self, workspace_id, operations_agent_id, format = None):
+        """Get the definition of an operations agent
+        Args:
+            workspace_id (str): The ID of the workspace
+            operations_agent_id (str): The ID of the operations agent
+            format (str): The format of the definition
+        Returns:
+            dict: The operations agent definition
+        """
+        return self.get_item_definition(workspace_id, operations_agent_id, type="OperationsAgents", format=format)
+
+    def list_operations_agents(self, workspace_id, with_properties = False):
+        """List operations agents in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of operations agents
+        """
+        return self.list_items(workspace_id, type="OperationsAgents", with_properties=with_properties)
+
+    def update_operations_agent(self, workspace_id, operations_agent_id, display_name = None, description = None, return_item=False):
+        """Update an operations agent in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            operations_agent_id (str): The ID of the operations agent
+            display_name (str): The display name of the operations agent
+            description (str): The description of the operations agent
+        Returns:
+            dict: The updated operations agent or OperationsAgent object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=operations_agent_id, display_name=display_name, description=description,
+                                type="OperationsAgents", return_item=return_item)
+
+    def update_operations_agent_definition(self, workspace_id, operations_agent_id, definition, update_metadata = None):
+        """Update the definition of an operations agent
+        Args:
+            workspace_id (str): The ID of the workspace
+            operations_agent_id (str): The ID of the operations agent
+            definition (dict): The definition of the operations agent
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated operations agent definition
+        """
+        return self.update_item_definition(workspace_id, operations_agent_id, type="OperationsAgents", definition=definition, update_metadata=update_metadata)
+
+    # snowflakeDatabases
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/snowflakeDatabases
+    def create_snowflake_database(self, workspace_id, display_name, definition = None, description = None):
+        """Create a Snowflake database in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the Snowflake database
+            definition (dict): The definition of the Snowflake database
+            description (str): The description of the Snowflake database
+        Returns:
+            SnowflakeDatabase: The Snowflake database object
+        """
+        return self.create_item(workspace_id=workspace_id,
+                                display_name=display_name,
+                                type="snowflakeDatabases",
+                                definition=definition,
+                                description=description)
+
+    def delete_snowflake_database(self, workspace_id, snowflake_database_id):
+        """Delete a Snowflake database from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            snowflake_database_id (str): The ID of the Snowflake database
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, item_id=snowflake_database_id, type="snowflakeDatabases")
+
+    # GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/snowflakeDatabases/{snowflakeDatabaseId}
+    def get_snowflake_database(self, workspace_id, snowflake_database_id = None, snowflake_database_name = None):
+        """Get a Snowflake database from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            snowflake_database_id (str): The ID of the Snowflake database
+            snowflake_database_name (str): The name of the Snowflake database
+        Returns:
+            SnowflakeDatabase: The Snowflake database object
+        """
+        from msfabricpysdkcore.otheritems import SnowflakeDatabase
+
+        if snowflake_database_id is None and snowflake_database_name is not None:
+            snowflake_databases = self.list_snowflake_databases(workspace_id)
+            filtered = [s for s in snowflake_databases if s.display_name == snowflake_database_name]
+            if len(filtered) == 0:
+                raise Exception(f"Snowflake database with name {snowflake_database_name} not found")
+            snowflake_database_id = filtered[0].id
+        elif snowflake_database_id is None:
+            raise Exception("snowflake_database_id or the snowflake_database_name is required")
+
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/snowflakeDatabases/{snowflake_database_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                         error_message="Error getting Snowflake database", return_format="json")
+
+        obj = SnowflakeDatabase.from_dict(item_dict, core_client=self)
+        obj.get_definition()
+        return obj
+
+    def get_snowflake_database_definition(self, workspace_id, snowflake_database_id, format = None):
+        """Get the definition of a Snowflake database
+        Args:
+            workspace_id (str): The ID of the workspace
+            snowflake_database_id (str): The ID of the Snowflake database
+            format (str): The format of the definition
+        Returns:
+            dict: The Snowflake database definition
+        """
+        return self.get_item_definition(workspace_id, snowflake_database_id, type="snowflakeDatabases", format=format)
+
+    def list_snowflake_databases(self, workspace_id, with_properties = False):
+        """List Snowflake databases in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of Snowflake databases
+        """
+        return self.list_items(workspace_id, type="snowflakeDatabases", with_properties=with_properties)
+
+    def update_snowflake_database(self, workspace_id, snowflake_database_id, display_name = None, description = None, return_item=False):
+        """Update a Snowflake database in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            snowflake_database_id (str): The ID of the Snowflake database
+            display_name (str): The display name of the Snowflake database
+            description (str): The description of the Snowflake database
+        Returns:
+            dict: The updated Snowflake database or SnowflakeDatabase object if return_item is True
+        """
+        return self.update_item(workspace_id, item_id=snowflake_database_id, display_name=display_name, description=description,
+                                type="snowflakeDatabases", return_item=return_item)
+
+    def update_snowflake_database_definition(self, workspace_id, snowflake_database_id, definition, update_metadata = None):
+        """Update the definition of a Snowflake database
+        Args:
+            workspace_id (str): The ID of the workspace
+            snowflake_database_id (str): The ID of the Snowflake database
+            definition (dict): The definition of the Snowflake database
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated Snowflake database definition
+        """
+        return self.update_item_definition(workspace_id, snowflake_database_id, type="snowflakeDatabases", definition=definition, update_metadata=update_metadata)
+
+    # Real-Time Intelligence Copilot
+
+    # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/copilot/nlToKql?beta=true
+    def nl_to_kql(self, workspace_id, cluster_url, database_name, item_id_for_billing, natural_language,
+                  chat_messages=None, user_shots=None):
+        """Convert natural language to KQL (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            cluster_url (str): The cluster URL
+            database_name (str): The database name
+            item_id_for_billing (str): The item ID for billing
+            natural_language (str): The natural language query
+            chat_messages (list): The chat messages for context
+            user_shots (list): The user shots for few-shot learning
+        Returns:
+            dict: The KQL query result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/copilot/nlToKql?beta=true"
+
+        body = {
+            "clusterUrl": cluster_url,
+            "databaseName": database_name,
+            "itemIdForBilling": item_id_for_billing,
+            "naturalLanguage": natural_language
+        }
+        if chat_messages:
+            body["chatMessages"] = chat_messages
+        if user_shots:
+            body["userShots"] = user_shots
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                    error_message="Error converting NL to KQL", return_format="json")

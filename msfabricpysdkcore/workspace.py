@@ -111,6 +111,24 @@ class Workspace:
         """
         return self.core_client.get_network_communication_policy(workspace_id=self.id)
 
+    def get_git_outbound_policy(self):
+        return self.core_client.get_git_outbound_policy(workspace_id=self.id)
+
+    def set_git_outbound_policy(self, default_action):
+        return self.core_client.set_git_outbound_policy(workspace_id=self.id, default_action=default_action)
+
+    def get_outbound_cloud_connection_rules(self):
+        return self.core_client.get_outbound_cloud_connection_rules(workspace_id=self.id)
+
+    def set_outbound_cloud_connection_rules(self, default_action, rules=None):
+        return self.core_client.set_outbound_cloud_connection_rules(workspace_id=self.id, default_action=default_action, rules=rules)
+
+    def get_outbound_gateway_rules(self):
+        return self.core_client.get_outbound_gateway_rules(workspace_id=self.id)
+
+    def set_outbound_gateway_rules(self, default_action, allowed_gateways=None):
+        return self.core_client.set_outbound_gateway_rules(workspace_id=self.id, default_action=default_action, allowed_gateways=allowed_gateways)
+
     def get_role_assignment(self, workspace_role_assignment_id):
         """Get a role assignment from the workspace
         Args:
@@ -146,6 +164,22 @@ class Workspace:
                                                                        wait_for_completion = wait_for_completion)
         self.capacity_id = None
         return response_status_code
+
+    def assign_to_domain(self, domain_id):
+        """Assign the workspace to a domain
+        Args:
+            domain_id (str): The id of the domain to assign the workspace to
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.assign_to_domain(workspace_id=self.id, domain_id=domain_id)
+
+    def unassign_from_domain(self):
+        """Unassign the workspace from a domain
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.unassign_from_domain(workspace_id=self.id)
     
     def update(self, display_name = None, description = None):
         """Update the workspace
@@ -302,6 +336,14 @@ class Workspace:
     def delete_item(self, item_id, type = None):
         """Delete an item from a workspace"""
         return self.core_client.delete_item(workspace_id=self.id, item_id=item_id, type=type)
+
+    def move_item(self, item_id, target_folder_id):
+        """Move an item to a different folder"""
+        return self.core_client.move_item(workspace_id=self.id, item_id=item_id, target_folder_id=target_folder_id)
+
+    def bulk_move_items(self, items, target_folder_id):
+        """Move multiple items to a target folder in bulk"""
+        return self.core_client.bulk_move_items(workspace_id=self.id, items=items, target_folder_id=target_folder_id)
   
     def list_items(self, with_properties = False, type = None):
         """List items in a workspace"""
@@ -439,7 +481,17 @@ class Workspace:
     def create_or_update_data_access_roles(self, item_id, data_access_roles, dryrun = False, etag_match = None):
         return self.core_client.create_or_update_data_access_roles(workspace_id=self.id, item_id=item_id, data_access_roles=data_access_roles,
                                                                    dryrun=dryrun, etag_match=etag_match)
-    
+
+    def create_or_update_single_data_access_role(self, item_id, data_access_role, data_access_role_conflict_policy=None, etag_match=None):
+        return self.core_client.create_or_update_single_data_access_role(workspace_id=self.id, item_id=item_id, data_access_role=data_access_role,
+                                                                         data_access_role_conflict_policy=data_access_role_conflict_policy, etag_match=etag_match)
+
+    def get_data_access_role(self, item_id, role_name):
+        return self.core_client.get_data_access_role(workspace_id=self.id, item_id=item_id, role_name=role_name)
+
+    def delete_data_access_role(self, item_id, role_name):
+        return self.core_client.delete_data_access_role(workspace_id=self.id, item_id=item_id, role_name=role_name)
+
     # list 
 
     def list_data_access_roles(self, item_id):
@@ -453,6 +505,10 @@ class Workspace:
     def modify_onelake_settings(self, status, destination=None, wait_for_completion=False):
         return self.core_client.modify_onelake_settings(workspace_id=self.id, status=status,
                                                         destination=destination, wait_for_completion=wait_for_completion)
+
+    def modify_onelake_immutability_policy(self, retention_days, scope=None):
+        return self.core_client.modify_onelake_immutability_policy(workspace_id=self.id, retention_days=retention_days, scope=scope)
+
     # List other items
 
     def list_dashboards(self):
@@ -490,6 +546,53 @@ class Workspace:
     def update_apache_airflow_job_definition(self, apache_airflow_job_id, definition, update_metadata = None):
         return self.core_client.update_apache_airflow_job_definition(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
                                                                      definition=definition, update_metadata=update_metadata)
+
+    def get_apache_airflow_job_compute(self, apache_airflow_job_id):
+        return self.core_client.get_apache_airflow_job_compute(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id)
+
+    def get_apache_airflow_job_environment(self, apache_airflow_job_id):
+        return self.core_client.get_apache_airflow_job_environment(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id)
+
+    def create_or_update_apache_airflow_job_file(self, apache_airflow_job_id, file_path, file_contents):
+        return self.core_client.create_or_update_apache_airflow_job_file(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
+                                                                         file_path=file_path, file_contents=file_contents)
+
+    def delete_apache_airflow_job_file(self, apache_airflow_job_id, file_path):
+        return self.core_client.delete_apache_airflow_job_file(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id, file_path=file_path)
+
+    def get_apache_airflow_job_file(self, apache_airflow_job_id, file_path):
+        return self.core_client.get_apache_airflow_job_file(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id, file_path=file_path)
+
+    def list_apache_airflow_job_files(self, apache_airflow_job_id, root_path=None, continuation_token=None):
+        return self.core_client.list_apache_airflow_job_files(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
+                                                              root_path=root_path, continuation_token=continuation_token)
+
+    def create_airflow_pool_template(self, name, node_size, apache_airflow_job_version=None, compute_scalability=None):
+        return self.core_client.create_airflow_pool_template(workspace_id=self.id, name=name, node_size=node_size,
+                                                             apache_airflow_job_version=apache_airflow_job_version,
+                                                             compute_scalability=compute_scalability)
+
+    def delete_airflow_pool_template(self, pool_template_id):
+        return self.core_client.delete_airflow_pool_template(workspace_id=self.id, pool_template_id=pool_template_id)
+
+    def get_airflow_pool_template(self, pool_template_id):
+        return self.core_client.get_airflow_pool_template(workspace_id=self.id, pool_template_id=pool_template_id)
+
+    def list_airflow_pool_templates(self, continuation_token=None):
+        return self.core_client.list_airflow_pool_templates(workspace_id=self.id, continuation_token=continuation_token)
+
+    def list_apache_airflow_job_libraries(self, apache_airflow_job_id, continuation_token=None):
+        return self.core_client.list_apache_airflow_job_libraries(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id,
+                                                                   continuation_token=continuation_token)
+
+    def get_apache_airflow_job_settings(self, apache_airflow_job_id):
+        return self.core_client.get_apache_airflow_job_settings(workspace_id=self.id, apache_airflow_job_id=apache_airflow_job_id)
+
+    def get_airflow_workspace_settings(self):
+        return self.core_client.get_airflow_workspace_settings(workspace_id=self.id)
+
+    def update_airflow_workspace_settings(self, default_pool_template_id):
+        return self.core_client.update_airflow_workspace_settings(workspace_id=self.id, default_pool_template_id=default_pool_template_id)
 
     # anomaly detectors
     def create_anomaly_detector(self, display_name, definition = None, description = None, folder_id = None):
@@ -677,6 +780,10 @@ class Workspace:
     def update_dataflow_definition(self, dataflow_id, definition, update_metadata = None):
         return self.core_client.update_dataflow_definition(workspace_id=self.id, dataflow_id=dataflow_id,
                                                            definition=definition, update_metadata=update_metadata)
+
+    def execute_dataflow_query(self, dataflow_id, query_name, custom_mashup_document=None):
+        return self.core_client.execute_dataflow_query(workspace_id=self.id, dataflow_id=dataflow_id,
+                                                       query_name=query_name, custom_mashup_document=custom_mashup_document)
 
     # datapipelines
 
@@ -1066,6 +1173,25 @@ class Workspace:
         """Update the definition of a kql database in a workspace"""
         return self.core_client.update_kql_database_definition(workspace_id=self.id, kql_database_id=kql_database_id,
                                                               definition=definition, update_metadata=update_metadata)
+
+    def create_kql_database_shortcut(self, kql_database_id, name, target, enable_query_acceleration=None):
+        """Create a table shortcut in a KQL database"""
+        return self.core_client.create_kql_database_shortcut(workspace_id=self.id, kql_database_id=kql_database_id,
+                                                             name=name, target=target, enable_query_acceleration=enable_query_acceleration)
+
+    def delete_kql_database_shortcut(self, kql_database_id, shortcut_name):
+        """Delete a table shortcut from a KQL database"""
+        return self.core_client.delete_kql_database_shortcut(workspace_id=self.id, kql_database_id=kql_database_id,
+                                                             shortcut_name=shortcut_name)
+
+    def get_kql_database_shortcut(self, kql_database_id, shortcut_name):
+        """Get a table shortcut from a KQL database"""
+        return self.core_client.get_kql_database_shortcut(workspace_id=self.id, kql_database_id=kql_database_id,
+                                                          shortcut_name=shortcut_name)
+
+    def list_kql_database_shortcuts(self, kql_database_id):
+        """List table shortcuts in a KQL database"""
+        return self.core_client.list_kql_database_shortcuts(workspace_id=self.id, kql_database_id=kql_database_id)
 
     # kqlQuerysets
 
@@ -1851,6 +1977,22 @@ class Workspace:
         return self.core_client.update_sql_database(workspace_id=self.id, sql_database_id=sql_database_id,
                                                   display_name=display_name, description=description)
 
+    def get_sql_database_definition(self, sql_database_id, format=None):
+        return self.core_client.get_sql_database_definition(workspace_id=self.id, sql_database_id=sql_database_id, format=format)
+
+    def update_sql_database_definition(self, sql_database_id, definition, update_metadata=None):
+        return self.core_client.update_sql_database_definition(workspace_id=self.id, sql_database_id=sql_database_id,
+                                                               definition=definition, update_metadata=update_metadata)
+
+    def revalidate_sql_database_cmk(self, sql_database_id):
+        return self.core_client.revalidate_sql_database_cmk(workspace_id=self.id, sql_database_id=sql_database_id)
+
+    def start_sql_database_mirroring(self, sql_database_id):
+        return self.core_client.start_sql_database_mirroring(workspace_id=self.id, sql_database_id=sql_database_id)
+
+    def stop_sql_database_mirroring(self, sql_database_id):
+        return self.core_client.stop_sql_database_mirroring(workspace_id=self.id, sql_database_id=sql_database_id)
+
     # warehouses
 
     def list_warehouses(self, with_properties = False):
@@ -2129,3 +2271,654 @@ class Workspace:
         """
         return self.core_client.update_variable_library_definition(workspace_id=self.id, variable_library_id=variable_library_id,
                                                                    definition=definition, update_metadata=update_metadata)
+
+    # cosmos db databases
+
+    def create_cosmos_db_database(self, display_name, definition = None, description = None):
+        """Create a Cosmos DB database in a workspace
+        Args:
+            display_name (str): The display name of the Cosmos DB database
+            definition (dict): The definition of the Cosmos DB database
+            description (str): The description of the Cosmos DB database
+        Returns:
+            CosmosDbDatabase: The created Cosmos DB database object
+        """
+        return self.core_client.create_cosmos_db_database(workspace_id=self.id,
+                                                          display_name=display_name,
+                                                          definition=definition,
+                                                          description=description)
+
+    def delete_cosmos_db_database(self, cosmos_db_database_id):
+        """Delete a Cosmos DB database from a workspace
+        Args:
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_cosmos_db_database(workspace_id=self.id, cosmos_db_database_id=cosmos_db_database_id)
+
+    def get_cosmos_db_database(self, cosmos_db_database_id = None, cosmos_db_database_name = None):
+        """Get a Cosmos DB database from a workspace
+        Args:
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            cosmos_db_database_name (str): The name of the Cosmos DB database
+        Returns:
+            CosmosDbDatabase: The Cosmos DB database object
+        """
+        return self.core_client.get_cosmos_db_database(workspace_id=self.id, cosmos_db_database_id=cosmos_db_database_id, cosmos_db_database_name=cosmos_db_database_name)
+
+    def get_cosmos_db_database_definition(self, cosmos_db_database_id, format = None):
+        """Get the definition of a Cosmos DB database
+        Args:
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            format (str): The format of the definition
+        Returns:
+            dict: The Cosmos DB database definition
+        """
+        return self.core_client.get_cosmos_db_database_definition(workspace_id=self.id, cosmos_db_database_id=cosmos_db_database_id, format=format)
+
+    def list_cosmos_db_databases(self, with_properties = False):
+        """List Cosmos DB databases in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of Cosmos DB databases
+        """
+        return self.core_client.list_cosmos_db_databases(workspace_id=self.id, with_properties=with_properties)
+
+    def update_cosmos_db_database(self, cosmos_db_database_id, display_name = None, description = None, return_item = False):
+        """Update a Cosmos DB database in a workspace
+        Args:
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            display_name (str): The display name of the Cosmos DB database
+            description (str): The description of the Cosmos DB database
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated Cosmos DB database or CosmosDbDatabase object if return_item is True
+        """
+        return self.core_client.update_cosmos_db_database(workspace_id=self.id, cosmos_db_database_id=cosmos_db_database_id,
+                                                          display_name=display_name, description=description, return_item=return_item)
+
+    def update_cosmos_db_database_definition(self, cosmos_db_database_id, definition, update_metadata = None):
+        """Update the definition of a Cosmos DB database in a workspace
+        Args:
+            cosmos_db_database_id (str): The ID of the Cosmos DB database
+            definition (dict): The new definition of the Cosmos DB database
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated Cosmos DB database definition
+        """
+        return self.core_client.update_cosmos_db_database_definition(workspace_id=self.id, cosmos_db_database_id=cosmos_db_database_id,
+                                                                     definition=definition, update_metadata=update_metadata)
+
+    # data agents
+
+    def create_data_agent(self, display_name, definition = None, description = None):
+        """Create a data agent in a workspace
+        Args:
+            display_name (str): The display name of the data agent
+            definition (dict): The definition of the data agent
+            description (str): The description of the data agent
+        Returns:
+            DataAgent: The created data agent object
+        """
+        return self.core_client.create_data_agent(workspace_id=self.id,
+                                                  display_name=display_name,
+                                                  definition=definition,
+                                                  description=description)
+
+    def delete_data_agent(self, data_agent_id):
+        """Delete a data agent from a workspace
+        Args:
+            data_agent_id (str): The ID of the data agent
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_data_agent(workspace_id=self.id, data_agent_id=data_agent_id)
+
+    def get_data_agent(self, data_agent_id = None, data_agent_name = None):
+        """Get a data agent from a workspace
+        Args:
+            data_agent_id (str): The ID of the data agent
+            data_agent_name (str): The name of the data agent
+        Returns:
+            DataAgent: The data agent object
+        """
+        return self.core_client.get_data_agent(workspace_id=self.id, data_agent_id=data_agent_id, data_agent_name=data_agent_name)
+
+    def get_data_agent_definition(self, data_agent_id, format = None):
+        """Get the definition of a data agent
+        Args:
+            data_agent_id (str): The ID of the data agent
+            format (str): The format of the definition
+        Returns:
+            dict: The data agent definition
+        """
+        return self.core_client.get_data_agent_definition(workspace_id=self.id, data_agent_id=data_agent_id, format=format)
+
+    def list_data_agents(self, with_properties = False):
+        """List data agents in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of data agents
+        """
+        return self.core_client.list_data_agents(workspace_id=self.id, with_properties=with_properties)
+
+    def update_data_agent(self, data_agent_id, display_name = None, description = None, return_item = False):
+        """Update a data agent in a workspace
+        Args:
+            data_agent_id (str): The ID of the data agent
+            display_name (str): The display name of the data agent
+            description (str): The description of the data agent
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated data agent or DataAgent object if return_item is True
+        """
+        return self.core_client.update_data_agent(workspace_id=self.id, data_agent_id=data_agent_id,
+                                                  display_name=display_name, description=description, return_item=return_item)
+
+    def update_data_agent_definition(self, data_agent_id, definition, update_metadata = None):
+        """Update the definition of a data agent in a workspace
+        Args:
+            data_agent_id (str): The ID of the data agent
+            definition (dict): The new definition of the data agent
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated data agent definition
+        """
+        return self.core_client.update_data_agent_definition(workspace_id=self.id, data_agent_id=data_agent_id,
+                                                             definition=definition, update_metadata=update_metadata)
+
+    # event schema sets
+
+    def create_event_schema_set(self, display_name, definition = None, description = None):
+        """Create an event schema set in a workspace
+        Args:
+            display_name (str): The display name of the event schema set
+            definition (dict): The definition of the event schema set
+            description (str): The description of the event schema set
+        Returns:
+            EventSchemaSet: The created event schema set object
+        """
+        return self.core_client.create_event_schema_set(workspace_id=self.id,
+                                                        display_name=display_name,
+                                                        definition=definition,
+                                                        description=description)
+
+    def delete_event_schema_set(self, event_schema_set_id):
+        """Delete an event schema set from a workspace
+        Args:
+            event_schema_set_id (str): The ID of the event schema set
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_event_schema_set(workspace_id=self.id, event_schema_set_id=event_schema_set_id)
+
+    def get_event_schema_set(self, event_schema_set_id = None, event_schema_set_name = None):
+        """Get an event schema set from a workspace
+        Args:
+            event_schema_set_id (str): The ID of the event schema set
+            event_schema_set_name (str): The name of the event schema set
+        Returns:
+            EventSchemaSet: The event schema set object
+        """
+        return self.core_client.get_event_schema_set(workspace_id=self.id, event_schema_set_id=event_schema_set_id, event_schema_set_name=event_schema_set_name)
+
+    def get_event_schema_set_definition(self, event_schema_set_id, format = None):
+        """Get the definition of an event schema set
+        Args:
+            event_schema_set_id (str): The ID of the event schema set
+            format (str): The format of the definition
+        Returns:
+            dict: The event schema set definition
+        """
+        return self.core_client.get_event_schema_set_definition(workspace_id=self.id, event_schema_set_id=event_schema_set_id, format=format)
+
+    def list_event_schema_sets(self, with_properties = False):
+        """List event schema sets in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of event schema sets
+        """
+        return self.core_client.list_event_schema_sets(workspace_id=self.id, with_properties=with_properties)
+
+    def update_event_schema_set(self, event_schema_set_id, display_name = None, description = None, return_item = False):
+        """Update an event schema set in a workspace
+        Args:
+            event_schema_set_id (str): The ID of the event schema set
+            display_name (str): The display name of the event schema set
+            description (str): The description of the event schema set
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated event schema set or EventSchemaSet object if return_item is True
+        """
+        return self.core_client.update_event_schema_set(workspace_id=self.id, event_schema_set_id=event_schema_set_id,
+                                                        display_name=display_name, description=description, return_item=return_item)
+
+    def update_event_schema_set_definition(self, event_schema_set_id, definition, update_metadata = None):
+        """Update the definition of an event schema set in a workspace
+        Args:
+            event_schema_set_id (str): The ID of the event schema set
+            definition (dict): The new definition of the event schema set
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated event schema set definition
+        """
+        return self.core_client.update_event_schema_set_definition(workspace_id=self.id, event_schema_set_id=event_schema_set_id,
+                                                                   definition=definition, update_metadata=update_metadata)
+
+    # graph models
+
+    def create_graph_model(self, display_name, definition = None, description = None):
+        """Create a graph model in a workspace
+        Args:
+            display_name (str): The display name of the graph model
+            definition (dict): The definition of the graph model
+            description (str): The description of the graph model
+        Returns:
+            GraphModel: The created graph model object
+        """
+        return self.core_client.create_graph_model(workspace_id=self.id,
+                                                   display_name=display_name,
+                                                   definition=definition,
+                                                   description=description)
+
+    def delete_graph_model(self, graph_model_id):
+        """Delete a graph model from a workspace
+        Args:
+            graph_model_id (str): The ID of the graph model
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_graph_model(workspace_id=self.id, graph_model_id=graph_model_id)
+
+    def get_graph_model(self, graph_model_id = None, graph_model_name = None):
+        """Get a graph model from a workspace
+        Args:
+            graph_model_id (str): The ID of the graph model
+            graph_model_name (str): The name of the graph model
+        Returns:
+            GraphModel: The graph model object
+        """
+        return self.core_client.get_graph_model(workspace_id=self.id, graph_model_id=graph_model_id, graph_model_name=graph_model_name)
+
+    def get_graph_model_definition(self, graph_model_id, format = None):
+        """Get the definition of a graph model
+        Args:
+            graph_model_id (str): The ID of the graph model
+            format (str): The format of the definition
+        Returns:
+            dict: The graph model definition
+        """
+        return self.core_client.get_graph_model_definition(workspace_id=self.id, graph_model_id=graph_model_id, format=format)
+
+    def list_graph_models(self, with_properties = False):
+        """List graph models in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of graph models
+        """
+        return self.core_client.list_graph_models(workspace_id=self.id, with_properties=with_properties)
+
+    def update_graph_model(self, graph_model_id, display_name = None, description = None, return_item = False):
+        """Update a graph model in a workspace
+        Args:
+            graph_model_id (str): The ID of the graph model
+            display_name (str): The display name of the graph model
+            description (str): The description of the graph model
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated graph model or GraphModel object if return_item is True
+        """
+        return self.core_client.update_graph_model(workspace_id=self.id, graph_model_id=graph_model_id,
+                                                   display_name=display_name, description=description, return_item=return_item)
+
+    def update_graph_model_definition(self, graph_model_id, definition, update_metadata = None):
+        """Update the definition of a graph model in a workspace
+        Args:
+            graph_model_id (str): The ID of the graph model
+            definition (dict): The new definition of the graph model
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated graph model definition
+        """
+        return self.core_client.update_graph_model_definition(workspace_id=self.id, graph_model_id=graph_model_id,
+                                                              definition=definition, update_metadata=update_metadata)
+
+    def run_on_demand_refresh_graph(self, graph_model_id, start_type=None, custom_start_date_time=None, wait_for_completion=True):
+        return self.core_client.run_on_demand_refresh_graph(workspace_id=self.id, graph_model_id=graph_model_id,
+                                                            start_type=start_type, custom_start_date_time=custom_start_date_time,
+                                                            wait_for_completion=wait_for_completion)
+
+    def execute_graph_model_query(self, graph_model_id, query):
+        return self.core_client.execute_graph_model_query(workspace_id=self.id, graph_model_id=graph_model_id, query=query)
+
+    def get_queryable_graph_type(self, graph_model_id):
+        return self.core_client.get_queryable_graph_type(workspace_id=self.id, graph_model_id=graph_model_id)
+
+    # graph query sets
+
+    def create_graph_query_set(self, display_name, definition = None, description = None):
+        """Create a graph query set in a workspace
+        Args:
+            display_name (str): The display name of the graph query set
+            definition (dict): The definition of the graph query set
+            description (str): The description of the graph query set
+        Returns:
+            GraphQuerySet: The created graph query set object
+        """
+        return self.core_client.create_graph_query_set(workspace_id=self.id,
+                                                       display_name=display_name,
+                                                       definition=definition,
+                                                       description=description)
+
+    def delete_graph_query_set(self, graph_query_set_id):
+        """Delete a graph query set from a workspace
+        Args:
+            graph_query_set_id (str): The ID of the graph query set
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_graph_query_set(workspace_id=self.id, graph_query_set_id=graph_query_set_id)
+
+    def get_graph_query_set(self, graph_query_set_id = None, graph_query_set_name = None):
+        """Get a graph query set from a workspace
+        Args:
+            graph_query_set_id (str): The ID of the graph query set
+            graph_query_set_name (str): The name of the graph query set
+        Returns:
+            GraphQuerySet: The graph query set object
+        """
+        return self.core_client.get_graph_query_set(workspace_id=self.id, graph_query_set_id=graph_query_set_id, graph_query_set_name=graph_query_set_name)
+
+    def get_graph_query_set_definition(self, graph_query_set_id, format = None):
+        """Get the definition of a graph query set
+        Args:
+            graph_query_set_id (str): The ID of the graph query set
+            format (str): The format of the definition
+        Returns:
+            dict: The graph query set definition
+        """
+        return self.core_client.get_graph_query_set_definition(workspace_id=self.id, graph_query_set_id=graph_query_set_id, format=format)
+
+    def list_graph_query_sets(self, with_properties = False):
+        """List graph query sets in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of graph query sets
+        """
+        return self.core_client.list_graph_query_sets(workspace_id=self.id, with_properties=with_properties)
+
+    def update_graph_query_set(self, graph_query_set_id, display_name = None, description = None, return_item = False):
+        """Update a graph query set in a workspace
+        Args:
+            graph_query_set_id (str): The ID of the graph query set
+            display_name (str): The display name of the graph query set
+            description (str): The description of the graph query set
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated graph query set or GraphQuerySet object if return_item is True
+        """
+        return self.core_client.update_graph_query_set(workspace_id=self.id, graph_query_set_id=graph_query_set_id,
+                                                       display_name=display_name, description=description, return_item=return_item)
+
+    def update_graph_query_set_definition(self, graph_query_set_id, definition, update_metadata = None):
+        """Update the definition of a graph query set in a workspace
+        Args:
+            graph_query_set_id (str): The ID of the graph query set
+            definition (dict): The new definition of the graph query set
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated graph query set definition
+        """
+        return self.core_client.update_graph_query_set_definition(workspace_id=self.id, graph_query_set_id=graph_query_set_id,
+                                                                  definition=definition, update_metadata=update_metadata)
+
+    # ontologies
+
+    def create_ontology(self, display_name, definition = None, description = None):
+        """Create an ontology in a workspace
+        Args:
+            display_name (str): The display name of the ontology
+            definition (dict): The definition of the ontology
+            description (str): The description of the ontology
+        Returns:
+            Ontology: The created ontology object
+        """
+        return self.core_client.create_ontology(workspace_id=self.id,
+                                                display_name=display_name,
+                                                definition=definition,
+                                                description=description)
+
+    def delete_ontology(self, ontology_id):
+        """Delete an ontology from a workspace
+        Args:
+            ontology_id (str): The ID of the ontology
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_ontology(workspace_id=self.id, ontology_id=ontology_id)
+
+    def get_ontology(self, ontology_id = None, ontology_name = None):
+        """Get an ontology from a workspace
+        Args:
+            ontology_id (str): The ID of the ontology
+            ontology_name (str): The name of the ontology
+        Returns:
+            Ontology: The ontology object
+        """
+        return self.core_client.get_ontology(workspace_id=self.id, ontology_id=ontology_id, ontology_name=ontology_name)
+
+    def get_ontology_definition(self, ontology_id, format = None):
+        """Get the definition of an ontology
+        Args:
+            ontology_id (str): The ID of the ontology
+            format (str): The format of the definition
+        Returns:
+            dict: The ontology definition
+        """
+        return self.core_client.get_ontology_definition(workspace_id=self.id, ontology_id=ontology_id, format=format)
+
+    def list_ontologies(self, with_properties = False):
+        """List ontologies in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of ontologies
+        """
+        return self.core_client.list_ontologies(workspace_id=self.id, with_properties=with_properties)
+
+    def update_ontology(self, ontology_id, display_name = None, description = None, return_item = False):
+        """Update an ontology in a workspace
+        Args:
+            ontology_id (str): The ID of the ontology
+            display_name (str): The display name of the ontology
+            description (str): The description of the ontology
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated ontology or Ontology object if return_item is True
+        """
+        return self.core_client.update_ontology(workspace_id=self.id, ontology_id=ontology_id,
+                                                display_name=display_name, description=description, return_item=return_item)
+
+    def update_ontology_definition(self, ontology_id, definition, update_metadata = None):
+        """Update the definition of an ontology in a workspace
+        Args:
+            ontology_id (str): The ID of the ontology
+            definition (dict): The new definition of the ontology
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated ontology definition
+        """
+        return self.core_client.update_ontology_definition(workspace_id=self.id, ontology_id=ontology_id,
+                                                           definition=definition, update_metadata=update_metadata)
+
+    # operations agents
+
+    def create_operations_agent(self, display_name, definition = None, description = None):
+        """Create an operations agent in a workspace
+        Args:
+            display_name (str): The display name of the operations agent
+            definition (dict): The definition of the operations agent
+            description (str): The description of the operations agent
+        Returns:
+            OperationsAgent: The created operations agent object
+        """
+        return self.core_client.create_operations_agent(workspace_id=self.id,
+                                                        display_name=display_name,
+                                                        definition=definition,
+                                                        description=description)
+
+    def delete_operations_agent(self, operations_agent_id):
+        """Delete an operations agent from a workspace
+        Args:
+            operations_agent_id (str): The ID of the operations agent
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_operations_agent(workspace_id=self.id, operations_agent_id=operations_agent_id)
+
+    def get_operations_agent(self, operations_agent_id = None, operations_agent_name = None):
+        """Get an operations agent from a workspace
+        Args:
+            operations_agent_id (str): The ID of the operations agent
+            operations_agent_name (str): The name of the operations agent
+        Returns:
+            OperationsAgent: The operations agent object
+        """
+        return self.core_client.get_operations_agent(workspace_id=self.id, operations_agent_id=operations_agent_id, operations_agent_name=operations_agent_name)
+
+    def get_operations_agent_definition(self, operations_agent_id, format = None):
+        """Get the definition of an operations agent
+        Args:
+            operations_agent_id (str): The ID of the operations agent
+            format (str): The format of the definition
+        Returns:
+            dict: The operations agent definition
+        """
+        return self.core_client.get_operations_agent_definition(workspace_id=self.id, operations_agent_id=operations_agent_id, format=format)
+
+    def list_operations_agents(self, with_properties = False):
+        """List operations agents in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of operations agents
+        """
+        return self.core_client.list_operations_agents(workspace_id=self.id, with_properties=with_properties)
+
+    def update_operations_agent(self, operations_agent_id, display_name = None, description = None, return_item = False):
+        """Update an operations agent in a workspace
+        Args:
+            operations_agent_id (str): The ID of the operations agent
+            display_name (str): The display name of the operations agent
+            description (str): The description of the operations agent
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated operations agent or OperationsAgent object if return_item is True
+        """
+        return self.core_client.update_operations_agent(workspace_id=self.id, operations_agent_id=operations_agent_id,
+                                                        display_name=display_name, description=description, return_item=return_item)
+
+    def update_operations_agent_definition(self, operations_agent_id, definition, update_metadata = None):
+        """Update the definition of an operations agent in a workspace
+        Args:
+            operations_agent_id (str): The ID of the operations agent
+            definition (dict): The new definition of the operations agent
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated operations agent definition
+        """
+        return self.core_client.update_operations_agent_definition(workspace_id=self.id, operations_agent_id=operations_agent_id,
+                                                                   definition=definition, update_metadata=update_metadata)
+
+    # snowflake databases
+
+    def create_snowflake_database(self, display_name, definition = None, description = None):
+        """Create a Snowflake database in a workspace
+        Args:
+            display_name (str): The display name of the Snowflake database
+            definition (dict): The definition of the Snowflake database
+            description (str): The description of the Snowflake database
+        Returns:
+            SnowflakeDatabase: The created Snowflake database object
+        """
+        return self.core_client.create_snowflake_database(workspace_id=self.id,
+                                                          display_name=display_name,
+                                                          definition=definition,
+                                                          description=description)
+
+    def delete_snowflake_database(self, snowflake_database_id):
+        """Delete a Snowflake database from a workspace
+        Args:
+            snowflake_database_id (str): The ID of the Snowflake database
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.delete_snowflake_database(workspace_id=self.id, snowflake_database_id=snowflake_database_id)
+
+    def get_snowflake_database(self, snowflake_database_id = None, snowflake_database_name = None):
+        """Get a Snowflake database from a workspace
+        Args:
+            snowflake_database_id (str): The ID of the Snowflake database
+            snowflake_database_name (str): The name of the Snowflake database
+        Returns:
+            SnowflakeDatabase: The Snowflake database object
+        """
+        return self.core_client.get_snowflake_database(workspace_id=self.id, snowflake_database_id=snowflake_database_id, snowflake_database_name=snowflake_database_name)
+
+    def get_snowflake_database_definition(self, snowflake_database_id, format = None):
+        """Get the definition of a Snowflake database
+        Args:
+            snowflake_database_id (str): The ID of the Snowflake database
+            format (str): The format of the definition
+        Returns:
+            dict: The Snowflake database definition
+        """
+        return self.core_client.get_snowflake_database_definition(workspace_id=self.id, snowflake_database_id=snowflake_database_id, format=format)
+
+    def list_snowflake_databases(self, with_properties = False):
+        """List Snowflake databases in a workspace
+        Args:
+            with_properties (bool): Whether to include properties in the response
+        Returns:
+            list: The list of Snowflake databases
+        """
+        return self.core_client.list_snowflake_databases(workspace_id=self.id, with_properties=with_properties)
+
+    def update_snowflake_database(self, snowflake_database_id, display_name = None, description = None, return_item = False):
+        """Update a Snowflake database in a workspace
+        Args:
+            snowflake_database_id (str): The ID of the Snowflake database
+            display_name (str): The display name of the Snowflake database
+            description (str): The description of the Snowflake database
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated Snowflake database or SnowflakeDatabase object if return_item is True
+        """
+        return self.core_client.update_snowflake_database(workspace_id=self.id, snowflake_database_id=snowflake_database_id,
+                                                          display_name=display_name, description=description, return_item=return_item)
+
+    def update_snowflake_database_definition(self, snowflake_database_id, definition, update_metadata = None):
+        """Update the definition of a Snowflake database in a workspace
+        Args:
+            snowflake_database_id (str): The ID of the Snowflake database
+            definition (dict): The new definition of the Snowflake database
+            update_metadata (bool): Whether to update the metadata
+        Returns:
+            dict: The updated Snowflake database definition
+        """
+        return self.core_client.update_snowflake_database_definition(workspace_id=self.id, snowflake_database_id=snowflake_database_id,
+                                                                     definition=definition, update_metadata=update_metadata)
+
+    # Real-Time Intelligence Copilot
+
+    def nl_to_kql(self, cluster_url, database_name, item_id_for_billing, natural_language,
+                  chat_messages=None, user_shots=None):
+        return self.core_client.nl_to_kql(workspace_id=self.id, cluster_url=cluster_url, database_name=database_name,
+                                          item_id_for_billing=item_id_for_billing, natural_language=natural_language,
+                                          chat_messages=chat_messages, user_shots=user_shots)

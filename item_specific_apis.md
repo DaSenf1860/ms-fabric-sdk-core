@@ -8,6 +8,8 @@ Go to:
 - [Anomaly Detectors](#anomaly-detectors)
 - [Apache Airflow Jobs](#apache-airflow-jobs)
 - [Copy Jobs](#copy-jobs)
+- [Cosmos DB Databases](#cosmos-db-databases)
+- [Data Agents](#data-agents)
 - [Dataflows](#dataflows)
 - [Data Pipelines](#data-pipelines)
 - [Digital Twin Builder](#digital-twin-builder)
@@ -15,21 +17,31 @@ Go to:
 - [Environments](#environments)
 - [Eventhouses](#eventhouses)
 - [Eventstreams](#eventstreams)
+- [Event Schema Sets](#event-schema-sets)
 - [Eventstream Topology](#eventstream-topology)
 - [GraphQL APIs](#graphql-apis)
+- [Graph Models](#graph-models)
+- [Graph Query Sets](#graph-query-sets)
 - [KQL Dashboards](#kql-dashboards)
 - [KQL Databases](#kql-databases)
 - [KQL Querysets](#kql-querysets)
 - [Lakehouse](#lakehouse)
 - [Maps](#maps)
+- [Mirrored Azure Databricks Catalogs](#mirrored-azure-databricks-catalogs)
 - [Mirrored Database](#mirrored-database)
 - [ML Experiments](#ml-experiments)
 - [ML Models](#ml-models)
+- [Mounted Data Factories](#mounted-data-factories)
 - [Notebooks](#notebooks)
+- [Ontologies](#ontologies)
+- [Operations Agents](#operations-agents)
+- [Reflexes](#reflexes)
 - [Reports](#reports)
 - [Semantic Models](#semantic-models)
+- [Snowflake Databases](#snowflake-databases)
 - [Spark Livy Sessions](#spark-livy-sessions)
 - [Spark Custom Pools](#spark-custom-pools)
+- [Spark Workspace Settings](#spark-workspace-settings)
 - [Spark Job Definitions](#spark-job-definitions)
 - [SQL Databases](#sql-databases)
 - [SQL Endpoints](#sql-endpoints)
@@ -37,6 +49,7 @@ Go to:
 - [Variable Libraries](#variable-libraries)
 - [Warehouses](#warehouses)
 - [Warehouse Snapshots](#warehouse-snapshots)
+- [NL To KQL](#nl-to-kql-real-time-intelligence-copilot)
 
 
 ## Dashboards, DataMarts, Mirrored Warehouses, Paginated Reports
@@ -139,6 +152,49 @@ apache_airflow_job_updated = fcc.update_apache_airflow_job_definition(workspace_
 
 # Delete Apache Airflow Job
 resp = fcc.delete_apache_airflow_job(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_updated.id)
+
+# Get Apache Airflow Job Compute (beta)
+compute = fcc.get_apache_airflow_job_compute(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id)
+
+# Get Apache Airflow Job Environment (beta)
+environment = fcc.get_apache_airflow_job_environment(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id)
+
+# Create or Update Apache Airflow Job File (beta)
+resp = fcc.create_or_update_apache_airflow_job_file(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id,
+                                                     file_path="dags/my_dag.py", file_contents="print('hello')")
+
+# Get Apache Airflow Job File (beta)
+file_resp = fcc.get_apache_airflow_job_file(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id, file_path="dags/my_dag.py")
+
+# List Apache Airflow Job Files (beta)
+files = fcc.list_apache_airflow_job_files(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id)
+
+# Delete Apache Airflow Job File (beta)
+resp = fcc.delete_apache_airflow_job_file(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id, file_path="dags/my_dag.py")
+
+# Create Airflow Pool Template (beta)
+pool = fcc.create_airflow_pool_template(workspace_id=workspace_id, name="my_pool", node_size="Small")
+
+# Get Airflow Pool Template (beta)
+pool = fcc.get_airflow_pool_template(workspace_id=workspace_id, pool_template_id=pool['id'])
+
+# List Airflow Pool Templates (beta)
+pools = fcc.list_airflow_pool_templates(workspace_id=workspace_id)
+
+# Delete Airflow Pool Template (beta)
+resp = fcc.delete_airflow_pool_template(workspace_id=workspace_id, pool_template_id=pool['id'])
+
+# List Apache Airflow Job Libraries (beta)
+libraries = fcc.list_apache_airflow_job_libraries(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id)
+
+# Get Apache Airflow Job Settings (beta)
+settings = fcc.get_apache_airflow_job_settings(workspace_id=workspace_id, apache_airflow_job_id=apache_airflow_job_new.id)
+
+# Get Airflow Workspace Settings (beta)
+ws_settings = fcc.get_airflow_workspace_settings(workspace_id=workspace_id)
+
+# Update Airflow Workspace Settings (beta)
+resp = fcc.update_airflow_workspace_settings(workspace_id=workspace_id, default_pool_template_id="pool_template_id")
 ```
 
 ## Copy Jobs
@@ -238,6 +294,9 @@ resp = fcc.schedule_execute(workspace_id=workspace_id, dataflow_id=dataflow_new.
 
 # Discover dataflow parameters
 params = fcc.discover_dataflow_parameters(workspace_id=workspace_id, dataflow_id=dataflow_new.id)
+
+# Execute dataflow query
+result = fcc.execute_dataflow_query(workspace_id=workspace_id, dataflow_id=dataflow_new.id, query_name="MyQuery")
 
 ```
 
@@ -587,6 +646,12 @@ graphql_api2 = fc.update_graphql_api(workspace_id = workspace_id, graphql_api_id
 # Delete GraphQL API
 fc.delete_graphql_api(workspace_id = workspace_id, graphql_api_id = graphql_api.id)
 
+# Get GraphQL API Definition
+graphql_api_definition = fc.get_graphql_api_definition(workspace_id = workspace_id, graphql_api_id = graphql_api.id)
+
+# Update GraphQL API Definition
+fc.update_graphql_api_definition(workspace_id = workspace_id, graphql_api_id = graphql_api.id, definition = graphql_api_definition)
+
 ```
 
 
@@ -657,6 +722,19 @@ kql_database_definition = fc.get_kql_database_definition(workspace_id, kql_datab
 # Update KQL Database Definition
 fc.update_kql_database_definition(workspace_id, kql_database_id=kqldb.id, definition=kql_database_definition, update_metadata = None)
 
+# Create KQL Database Table Shortcut
+target = {"oneLake": {"itemId": "item_id_target", "path": "Tables/MyTable", "workspaceId": "ws_id_target"}}
+shortcut = fc.create_kql_database_shortcut(workspace_id, kql_database_id=kqldb.id, name="my_shortcut", target=target, enable_query_acceleration=True)
+
+# Get KQL Database Table Shortcut
+shortcut = fc.get_kql_database_shortcut(workspace_id, kql_database_id=kqldb.id, shortcut_name="my_shortcut")
+
+# List KQL Database Table Shortcuts
+shortcuts = fc.list_kql_database_shortcuts(workspace_id, kql_database_id=kqldb.id)
+
+# Delete KQL Database Table Shortcut
+status_code = fc.delete_kql_database_shortcut(workspace_id, kql_database_id=kqldb.id, shortcut_name="my_shortcut")
+
 
 ```
 
@@ -717,7 +795,6 @@ status_code = fc.load_table(workspace_id=workspace_id, lakehouse_id=lakehouse_id
 # List Tables
 table_list = fc.list_tables(workspace_id=workspace_id, lakehouse_id=lakehouse_id)
 
-
 # Run on demand table maintenance
 execution_data = {
     "tableName": table_name,
@@ -756,6 +833,12 @@ lakehouse2 = fc.update_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehou
 
 # Delete Lakehouse
 fc.delete_lakehouse(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
+
+# Get Lakehouse Definition
+lakehouse_definition = fc.get_lakehouse_definition(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
+
+# Update Lakehouse Definition
+fc.update_lakehouse_definition(workspace_id=workspace_id, lakehouse_id=lakehouse.id, definition=lakehouse_definition)
 
 # List Livy Sessions
 livy_sessions = fc.list_lakehouse_livy_sessions(workspace_id=workspace_id, lakehouse_id=lakehouse.id)
@@ -1248,6 +1331,12 @@ workspace_id = workspace.id
 # List Spark Livy Sessions
 spark_livy_sessions = fc.list_livy_sessions(workspace_id=workspace_id)
 
+# List Livy Sessions for a specific item
+spark_livy_sessions = fc.list_livy_sessions(workspace_id=workspace_id, item_id="item_id", item_type="lakehouses")
+
+# Get a specific Livy Session
+livy_session = fc.get_livy_session(workspace_id=workspace_id, item_id="item_id", item_type="lakehouses", livy_id="livy_id")
+
 ```
 
 ## Spark Custom Pools
@@ -1374,6 +1463,21 @@ sql_database2 = fc.update_sql_database(workspace_id=workspace_id, sql_database_i
 
 # Delete SQL Database
 fc.delete_sql_database(workspace_id=workspace_id, sql_database_id=sql_database.id)
+
+# Get SQL Database Definition
+definition = fc.get_sql_database_definition(workspace_id=workspace_id, sql_database_id=sql_database.id)
+
+# Update SQL Database Definition
+resp = fc.update_sql_database_definition(workspace_id=workspace_id, sql_database_id=sql_database.id, definition=definition)
+
+# Revalidate SQL Database CMK
+resp = fc.revalidate_sql_database_cmk(workspace_id=workspace_id, sql_database_id=sql_database.id)
+
+# Start SQL Database Mirroring
+resp = fc.start_sql_database_mirroring(workspace_id=workspace_id, sql_database_id=sql_database.id)
+
+# Stop SQL Database Mirroring
+resp = fc.stop_sql_database_mirroring(workspace_id=workspace_id, sql_database_id=sql_database.id)
 
 ```
 ## SQL Endpoints
@@ -1559,7 +1663,7 @@ respo = fcc.set_warehouse_audit_actions_and_groups(workspace_id=workspace_id, wa
 
 ```
 
-# Warehouse Snapshots
+## Warehouse Snapshots
 
 ```python
 from msfabricpysdkcore import FabricClientCore
@@ -1597,4 +1701,284 @@ warehouse_sn3 = fc.update_warehouse_snapshot(workspace_id=workspace_id, warehous
 
 # Delete Warehouse Snapshot
 resp = fc.delete_warehouse_snapshot(workspace_id=workspace_id, warehouse_snapshot_id=warehouse_sn.id)
+```
+
+## Cosmos DB Databases
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create Cosmos DB database
+cosmos_db = fcc.create_cosmos_db_database(workspace_id=workspace_id, display_name="my_cosmos_db", definition=definition)
+
+# Get Cosmos DB database
+cosmos_db_get = fcc.get_cosmos_db_database(workspace_id=workspace_id, cosmos_db_database_id=cosmos_db.id)
+
+# Get Cosmos DB database by name
+cosmos_db_get = fcc.get_cosmos_db_database(workspace_id=workspace_id, cosmos_db_database_name="my_cosmos_db")
+
+# Get Cosmos DB database definition
+cosmos_db_def = fcc.get_cosmos_db_database_definition(workspace_id=workspace_id, cosmos_db_database_id=cosmos_db.id)
+
+# List Cosmos DB databases
+cosmos_dbs = fcc.list_cosmos_db_databases(workspace_id=workspace_id)
+
+# Update Cosmos DB database
+cosmos_db_updated = fcc.update_cosmos_db_database(workspace_id=workspace_id, cosmos_db_database_id=cosmos_db.id, display_name="updated_name", return_item=True)
+
+# Update Cosmos DB database definition
+fcc.update_cosmos_db_database_definition(workspace_id=workspace_id, cosmos_db_database_id=cosmos_db.id, definition=definition)
+
+# Delete Cosmos DB database
+resp = fcc.delete_cosmos_db_database(workspace_id=workspace_id, cosmos_db_database_id=cosmos_db.id)
+```
+
+## Data Agents
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create data agent
+data_agent = fcc.create_data_agent(workspace_id=workspace_id, display_name="my_data_agent", definition=definition)
+
+# Get data agent
+data_agent_get = fcc.get_data_agent(workspace_id=workspace_id, data_agent_id=data_agent.id)
+
+# Get data agent by name
+data_agent_get = fcc.get_data_agent(workspace_id=workspace_id, data_agent_name="my_data_agent")
+
+# Get data agent definition
+data_agent_def = fcc.get_data_agent_definition(workspace_id=workspace_id, data_agent_id=data_agent.id)
+
+# List data agents
+data_agents = fcc.list_data_agents(workspace_id=workspace_id)
+
+# Update data agent
+data_agent_updated = fcc.update_data_agent(workspace_id=workspace_id, data_agent_id=data_agent.id, display_name="updated_name", return_item=True)
+
+# Update data agent definition
+fcc.update_data_agent_definition(workspace_id=workspace_id, data_agent_id=data_agent.id, definition=definition)
+
+# Delete data agent
+resp = fcc.delete_data_agent(workspace_id=workspace_id, data_agent_id=data_agent.id)
+```
+
+## Event Schema Sets
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create event schema set
+event_schema_set = fcc.create_event_schema_set(workspace_id=workspace_id, display_name="my_event_schema_set", definition=definition)
+
+# Get event schema set
+event_schema_set_get = fcc.get_event_schema_set(workspace_id=workspace_id, event_schema_set_id=event_schema_set.id)
+
+# Get event schema set by name
+event_schema_set_get = fcc.get_event_schema_set(workspace_id=workspace_id, event_schema_set_name="my_event_schema_set")
+
+# Get event schema set definition
+event_schema_set_def = fcc.get_event_schema_set_definition(workspace_id=workspace_id, event_schema_set_id=event_schema_set.id)
+
+# List event schema sets
+event_schema_sets = fcc.list_event_schema_sets(workspace_id=workspace_id)
+
+# Update event schema set
+event_schema_set_updated = fcc.update_event_schema_set(workspace_id=workspace_id, event_schema_set_id=event_schema_set.id, display_name="updated_name", return_item=True)
+
+# Update event schema set definition
+fcc.update_event_schema_set_definition(workspace_id=workspace_id, event_schema_set_id=event_schema_set.id, definition=definition)
+
+# Delete event schema set
+resp = fcc.delete_event_schema_set(workspace_id=workspace_id, event_schema_set_id=event_schema_set.id)
+```
+
+## Graph Models
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create graph model
+graph_model = fcc.create_graph_model(workspace_id=workspace_id, display_name="my_graph_model", definition=definition)
+
+# Get graph model
+graph_model_get = fcc.get_graph_model(workspace_id=workspace_id, graph_model_id=graph_model.id)
+
+# Get graph model by name
+graph_model_get = fcc.get_graph_model(workspace_id=workspace_id, graph_model_name="my_graph_model")
+
+# Get graph model definition
+graph_model_def = fcc.get_graph_model_definition(workspace_id=workspace_id, graph_model_id=graph_model.id)
+
+# List graph models
+graph_models = fcc.list_graph_models(workspace_id=workspace_id)
+
+# Update graph model
+graph_model_updated = fcc.update_graph_model(workspace_id=workspace_id, graph_model_id=graph_model.id, display_name="updated_name", return_item=True)
+
+# Update graph model definition
+fcc.update_graph_model_definition(workspace_id=workspace_id, graph_model_id=graph_model.id, definition=definition)
+
+# Delete graph model
+resp = fcc.delete_graph_model(workspace_id=workspace_id, graph_model_id=graph_model.id)
+
+# Run on-demand refresh graph
+resp = fcc.run_on_demand_refresh_graph(workspace_id=workspace_id, graph_model_id=graph_model.id)
+
+# Execute graph model query (beta)
+result = fcc.execute_graph_model_query(workspace_id=workspace_id, graph_model_id=graph_model.id, query="MATCH (n) RETURN n LIMIT 10")
+
+# Get queryable graph type (beta)
+graph_type = fcc.get_queryable_graph_type(workspace_id=workspace_id, graph_model_id=graph_model.id)
+```
+
+## Graph Query Sets
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create graph query set
+graph_query_set = fcc.create_graph_query_set(workspace_id=workspace_id, display_name="my_graph_query_set", definition=definition)
+
+# Get graph query set
+graph_query_set_get = fcc.get_graph_query_set(workspace_id=workspace_id, graph_query_set_id=graph_query_set.id)
+
+# Get graph query set by name
+graph_query_set_get = fcc.get_graph_query_set(workspace_id=workspace_id, graph_query_set_name="my_graph_query_set")
+
+# Get graph query set definition
+graph_query_set_def = fcc.get_graph_query_set_definition(workspace_id=workspace_id, graph_query_set_id=graph_query_set.id)
+
+# List graph query sets
+graph_query_sets = fcc.list_graph_query_sets(workspace_id=workspace_id)
+
+# Update graph query set
+graph_query_set_updated = fcc.update_graph_query_set(workspace_id=workspace_id, graph_query_set_id=graph_query_set.id, display_name="updated_name", return_item=True)
+
+# Update graph query set definition
+fcc.update_graph_query_set_definition(workspace_id=workspace_id, graph_query_set_id=graph_query_set.id, definition=definition)
+
+# Delete graph query set
+resp = fcc.delete_graph_query_set(workspace_id=workspace_id, graph_query_set_id=graph_query_set.id)
+```
+
+## Ontologies
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create ontology
+ontology = fcc.create_ontology(workspace_id=workspace_id, display_name="my_ontology", definition=definition)
+
+# Get ontology
+ontology_get = fcc.get_ontology(workspace_id=workspace_id, ontology_id=ontology.id)
+
+# Get ontology by name
+ontology_get = fcc.get_ontology(workspace_id=workspace_id, ontology_name="my_ontology")
+
+# Get ontology definition
+ontology_def = fcc.get_ontology_definition(workspace_id=workspace_id, ontology_id=ontology.id)
+
+# List ontologies
+ontologies = fcc.list_ontologies(workspace_id=workspace_id)
+
+# Update ontology
+ontology_updated = fcc.update_ontology(workspace_id=workspace_id, ontology_id=ontology.id, display_name="updated_name", return_item=True)
+
+# Update ontology definition
+fcc.update_ontology_definition(workspace_id=workspace_id, ontology_id=ontology.id, definition=definition)
+
+# Delete ontology
+resp = fcc.delete_ontology(workspace_id=workspace_id, ontology_id=ontology.id)
+```
+
+## Operations Agents
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create operations agent
+ops_agent = fcc.create_operations_agent(workspace_id=workspace_id, display_name="my_ops_agent", definition=definition)
+
+# Get operations agent
+ops_agent_get = fcc.get_operations_agent(workspace_id=workspace_id, operations_agent_id=ops_agent.id)
+
+# Get operations agent by name
+ops_agent_get = fcc.get_operations_agent(workspace_id=workspace_id, operations_agent_name="my_ops_agent")
+
+# Get operations agent definition
+ops_agent_def = fcc.get_operations_agent_definition(workspace_id=workspace_id, operations_agent_id=ops_agent.id)
+
+# List operations agents
+ops_agents = fcc.list_operations_agents(workspace_id=workspace_id)
+
+# Update operations agent
+ops_agent_updated = fcc.update_operations_agent(workspace_id=workspace_id, operations_agent_id=ops_agent.id, display_name="updated_name", return_item=True)
+
+# Update operations agent definition
+fcc.update_operations_agent_definition(workspace_id=workspace_id, operations_agent_id=ops_agent.id, definition=definition)
+
+# Delete operations agent
+resp = fcc.delete_operations_agent(workspace_id=workspace_id, operations_agent_id=ops_agent.id)
+```
+
+## Snowflake Databases
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Create Snowflake database
+snowflake_db = fcc.create_snowflake_database(workspace_id=workspace_id, display_name="my_snowflake_db", definition=definition)
+
+# Get Snowflake database
+snowflake_db_get = fcc.get_snowflake_database(workspace_id=workspace_id, snowflake_database_id=snowflake_db.id)
+
+# Get Snowflake database by name
+snowflake_db_get = fcc.get_snowflake_database(workspace_id=workspace_id, snowflake_database_name="my_snowflake_db")
+
+# Get Snowflake database definition
+snowflake_db_def = fcc.get_snowflake_database_definition(workspace_id=workspace_id, snowflake_database_id=snowflake_db.id)
+
+# List Snowflake databases
+snowflake_dbs = fcc.list_snowflake_databases(workspace_id=workspace_id)
+
+# Update Snowflake database
+snowflake_db_updated = fcc.update_snowflake_database(workspace_id=workspace_id, snowflake_database_id=snowflake_db.id, display_name="updated_name", return_item=True)
+
+# Update Snowflake database definition
+fcc.update_snowflake_database_definition(workspace_id=workspace_id, snowflake_database_id=snowflake_db.id, definition=definition)
+
+# Delete Snowflake database
+resp = fcc.delete_snowflake_database(workspace_id=workspace_id, snowflake_database_id=snowflake_db.id)
+```
+
+## NL To KQL (Real-Time Intelligence Copilot)
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+workspace_id = "your_workspace_id"
+
+# Convert natural language to KQL (beta)
+result = fcc.nl_to_kql(workspace_id=workspace_id,
+                       cluster_url="https://mycluster.kusto.windows.net",
+                       database_name="mydb",
+                       item_id_for_billing="item_id",
+                       natural_language="Show me the top 10 errors in the last hour")
 ```

@@ -957,3 +957,19 @@ class FabricClientAdmin(FabricClient):
                                              return_format="response")
 
         return response_json
+
+    # GET https://api.fabric.microsoft.com/v1/admin/networking/communicationPolicies
+    def list_networking_communication_policies(self, continuation_token=None):
+        """List networking communication policies
+        Args:
+            continuation_token (str): The continuation token for paging
+        Returns:
+            list: The list of networking communication policies
+        """
+        url = "https://api.fabric.microsoft.com/v1/admin/networking/communicationPolicies"
+        if continuation_token:
+            url += f"?continuationToken={continuation_token}"
+
+        return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing networking communication policies",
+                                    return_format="json", paging=True)

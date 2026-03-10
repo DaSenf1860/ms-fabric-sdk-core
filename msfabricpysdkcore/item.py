@@ -44,6 +44,10 @@ class Item:
         """Delete the workspace item"""
 
         return self.core_client.delete_item(self.workspace_id, self.id, type=type)
+
+    def move(self, target_folder_id):
+        """Move the item to a different folder"""
+        return self.core_client.move_item(self.workspace_id, self.id, target_folder_id=target_folder_id)
     
     def get_definition(self, type = None, format = None, **kwargs):
         """Get the definition of the item"""
@@ -189,3 +193,15 @@ class Item:
     def create_or_update_data_access_roles(self, data_access_roles, dryrun = False, etag_match = None):
         return self.core_client.create_or_update_data_access_roles(workspace_id=self.workspace_id, item_id=self.id,
                                                                      data_access_roles=data_access_roles, dryrun=dryrun, etag_match=etag_match)
+
+    def create_or_update_single_data_access_role(self, data_access_role, data_access_role_conflict_policy=None, etag_match=None):
+        return self.core_client.create_or_update_single_data_access_role(workspace_id=self.workspace_id, item_id=self.id,
+                                                                         data_access_role=data_access_role,
+                                                                         data_access_role_conflict_policy=data_access_role_conflict_policy,
+                                                                         etag_match=etag_match)
+
+    def get_data_access_role(self, role_name):
+        return self.core_client.get_data_access_role(workspace_id=self.workspace_id, item_id=self.id, role_name=role_name)
+
+    def delete_data_access_role(self, role_name):
+        return self.core_client.delete_data_access_role(workspace_id=self.workspace_id, item_id=self.id, role_name=role_name)

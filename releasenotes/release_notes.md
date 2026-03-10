@@ -1,5 +1,28 @@
 # Release Notes
 
+## 0.3.1
+### New Features
+- Cosmos DB Databases: CRUDL, Get/Update Definition
+- Data Agents: CRUDL, Get/Update Definition
+- Event Schema Sets: CRUDL, Get/Update Definition
+- Graph Models: CRUDL, Get/Update Definition
+- Graph Query Sets: CRUDL, Get/Update Definition
+- Ontologies: CRUDL, Get/Update Definition
+- Operations Agents: CRUDL, Get/Update Definition
+- Snowflake Databases: CRUDL, Get/Update Definition
+- Apache Airflow Job sub-APIs (beta): Get Compute, Get Environment, CRUD Files, CRUD Pool Templates, List Libraries, Get Settings, Get/Update Workspace Settings
+- Workspace Outbound Policies: Get/Set Git Outbound Policy, Get/Set Outbound Cloud Connection Rules, Get/Set Outbound Gateway Rules
+- Graph Models: Run On Demand Refresh Graph, Execute Query (beta), Get Queryable Graph Type (beta)
+- SQL Databases: Get/Update Definition, Revalidate CMK, Start/Stop Mirroring
+- Dataflows: Execute Query
+- NL To KQL: Real-Time Intelligence Copilot (beta)
+- OneLake Settings: Modify Immutability Policy
+- Admin API: List Networking Communication Policies
+- Item-level methods added to ApacheAirflowJob, GraphModel, SQLDatabase, and Dataflow classes
+- Item Schedules: Delete Item Schedule
+- GraphQL API: Get/Update Definition
+- Lakehouse: Get/Update Definition
+
 ## 0.2.12
 ### Bugfix
 - continuation token process seems to have changed. Fixed it for list_tables

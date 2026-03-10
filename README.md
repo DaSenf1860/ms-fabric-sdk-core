@@ -1,6 +1,6 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of October 22, 2025).
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of March 10, 2026).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
@@ -62,6 +62,7 @@ Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and
   - [Long Running Operations](#long-running-operations)
   - [OneLakeDataAccessSecurity](#one-lake-data-access-security)
   - [One Lake Settings / Diagnostics](#one-lake-settings--diagnostics)
+  - [NL To KQL](#nl-to-kql-real-time-intelligence-copilot)
   - [OneLakeShortcuts](#working-with-one-lake-shortcuts)
   - [Tags](#tags)
   - [Workspaces](#working-with-workspaces)
@@ -74,6 +75,7 @@ Currently it supports all Core APIs, Admin APIs, all item specific CRUD APIs and
   - [Tenants](#admin-api-for-tenants)
   - [Users](#admin-api-for-users)
   - [Workspaces](#admin-api-for-workspaces)
+  - [Networking Communication Policies](#admin-api-for-networking-communication-policies)
 - [Item Specific APIs](item_specific_apis.md), e.g.
   - List, create, update, delete warehouses, notebooks, semantic models, kql databases,.....
   - Lakehouse operations (Load table, list tables, run table maintenance)
@@ -225,6 +227,24 @@ outbound = {'publicAccessRules': {'defaultAction': 'Allow'}}
 
 resp = fc.set_network_communication_policy(workspace_id=ws.id, inbound=inbound, outbound=outbound)
 
+# Get git outbound policy
+policy = fc.get_git_outbound_policy(workspace_id=ws.id)
+
+# Set git outbound policy
+resp = fc.set_git_outbound_policy(workspace_id=ws.id, default_action="Allow")
+
+# Get outbound cloud connection rules
+rules = fc.get_outbound_cloud_connection_rules(workspace_id=ws.id)
+
+# Set outbound cloud connection rules
+resp = fc.set_outbound_cloud_connection_rules(workspace_id=ws.id, default_action="Allow", rules=[])
+
+# Get outbound gateway rules
+rules = fc.get_outbound_gateway_rules(workspace_id=ws.id)
+
+# Set outbound gateway rules
+resp = fc.set_outbound_gateway_rules(workspace_id=ws.id, default_action="Allow", allowed_gateways=[])
+
 
 ```
 
@@ -247,6 +267,16 @@ ws.assign_to_capacity(capacity_id=capacity_object.id)
 fc.unassign_from_capacity(workspace_id=ws.id)
 # or
 ws.unassign_from_capacity()
+
+# Assign workspace to domain
+fc.assign_to_domain(workspace_id=ws.id, domain_id="domain_id")
+# or
+ws.assign_to_domain(domain_id="domain_id")
+
+# Unassign workspace from domain
+fc.unassign_from_domain(workspace_id=ws.id)
+# or
+ws.unassign_from_domain()
 
 
 # List capacities
@@ -523,7 +553,10 @@ ws.create_item(display_name="item_name", type="Lakehouse", definition = None, de
 # Get an item
 item = fc.get_item(workspace_id="workspace_id", item_id="item_id")
 # or
-item = ws.get_item(item_id="item_id") 
+item = ws.get_item(item_id="item_id")
+
+# Get an item by name
+item = fc.get_item_by_name(workspace_id="workspace_id", item_name="item_name", item_type="Lakehouse") 
 
 # Get item definition
 response = fc.get_item_definition(workspace_id="123123", item_id="123123", type = "Notebook")
@@ -555,6 +588,19 @@ fc.delete_item(workspace_id="workspace_id", item_id="item_id")
 ws.delete_item(item_id="item_id")
 # or
 item.delete()
+
+# Move an item to a folder
+fc.move_item(workspace_id="workspace_id", item_id="item_id", target_folder_id="target_folder_id")
+# or
+ws.move_item(item_id="item_id", target_folder_id="target_folder_id")
+# or
+item.move(target_folder_id="target_folder_id")
+
+# Bulk move items to a folder
+items = [{"id": "item_id_1", "type": "Lakehouse"}, {"id": "item_id_2", "type": "Notebook"}]
+fc.bulk_move_items(workspace_id="workspace_id", items=items, target_folder_id="target_folder_id")
+# or
+ws.bulk_move_items(items=items, target_folder_id="target_folder_id")
 
 ```
 
@@ -744,6 +790,25 @@ destination= {'lakehouse': {'itemId': 'a---------------b',
    'type': 'Lakehouse'}
 resp = fcc.modify_onelake_settings(workspace_id, status=status, destination=destination)
 
+# Modify OneLake immutability policy
+resp = fcc.modify_onelake_immutability_policy(workspace_id, retention_days=30, scope="Workspace")
+
+```
+
+### NL To KQL (Real-Time Intelligence Copilot)
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+workspace_id = "your_workspace_id"
+
+# Convert natural language to KQL (beta)
+result = fcc.nl_to_kql(workspace_id=workspace_id,
+                       cluster_url="https://mycluster.kusto.windows.net",
+                       database_name="mydb",
+                       item_id_for_billing="item_id",
+                       natural_language="Show me the top 10 errors in the last hour")
 ```
 
 ### Working with one lake shortcuts
@@ -846,6 +911,19 @@ item.list_shortcuts(parent_path="Tables")
 # Reset shortcut cache
 fc.reset_shortcut_cache(workspace_id="23232", wait_for_completion = False)
 
+```
+
+### Domains (Core)
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# List domains
+domains = fcc.list_domains()
+
+# Get a domain
+domain = fcc.get_domain(domain_id="domain_id")
 ```
 
 ### Tags
@@ -1007,6 +1085,22 @@ resp = fc.create_or_update_data_access_roles(workspace_id=workspace_id,
                                               item_id=item_id, 
                                               data_access_roles=roles, 
                                               etag_match={"If-Match":etag})
+
+# Create or Update Single Data Access Role
+
+single_role = roles[0]
+resp = fc.create_or_update_single_data_access_role(workspace_id=workspace_id,
+                                                    item_id=item_id,
+                                                    data_access_role=single_role,
+                                                    data_access_role_conflict_policy="Overwrite")
+
+# Get Data Access Role
+
+role = fc.get_data_access_role(workspace_id=workspace_id, item_id=item_id, role_name="MyRole")
+
+# Delete Data Access Role
+
+status_code = fc.delete_data_access_role(workspace_id=workspace_id, item_id=item_id, role_name="MyRole")
 
 ```
 
@@ -1268,6 +1362,18 @@ fca.revoke_external_data_share(external_data_share_id = data_shares[0]['id'],
                                 item_id = data_shares[0]['itemId'], 
                                 workspace_id = data_shares[0]['workspaceId'])
 
+
+```
+
+### Admin API for Networking Communication Policies
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+
+fca = FabricClientAdmin()
+
+# List networking communication policies
+policies = fca.list_networking_communication_policies()
 
 ```
 

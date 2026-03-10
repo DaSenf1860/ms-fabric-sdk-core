@@ -31,6 +31,40 @@ class ApacheAirflowJob(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
+    def get_definition(self, format=None):
+        return super().get_definition(type="ApacheAirflowJobs", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="ApacheAirflowJobs",
+                                                       update_metadata=update_metadata)
+
+    def get_compute(self):
+        return self.core_client.get_apache_airflow_job_compute(workspace_id=self.workspace_id, apache_airflow_job_id=self.id)
+
+    def get_environment(self):
+        return self.core_client.get_apache_airflow_job_environment(workspace_id=self.workspace_id, apache_airflow_job_id=self.id)
+
+    def create_or_update_file(self, file_path, file_contents):
+        return self.core_client.create_or_update_apache_airflow_job_file(workspace_id=self.workspace_id, apache_airflow_job_id=self.id,
+                                                                         file_path=file_path, file_contents=file_contents)
+
+    def delete_file(self, file_path):
+        return self.core_client.delete_apache_airflow_job_file(workspace_id=self.workspace_id, apache_airflow_job_id=self.id, file_path=file_path)
+
+    def get_file(self, file_path):
+        return self.core_client.get_apache_airflow_job_file(workspace_id=self.workspace_id, apache_airflow_job_id=self.id, file_path=file_path)
+
+    def list_files(self, root_path=None, continuation_token=None):
+        return self.core_client.list_apache_airflow_job_files(workspace_id=self.workspace_id, apache_airflow_job_id=self.id,
+                                                              root_path=root_path, continuation_token=continuation_token)
+
+    def list_libraries(self, continuation_token=None):
+        return self.core_client.list_apache_airflow_job_libraries(workspace_id=self.workspace_id, apache_airflow_job_id=self.id,
+                                                                   continuation_token=continuation_token)
+
+    def get_settings(self):
+        return self.core_client.get_apache_airflow_job_settings(workspace_id=self.workspace_id, apache_airflow_job_id=self.id)
+
 class CopyJob(Item):
     """Class to represent a copy job in Microsoft Fabric"""
      
@@ -55,6 +89,10 @@ class Dataflow(Item):
 
     def discover_parameters(self):
         return self.core_client.discover_dataflow_parameters(workspace_id=self.workspace_id, dataflow_id=self.id)
+
+    def execute_query(self, query_name, custom_mashup_document=None):
+        return self.core_client.execute_dataflow_query(workspace_id=self.workspace_id, dataflow_id=self.id,
+                                                       query_name=query_name, custom_mashup_document=custom_mashup_document)
 
 class DataPipeline(Item):
     """Class to represent a spark job definition in Microsoft Fabric"""
@@ -141,6 +179,25 @@ class Eventhouse(Item):
                             "parentEventhouseItemId" : self.id}
         
         return self.core_client.create_kql_database(self.workspace_id, display_name=display_name, description=description, creation_payload=creation_payload)
+
+    def create_kql_database_shortcut(self, kql_database_id, name, target, enable_query_acceleration=None):
+        """Create a table shortcut in a KQL database in the eventhouse"""
+        return self.core_client.create_kql_database_shortcut(workspace_id=self.workspace_id, kql_database_id=kql_database_id,
+                                                             name=name, target=target, enable_query_acceleration=enable_query_acceleration)
+
+    def delete_kql_database_shortcut(self, kql_database_id, shortcut_name):
+        """Delete a table shortcut from a KQL database in the eventhouse"""
+        return self.core_client.delete_kql_database_shortcut(workspace_id=self.workspace_id, kql_database_id=kql_database_id,
+                                                             shortcut_name=shortcut_name)
+
+    def get_kql_database_shortcut(self, kql_database_id, shortcut_name):
+        """Get a table shortcut from a KQL database in the eventhouse"""
+        return self.core_client.get_kql_database_shortcut(workspace_id=self.workspace_id, kql_database_id=kql_database_id,
+                                                          shortcut_name=shortcut_name)
+
+    def list_kql_database_shortcuts(self, kql_database_id):
+        """List table shortcuts in a KQL database in the eventhouse"""
+        return self.core_client.list_kql_database_shortcuts(workspace_id=self.workspace_id, kql_database_id=kql_database_id)
 
 class SparkJobDefinition(Item):
     """Class to represent a spark job definition in Microsoft Fabric"""
@@ -309,6 +366,25 @@ class KQLDatabase(Item):
     def update_definition(self, definition):
         """Method to update the definition of the kql database"""
         return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="kqlDatabases")
+
+    def create_shortcut(self, name, target, enable_query_acceleration=None):
+        """Create a table shortcut in the KQL database"""
+        return self.core_client.create_kql_database_shortcut(workspace_id=self.workspace_id, kql_database_id=self.id,
+                                                             name=name, target=target, enable_query_acceleration=enable_query_acceleration)
+
+    def delete_shortcut(self, shortcut_name):
+        """Delete a table shortcut from the KQL database"""
+        return self.core_client.delete_kql_database_shortcut(workspace_id=self.workspace_id, kql_database_id=self.id,
+                                                             shortcut_name=shortcut_name)
+
+    def get_shortcut(self, shortcut_name):
+        """Get a table shortcut from the KQL database"""
+        return self.core_client.get_kql_database_shortcut(workspace_id=self.workspace_id, kql_database_id=self.id,
+                                                          shortcut_name=shortcut_name)
+
+    def list_shortcuts(self):
+        """List table shortcuts in the KQL database"""
+        return self.core_client.list_kql_database_shortcuts(workspace_id=self.workspace_id, kql_database_id=self.id)
 
 class KQLQueryset(Item):
     """Class to represent a kql database in Microsoft Fabric"""
@@ -646,6 +722,22 @@ class SQLDatabase(Item):
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
 
+    def get_definition(self, format=None):
+        return super().get_definition(type="SQLDatabases", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="SQLDatabases",
+                                                       update_metadata=update_metadata)
+
+    def revalidate_cmk(self):
+        return self.core_client.revalidate_sql_database_cmk(workspace_id=self.workspace_id, sql_database_id=self.id)
+
+    def start_mirroring(self):
+        return self.core_client.start_sql_database_mirroring(workspace_id=self.workspace_id, sql_database_id=self.id)
+
+    def stop_mirroring(self):
+        return self.core_client.stop_sql_database_mirroring(workspace_id=self.workspace_id, sql_database_id=self.id)
+
 class VariableLibrary(Item):
     """Class to represent a variable library in Microsoft Fabric"""
 
@@ -656,3 +748,158 @@ class VariableLibrary(Item):
         return VariableLibrary(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
             properties=item_dict.get('properties', None),
             definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+class CosmosDbDatabase(Item):
+    """Class to represent a Cosmos DB database in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return CosmosDbDatabase(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="cosmosDbDatabases", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="cosmosDbDatabases",
+                                                       update_metadata=update_metadata)
+
+class DataAgent(Item):
+    """Class to represent a data agent in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return DataAgent(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="DataAgents", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="DataAgents",
+                                                       update_metadata=update_metadata)
+
+class EventSchemaSet(Item):
+    """Class to represent an event schema set in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return EventSchemaSet(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="EventSchemaSets", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="EventSchemaSets",
+                                                       update_metadata=update_metadata)
+
+class GraphModel(Item):
+    """Class to represent a graph model in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return GraphModel(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="GraphModels", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="GraphModels",
+                                                       update_metadata=update_metadata)
+
+    def run_on_demand_refresh_graph(self, start_type=None, custom_start_date_time=None, wait_for_completion=True):
+        return self.core_client.run_on_demand_refresh_graph(workspace_id=self.workspace_id, graph_model_id=self.id,
+                                                            start_type=start_type, custom_start_date_time=custom_start_date_time,
+                                                            wait_for_completion=wait_for_completion)
+
+    def execute_query(self, query):
+        return self.core_client.execute_graph_model_query(workspace_id=self.workspace_id, graph_model_id=self.id, query=query)
+
+    def get_queryable_graph_type(self):
+        return self.core_client.get_queryable_graph_type(workspace_id=self.workspace_id, graph_model_id=self.id)
+
+class GraphQuerySet(Item):
+    """Class to represent a graph query set in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return GraphQuerySet(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="GraphQuerySets", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="GraphQuerySets",
+                                                       update_metadata=update_metadata)
+
+class Ontology(Item):
+    """Class to represent an ontology in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return Ontology(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="ontologies", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="ontologies",
+                                                       update_metadata=update_metadata)
+
+class OperationsAgent(Item):
+    """Class to represent an operations agent in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return OperationsAgent(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="OperationsAgents", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="OperationsAgents",
+                                                       update_metadata=update_metadata)
+
+class SnowflakeDatabase(Item):
+    """Class to represent a Snowflake database in Microsoft Fabric"""
+
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties=None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+
+    def from_dict(item_dict, core_client):
+        return SnowflakeDatabase(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+
+    def get_definition(self, format=None):
+        return super().get_definition(type="snowflakeDatabases", format=format)
+
+    def update_definition(self, definition, update_metadata=None):
+        return self.core_client.update_item_definition(self.workspace_id, self.id, definition, type="snowflakeDatabases",
+                                                       update_metadata=update_metadata)
