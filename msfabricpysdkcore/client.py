@@ -14,7 +14,7 @@ class FabricClient():
 
     _logger: logging.Logger
 
-    def __init__(self, scope, tenant_id = None, client_id = None, client_secret = None, username = None, password = None, silent=None) -> None:
+    def __init__(self, scope, tenant_id = None, client_id = None, client_secret = None, username = None, password = None, silent=None, base_url = None) -> None:
         """Initialize FabricClient object"""
 
         self._logger = logger.getChild(__name__)
@@ -25,6 +25,7 @@ class FabricClient():
         self.username = username if username else os.getenv("FABRIC_USERNAME")
         self.password = password if password else os.getenv("FABRIC_PASSWORD")
         self.scope = scope
+        self.base_url = base_url
 
         if self.client_id is None or self.client_secret is None or self.tenant_id is None:
             try:

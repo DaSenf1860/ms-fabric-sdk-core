@@ -9,15 +9,18 @@ from msfabricpysdkcore.util import logger
 class FabricClientCore(FabricClient):
     """FabricClientCore class to interact with Fabric Core APIs"""
 
+    DEFAULT_BASE_URL = "https://api.fabric.microsoft.com"
+
     def __init__(self, tenant_id = None, client_id = None, client_secret = None,
-                 username = None, password = None, silent=None) -> None:
+                 username = None, password = None, silent=None, base_url = None) -> None:
         """Initialize FabricClientCore object"""
         super().__init__(scope="https://api.fabric.microsoft.com/.default", 
                          tenant_id=tenant_id,
                          client_id=client_id,
                          client_secret=client_secret,
                          username=username,
-                         password=password)
+                         password=password,
+                         base_url=base_url if base_url else self.DEFAULT_BASE_URL)
         if silent is not None:
             warn("The 'silent' parameter is deprecated and will be removed in a future version.", DeprecationWarning, stacklevel=2)
 
@@ -58,7 +61,7 @@ class FabricClientCore(FabricClient):
             list: The list of capacities
         """
         from msfabricpysdkcore.capacity import Capacity
-        url = "https://api.fabric.microsoft.com/v1/capacities"
+        url = f"{self.base_url}/v1/capacities"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error listing capacities", return_format="value_json", paging=True)
 
@@ -78,7 +81,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The role assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}/roleAssignments"
+        url = f"{self.base_url}/v1/connections/{connection_id}/roleAssignments"
 
         body = {
             'principal': principal,
@@ -96,7 +99,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The connection
         """
-        url = "https://api.fabric.microsoft.com/v1/connections"
+        url = f"{self.base_url}/v1/connections"
 
         response_json = self.calling_routine(url, operation="POST", body=connection_request, response_codes=[201, 429],
                                              error_message="Error creating connection", return_format="json")
@@ -109,7 +112,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}"
+        url = f"{self.base_url}/v1/connections/{connection_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting connection")
@@ -123,7 +126,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}/roleAssignments/{connection_role_assignment_id}"
+        url = f"{self.base_url}/v1/connections/{connection_id}/roleAssignments/{connection_role_assignment_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting connection role assignment")
@@ -146,7 +149,7 @@ class FabricClientCore(FabricClient):
         if connection_id is None:
             raise Exception("Please provide either connection_id or connection_name")
     
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}"
+        url = f"{self.base_url}/v1/connections/{connection_id}"
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting connection", return_format="json")
         return response_json
@@ -160,7 +163,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The role assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}/roleAssignments/{connection_role_assignment_id}"
+        url = f"{self.base_url}/v1/connections/{connection_id}/roleAssignments/{connection_role_assignment_id}"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting connection role assignment", return_format="json")
@@ -173,7 +176,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of role assignments
         """
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}/roleAssignments"
+        url = f"{self.base_url}/v1/connections/{connection_id}/roleAssignments"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing connection role assignments", return_format="value_json", paging=True)
@@ -186,7 +189,7 @@ class FabricClientCore(FabricClient):
         """
         # GET https://api.fabric.microsoft.com/v1/connections
 
-        url = "https://api.fabric.microsoft.com/v1/connections"
+        url = f"{self.base_url}/v1/connections"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing connections", return_format="value_json", paging=True)
@@ -201,7 +204,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of supported connection types
         """
-        url = "https://api.fabric.microsoft.com/v1/connections/supportedConnectionTypes"
+        url = f"{self.base_url}/v1/connections/supportedConnectionTypes"
 
         if gateway_id:
             url += f"?gatewayId={gateway_id}"
@@ -225,7 +228,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated connection
         """
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}"
+        url = f"{self.base_url}/v1/connections/{connection_id}"
 
         response_json = self.calling_routine(url, operation="PATCH", body=connection_request, response_codes=[200, 429],
                                              error_message="Error updating connection", return_format="json")
@@ -242,7 +245,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The role assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}/roleAssignments/{connection_role_assignment_id}"
+        url = f"{self.base_url}/v1/connections/{connection_id}/roleAssignments/{connection_role_assignment_id}"
 
         body = {
             'role': role
@@ -264,7 +267,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The role assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments"
 
         body = {
             'principal': principal,
@@ -285,7 +288,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The workspace assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/assignWorkspace"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/assignWorkspace"
 
         body = {
             'workspaceId': workspace_id
@@ -305,7 +308,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The deployment pipeline
         """
-        url = "https://api.fabric.microsoft.com/v1/deploymentPipelines"
+        url = f"{self.base_url}/v1/deploymentPipelines"
 
         body = {
             'displayName': display_name,
@@ -329,7 +332,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting deployment pipeline")
@@ -344,7 +347,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments/{principal_id}"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments/{principal_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting deployment pipeline role assignment")
@@ -368,7 +371,7 @@ class FabricClientCore(FabricClient):
         
         # POST https://api.fabric.microsoft.com/v1/deploymentPipelines/{deploymentPipelineId}/deploy
 
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/deploy"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/deploy"
 
         body = {
             "sourceStageId": source_stage_id,
@@ -408,7 +411,7 @@ class FabricClientCore(FabricClient):
             
 
         from msfabricpysdkcore.deployment_pipeline import DeploymentPipeline
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}"
 
         result_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting deployment pipeline", return_format="json")
 
@@ -436,7 +439,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The deployment pipeline operation
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/operations/{operation_id}"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/operations/{operation_id}"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting deployment pipeline operation", return_format="json")
@@ -451,7 +454,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The deployment pipeline stage
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}"
 
         stage = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting deployment pipeline stage", return_format="json")
@@ -477,7 +480,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of deployment pipeline operations
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/operations"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/operations"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing deployment pipeline operations", return_format="value_json", paging=True)
@@ -492,7 +495,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of role assignments
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/roleAssignments"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing deployment pipeline role assignments", return_format="value_json", paging=True)
@@ -521,7 +524,7 @@ class FabricClientCore(FabricClient):
                 raise Exception(f"Stage with name {stage_name} not found")
             stage_id = dep_pip_stages[0].id
 
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/items"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/items"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error getting deployment pipeline stage items", return_format="value_json", paging=True)
@@ -537,7 +540,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.deployment_pipeline import DeploymentPipelineStage
 
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/stages"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                       error_message="Error getting deployment pipeline stages", return_format="value_json", paging=True)
@@ -560,7 +563,7 @@ class FabricClientCore(FabricClient):
             list: List of DeploymentPipeline objects
         """
 
-        url = "https://api.fabric.microsoft.com/v1/deploymentPipelines"
+        url = f"{self.base_url}/v1/deploymentPipelines"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing deployment pipelines", return_format="value_json", paging=True)
@@ -579,7 +582,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The workspace unassignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/unassignWorkspace"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}/unassignWorkspace"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 429],
                                              error_message="Error unassigning workspace from stage", return_format="response")
@@ -595,7 +598,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated deployment pipeline
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}"
         body = {}
         if display_name:
             body['displayName'] = display_name
@@ -620,7 +623,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated deployment pipeline stage
         """
-        url = f"https://api.fabric.microsoft.com/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}"
+        url = f"{self.base_url}/v1/deploymentPipelines/{deployment_pipeline_id}/stages/{stage_id}"
 
         body = {}
         body['displayName'] = display_name
@@ -649,7 +652,7 @@ class FabricClientCore(FabricClient):
             dict: The external data share
         """
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares"
 
         body = {
             'paths': paths,
@@ -668,7 +671,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The external data share
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}"
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting external data share", return_format="json")
         return response_json
@@ -684,7 +687,7 @@ class FabricClientCore(FabricClient):
             list: The list of external data shares
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing external data shares", return_format="value_json", paging=True)
@@ -702,7 +705,7 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}/revoke"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}/revoke"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error revoking external data share", return_format="response")
         return response.status_code
@@ -717,7 +720,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting external data share")
@@ -737,7 +740,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The external data share invitation
         """
-        url = f"https://api.fabric.microsoft.com/v1/externalDataShares/invitations/{invitation_id}/accept"
+        url = f"{self.base_url}/v1/externalDataShares/invitations/{invitation_id}/accept"
 
         body = {
             'itemId': item_id,
@@ -758,7 +761,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The external data share invitation
         """
-        url = f"https://api.fabric.microsoft.com/v1/externalDataShares/invitations/{invitation_id}?providerTenantId={provider_tenant_id}"
+        url = f"{self.base_url}/v1/externalDataShares/invitations/{invitation_id}?providerTenantId={provider_tenant_id}"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting external data share invitation", return_format="json")
@@ -777,7 +780,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.folder import Folder
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/folders"
 
         body = {
             'displayName': display_name
@@ -800,7 +803,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/folders/{folder_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting folder")
@@ -815,7 +818,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The folder
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/folders/{folder_id}"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting folder", return_format="json")
@@ -833,7 +836,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of folders
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/folders"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing folders", return_format="value_json", paging=True)
@@ -853,7 +856,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The moved folder
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}/move"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/folders/{folder_id}/move"
 
         body = {
         }
@@ -878,7 +881,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated folder
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/folders/{folder_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/folders/{folder_id}"
 
         body = {'displayName' : display_name}
 
@@ -901,7 +904,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The role assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/roleAssignments"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/roleAssignments"
 
         body = {
             'principal': principal,
@@ -919,7 +922,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The gateway
         """
-        url = "https://api.fabric.microsoft.com/v1/gateways"
+        url = f"{self.base_url}/v1/gateways"
 
         response_json = self.calling_routine(url, operation="POST", body=gateway_request, response_codes=[200, 201, 429],
                                              error_message="Error creating gateway", return_format="json")
@@ -932,7 +935,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting gateway")
@@ -946,7 +949,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/members/{gateway_member_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/members/{gateway_member_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting gateway member")
@@ -960,7 +963,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/roleAssignments/{gateway_role_assignment_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/roleAssignments/{gateway_role_assignment_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting gateway role assignment")
@@ -983,7 +986,7 @@ class FabricClientCore(FabricClient):
         if gateway_id is None:
             raise Exception("Please provide either gateway_id or gateway_name")
     
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}"
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting gateway", return_format="json")
         return response_json
@@ -996,7 +999,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The gateway role assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/roleAssignments/{gateway_role_assignment_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/roleAssignments/{gateway_role_assignment_id}"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting gateway role assignment", return_format="json")
@@ -1009,7 +1012,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of gateway members
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/members"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/members"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing gateway members", return_format="value_json", paging=True)
@@ -1022,7 +1025,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of gateway role assignments
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/roleAssignments"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/roleAssignments"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing gateway role assignments", return_format="value_json", paging=True)
@@ -1033,7 +1036,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of gateways
         """
-        url = "https://api.fabric.microsoft.com/v1/gateways"
+        url = f"{self.base_url}/v1/gateways"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing gateways", return_format="value_json", paging=True)
@@ -1048,7 +1051,7 @@ class FabricClientCore(FabricClient):
             dict: The updated gateway
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}"
 
         response_json = self.calling_routine(url, operation="PATCH", body=gateway_request, response_codes=[200, 429],
                                              error_message="Error updating gateway", return_format="json")
@@ -1064,7 +1067,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated gateway member
         """
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/members/{gateway_member_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/members/{gateway_member_id}"
 
         body = {
             'displayName': display_name,
@@ -1085,7 +1088,7 @@ class FabricClientCore(FabricClient):
             dict: The updated gateway role assignment
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/gateways/{gateway_id}/roleAssignments/{gateway_role_assignment_id}"
+        url = f"{self.base_url}/v1/gateways/{gateway_id}/roleAssignments/{gateway_role_assignment_id}"
 
         body = {
             'role': role
@@ -1097,7 +1100,7 @@ class FabricClientCore(FabricClient):
 
     # Git
     
-    def commit_to_git(self, workspace_id, mode, comment=None, items=None, workspace_head=None):
+    def commit_to_git(self, workspace_id, mode, comment=None, items=None, workspace_head=None, wait_for_completion=True):
         # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/git/commitToGit
         """Commit to git
         Args:
@@ -1106,10 +1109,11 @@ class FabricClientCore(FabricClient):
             comment (str): The comment of the commit
             items (list): The list of items
             workspace_head (str): The workspace head
+            wait_for_completion (bool): Whether to wait for the operation to complete
         Returns:
-            int: The status code of the response
+            The operation result if wait_for_completion is True, otherwise the response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/commitToGit"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/commitToGit"
 
         body = {
             'mode': mode
@@ -1122,11 +1126,13 @@ class FabricClientCore(FabricClient):
         if workspace_head:
             body['workspaceHead'] = workspace_head
 
-        response = self.calling_routine(url=url, operation="POST", body=body,
+        result = self.calling_routine(url=url, operation="POST", body=body,
                                         response_codes=[200, 202, 429],
-                                        error_message="Error committing to git", return_format="response")
+                                        error_message="Error committing to git", 
+                                        return_format="response+operation_result",
+                                        wait_for_completion=wait_for_completion)
 
-        return response.status_code
+        return result
 
 
     def git_connect(self, workspace_id, git_provider_details, my_git_credentials = None):
@@ -1139,7 +1145,7 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
         # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/git/connect
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/connect"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/connect"
 
         payload = {
             'gitProviderDetails': git_provider_details,
@@ -1161,7 +1167,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/disconnect"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/disconnect"
 
         response = self.calling_routine(url=url, operation="POST", response_codes=[200, 204, 429],
                                         error_message="Error disconnecting git", return_format="response")
@@ -1174,7 +1180,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The git connection info
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/connection"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/connection"
 
         response_json = self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting git connection info", return_format="json")
@@ -1190,7 +1196,7 @@ class FabricClientCore(FabricClient):
             dict: The git credentials
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/myGitCredentials"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/myGitCredentials"
 
         response_json = self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting git credentials", return_format="json")
@@ -1204,7 +1210,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The git connection status
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/status"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/status"
 
         response_json = self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting git connection status",
@@ -1212,29 +1218,42 @@ class FabricClientCore(FabricClient):
 
         return response_json
 
-    def git_initialize_connection(self, workspace_id, initialization_strategy):
+    def git_initialize_connection(self, workspace_id, initialization_strategy, wait_for_completion=True):
     #        POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/git/initializeConnection
         """Initialize git connection
         Args:
             workspace_id (str): The ID of the workspace
             initialization_strategy (dict): The initialization strategy
+            wait_for_completion (bool): Whether to wait for the operation to complete
         Returns:
-            int: The status code of the response
+            The operation result if wait_for_completion is True, otherwise the response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/initializeConnection"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/initializeConnection"
 
         body = {'initializationStrategy':initialization_strategy}
         
-        response = self.calling_routine(url=url, operation="POST", body=body, response_codes=[200, 202, 429],
-                                        error_message="Error initializing connection", return_format="response")
+        result = self.calling_routine(url=url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                        error_message="Error initializing connection", 
+                                        return_format="response+operation_result",
+                                        wait_for_completion=wait_for_completion)
         
-        return response.status_code
+        return result
     
     def update_from_git(self, workspace_id, remote_commit_hash, conflict_resolution = None,
-                        options = None, workspace_head = None):
+                        options = None, workspace_head = None, wait_for_completion=True):
         # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/git/updateFromGit
-        """Update from git"""
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/updateFromGit"
+        """Update from git
+        Args:
+            workspace_id (str): The ID of the workspace
+            remote_commit_hash (str): The remote commit hash
+            conflict_resolution (dict): The conflict resolution strategy
+            options (dict): Additional options
+            workspace_head (str): The workspace head
+            wait_for_completion (bool): Whether to wait for the operation to complete
+        Returns:
+            The operation result if wait_for_completion is True, otherwise the response object
+        """
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/updateFromGit"
 
         body = {
             "remoteCommitHash" : remote_commit_hash
@@ -1247,11 +1266,13 @@ class FabricClientCore(FabricClient):
         if workspace_head:
             body['workspaceHead'] = workspace_head
 
-        response = self.calling_routine(url=url, operation="POST", body=body,
+        result = self.calling_routine(url=url, operation="POST", body=body,
                                         response_codes=[200, 202, 429],
-                                        error_message="Error updating from git", return_format="response")
+                                        error_message="Error updating from git", 
+                                        return_format="response+operation_result",
+                                        wait_for_completion=wait_for_completion)
 
-        return response.status_code
+        return result
 
     def update_my_git_credentials(self, workspace_id, source, connection_id = None):
         #PATCH https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/git/myGitCredentials
@@ -1262,7 +1283,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/git/myGitCredentials"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/git/myGitCredentials"
 
         body = {"source": source}
 
@@ -1406,7 +1427,7 @@ class FabricClientCore(FabricClient):
             Item: The created item
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items"
         body = {
             'displayName': display_name,
             'type': type
@@ -1469,7 +1490,7 @@ class FabricClientCore(FabricClient):
                     raise Exception("creation_payload is required for KQLDatabase")
                 body["creationPayload"] = creation_payload
             
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{type}"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/{type}"
             body.pop('type')
 
         item_dict = self.calling_routine(url, operation="POST", 
@@ -1560,7 +1581,7 @@ class FabricClientCore(FabricClient):
         elif item_id is None:
             raise Exception("item_id or the combination item_name + item_type is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting item", return_format="json")
 
@@ -1577,9 +1598,9 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}"
         if type:
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{type}/{item_id}"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/{type}/{item_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                         error_message="Error deleting item")
@@ -1597,7 +1618,7 @@ class FabricClientCore(FabricClient):
             dict: The item connections
         """
         #GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/connections
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/connections"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/connections"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error listing item connections", return_format="value_json", paging=True)
@@ -1615,9 +1636,9 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.item import Item
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items"
         if type:
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{type}"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/{type}"
         
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                 error_message="Error listing items", return_format="value_json", paging=True)
@@ -1640,9 +1661,9 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The item definition
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/getDefinition"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/getDefinition"
         if type:
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{type}/{item_id}/getDefinition"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/{type}/{item_id}/getDefinition"
 
         if format:
             url += f"?format={format}"
@@ -1663,9 +1684,9 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated item
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}"
         if type:
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{type}/{item_id}"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/{type}/{item_id}"
 
         payload = dict()
         if display_name:
@@ -1694,10 +1715,10 @@ class FabricClientCore(FabricClient):
             requests.Response: The response object
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/updateDefinition"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/updateDefinition"
 
         if type:
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{type}/{item_id}/updateDefinition"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/{type}/{item_id}/updateDefinition"
        
         if "update_metadata" in kwargs and kwargs["update_metadata"]:
             url = f"{url}?updateMetadata={kwargs['update_metadata']}"
@@ -1763,7 +1784,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances/{job_instance_id}/cancel"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances/{job_instance_id}/cancel"
         
         response = self.calling_routine(url=url, operation="POST", response_codes=[202, 429],
                                         error_message="Error cancelling job instance", return_format="response",
@@ -1783,7 +1804,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.job_instance import JobInstance
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances/{job_instance_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances/{job_instance_id}"
         
         job_dict = self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                         error_message="Error getting job instance", return_format="json")
@@ -1801,7 +1822,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The job schedule
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules"
 
         payload = {"configuration": configuration,
                    "enabled": enabled}
@@ -1819,7 +1840,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The job schedule
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules/{schedule_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules/{schedule_id}"
 
         return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                     error_message="Error getting job schedule", return_format="json")
@@ -1833,7 +1854,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of job instances
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances"
 
         return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                     error_message="Error listing job instances", return_format="value_json", paging=True)
@@ -1847,7 +1868,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of job schedules
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules"
 
         return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                     error_message="Error listing job schedules", return_format="value_json", paging=True)   
@@ -1879,7 +1900,7 @@ class FabricClientCore(FabricClient):
         """
 
         # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/jobs/instances?jobType={jobType}
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances?jobType={job_type}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/instances?jobType={job_type}"
         payload = {
             'executionData': execution_data
         }
@@ -1903,7 +1924,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated job schedule
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules/{schedule_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/jobs/{job_type}/schedules/{schedule_id}"
 
         payload = {"configuration": configuration,
                      "enabled": enabled}
@@ -1920,7 +1941,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The results of the operation
         """
-        url = f"https://api.fabric.microsoft.com/v1/operations/{operation_id}/result"
+        url = f"{self.base_url}/v1/operations/{operation_id}/result"
 
         response = self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting operation results", return_format="response",
@@ -1936,7 +1957,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The state of the operation
         """ 
-        url = f"https://api.fabric.microsoft.com/v1/operations/{operation_id}"
+        url = f"{self.base_url}/v1/operations/{operation_id}"
 
         response_json = self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting operation state", return_format="json")
@@ -1966,7 +1987,7 @@ class FabricClientCore(FabricClient):
         }
         if request_message:
             body["requestMessage"] = request_message
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/managedPrivateEndpoints"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/managedPrivateEndpoints"
 
         response = self.calling_routine(url, operation="POST", body=body,
                                              response_codes=[201, 429], error_message="Error creating managed private endpoint",
@@ -1982,7 +2003,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/managedPrivateEndpoints/{managed_private_endpoint_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/managedPrivateEndpoints/{managed_private_endpoint_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], return_format="response",
                                              error_message="Error deleting managed private endpoint")
@@ -1997,7 +2018,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The managed private endpoint
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/managedPrivateEndpoints/{managed_private_endpoint_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/managedPrivateEndpoints/{managed_private_endpoint_id}"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting managed private endpoint", return_format="json")
@@ -2013,7 +2034,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of FQDNs
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/managedPrivateEndpoints/{managed_private_endpoint_id}/targetFQDNs"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/managedPrivateEndpoints/{managed_private_endpoint_id}/targetFQDNs"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error listing FQDNs", return_format="value_json", paging=True)
@@ -2027,7 +2048,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of managed private endpoints
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/managedPrivateEndpoints"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/managedPrivateEndpoints"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], paging=True,
                                              error_message="Error listing managed private endpoints", return_format="json")
@@ -2042,7 +2063,7 @@ class FabricClientCore(FabricClient):
     def create_or_update_data_access_roles(self, workspace_id, item_id, data_access_roles, dryrun = False, etag_match = None):
         # PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/dataAccessRoles
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/dataAccessRoles"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/dataAccessRoles"
 
         if dryrun:
             url += "?dryrun=true"
@@ -2134,7 +2155,7 @@ class FabricClientCore(FabricClient):
     
     def list_data_access_roles(self, workspace_id, item_id):
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/dataAccessRoles"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/dataAccessRoles"
 
         items, etag = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error listing data access roles", return_format="value_json+etag")
         return items, etag
@@ -2149,7 +2170,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The OneLake settings
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/onelake/settings"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/onelake/settings"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting OneLake settings", return_format="json")
@@ -2166,7 +2187,7 @@ class FabricClientCore(FabricClient):
         Returns:
             Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/onelake/settings/modifyDiagnostics"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/onelake/settings/modifyDiagnostics"
 
         body = {
             "status": status
@@ -2214,7 +2235,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.onelakeshortcut import OneLakeShortcut
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts"
 
         body = {'name': name,
                 'path': path,
@@ -2255,7 +2276,7 @@ class FabricClientCore(FabricClient):
             if missing:
                 raise Exception(f"Shortcut request at index {idx} missing keys: {missing}")
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts/bulkCreate"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts/bulkCreate"
         body = {
             "createShortcutRequests": create_shortcut_requests
         }
@@ -2281,7 +2302,7 @@ class FabricClientCore(FabricClient):
             OneLakeShortcut: The shortcut object
         """
         from msfabricpysdkcore.onelakeshortcut import OneLakeShortcut
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts/{path}/{name}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts/{path}/{name}"
         
         shortcut_dict = self.calling_routine(url=url, operation="GET",
                                              response_codes=[200, 429], error_message="Error getting shortcut",
@@ -2304,7 +2325,7 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts/{path}/{name}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts/{path}/{name}"
         response = self.calling_routine(url=url, operation="DELETE",
                                              response_codes=[200, 429], error_message="Error creating shortcut",
                                              return_format="response")
@@ -2325,7 +2346,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.onelakeshortcut import OneLakeShortcut
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/shortcuts"
         if parent_path:
             url += f"?parentPath={parent_path}"
 
@@ -2348,7 +2369,7 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/onelake/resetShortcutCache"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/onelake/resetShortcutCache"
         response = self.calling_routine(url=url, operation="POST", response_codes=[200, 202, 429], error_message="Error resetting shortcut cache",
                                         return_format="response", wait_for_completion = wait_for_completion)
 
@@ -2387,7 +2408,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of tags
         """
-        url = "https://api.fabric.microsoft.com/v1/tags"
+        url = f"{self.base_url}/v1/tags"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error listing tags", return_format="value_json", paging=True)
@@ -2404,7 +2425,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/applyTags"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/applyTags"
 
         payload = {
             'tags': tags
@@ -2425,7 +2446,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/unapplyTags"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/items/{item_id}/unapplyTags"
 
         payload = {
             'tags': tags
@@ -2447,7 +2468,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/roleAssignments"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/roleAssignments"
 
         payload = {
             'principal': principal,
@@ -2468,7 +2489,7 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/assignToCapacity"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/assignToCapacity"
 
         body = {
             'capacityId': capacity_id
@@ -2497,7 +2518,7 @@ class FabricClientCore(FabricClient):
         if description:
             body["description"] = description
         
-        url = "https://api.fabric.microsoft.com/v1/workspaces"
+        url = f"{self.base_url}/v1/workspaces"
 
         response = self.calling_routine(url, operation="POST", body=body, response_codes=[201, 429], error_message="Error creating workspace", return_format="response", continue_on_error_code=True)
         ws_dict = json.loads(response.text)
@@ -2524,7 +2545,7 @@ class FabricClientCore(FabricClient):
             ws = self.get_workspace_by_name(display_name)
             workspace_id = ws.id
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], error_message="Error deleting workspace", return_format="response")
 
@@ -2538,7 +2559,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/roleAssignments/{workspace_role_assignment_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/roleAssignments/{workspace_role_assignment_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], error_message="Error deleting role assignments", return_format="response")
         
@@ -2551,7 +2572,7 @@ class FabricClientCore(FabricClient):
         Returns:
             requests.Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/deprovisionIdentity"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/deprovisionIdentity"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 201, 202, 429], error_message="Error deprovisioning identity", return_format="response")
 
@@ -2565,7 +2586,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The network communication policy
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/communicationPolicy"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/networking/communicationPolicy"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                              error_message="Error getting network communication policy", return_format="json")
@@ -2597,7 +2618,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.workspace import Workspace
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{id}"
+        url = f"{self.base_url}/v1/workspaces/{id}"
 
         ws_dict = self.calling_routine(url, operation="GET", response_codes=[200, 404], error_message="Error getting workspace", return_format="json")
 
@@ -2627,7 +2648,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The role assignment
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/roleAssignments/{workspace_role_assignment_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/roleAssignments/{workspace_role_assignment_id}"
 
         return self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting role assignments", return_format="json")
            
@@ -2638,7 +2659,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of role assignments
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/roleAssignments"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/roleAssignments"
 
        
         role_assignments = self.calling_routine(url, operation="GET", response_codes=[200, 429],
@@ -2654,7 +2675,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.workspace import Workspace
 
-        url = "https://api.fabric.microsoft.com/v1/workspaces"
+        url = f"{self.base_url}/v1/workspaces"
 
         ws_list = self.calling_routine(url, operation="GET", response_codes=[200], error_message="Error listing workspaces", return_format="value_json", paging=True)
         ws_list = [Workspace.from_dict(ws, core_client=self) for ws in ws_list]
@@ -2668,7 +2689,7 @@ class FabricClientCore(FabricClient):
         Returns:
             requests.Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/provisionIdentity"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/provisionIdentity"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 201, 202, 429], error_message="Error provisioning identity", return_format="response")
         return response
@@ -2684,7 +2705,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated network communication policy
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/communicationPolicy"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/networking/communicationPolicy"
 
         headers = self.auth.get_headers()
         if if_match:
@@ -2803,7 +2824,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/unassignFromCapacity"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/unassignFromCapacity"
 
         response = self.calling_routine(url, operation="POST", response_codes=[202, 429], error_message="Error unassigning capacity", return_format="response", wait_for_completion=wait_for_completion)
 
@@ -2851,7 +2872,7 @@ class FabricClientCore(FabricClient):
         Returns:
             Workspace: The updated workspace
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}"
 
         body = dict()
         if display_name:
@@ -2875,7 +2896,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/roleAssignments/{workspace_role_assignment_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/roleAssignments/{workspace_role_assignment_id}"
         body = {
             'role': role
         }
@@ -2950,7 +2971,7 @@ class FabricClientCore(FabricClient):
             apache_airflow_job_id = aajs[0].id
         elif apache_airflow_job_id is None:
             raise Exception("apache_airflow_job_id or the apache_airflow_job_name is required")
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}"
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting Apache Airflow job", return_format="json")
         aaj = ApacheAirflowJob.from_dict(item_dict, core_client=self)
@@ -3283,7 +3304,7 @@ class FabricClientCore(FabricClient):
             anomaly_detector_id = ads[0].id
         elif anomaly_detector_id is None:
             raise Exception("anomaly_detector_id or the anomaly_detector_name is required")
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/anomalydetectors/{anomaly_detector_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/anomalydetectors/{anomaly_detector_id}"
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting anomaly detector", return_format="json")
         ad = AnomalyDetector.from_dict(item_dict, core_client=self)
@@ -3391,7 +3412,7 @@ class FabricClientCore(FabricClient):
         elif copy_job_id is None:
             raise Exception("copy_job_id or the copy_job_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/copyJobs/{copy_job_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/copyJobs/{copy_job_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting copy job", return_format="json")
@@ -3496,7 +3517,7 @@ class FabricClientCore(FabricClient):
         elif user_data_function_id is None:
             raise Exception("user_data_function_id or the user_data_function_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/UserDataFunctions/{user_data_function_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/UserDataFunctions/{user_data_function_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting user data function", return_format="json")
@@ -3605,7 +3626,7 @@ class FabricClientCore(FabricClient):
         elif variable_library_id is None:
             raise Exception("variable_library_id or the variable_library_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/VariableLibraries/{variable_library_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/VariableLibraries/{variable_library_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting variable library", return_format="json")
@@ -3698,7 +3719,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of dataflow parameters
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/parameters"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/parameters"
 
         parameters = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                                 error_message="Error listing dataflow parameters", return_format = "value_json",
@@ -3728,7 +3749,7 @@ class FabricClientCore(FabricClient):
         elif dataflow_id is None:
             raise Exception("dataflow_id or the dataflow_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting data flow", return_format="json")
@@ -3798,7 +3819,7 @@ class FabricClientCore(FabricClient):
         Returns:
             requests.Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/instances?jobType={job_type}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/instances?jobType={job_type}"
 
         response = self.calling_routine(url, operation="POST", response_codes=[202, 429], error_message="Error running on-demand apply changes",
                                         return_format="response", wait_for_completion=wait_for_completion)
@@ -3815,7 +3836,7 @@ class FabricClientCore(FabricClient):
         Returns:
             requests.Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/instances?jobType={job_type}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/instances?jobType={job_type}"
 
         response = self.calling_routine(url, operation="POST", response_codes=[202, 429], error_message="Error running on-demand execute",
                                         return_format="response", wait_for_completion=wait_for_completion)
@@ -3833,7 +3854,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The schedule object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/ApplyChanges/schedules"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/ApplyChanges/schedules"
 
         body = {
             "configuration": configuration,
@@ -3855,7 +3876,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The schedule object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/Execute/schedules"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/dataflows/{dataflow_id}/jobs/Execute/schedules"
 
         body = {
             "configuration": configuration,
@@ -3928,7 +3949,7 @@ class FabricClientCore(FabricClient):
         elif data_pipeline_id is None:
             raise Exception("data_pipeline_id or the data_pipeline_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/dataPipelines/{data_pipeline_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/dataPipelines/{data_pipeline_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting data pipeline", return_format="json")
@@ -4033,7 +4054,7 @@ class FabricClientCore(FabricClient):
         elif digital_twin_builder_id is None:
             raise Exception("digital_twin_builder_id or the digital_twin_builder_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/digitaltwinbuilders/{digital_twin_builder_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/digitaltwinbuilders/{digital_twin_builder_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting digital twin builder", return_format="json")
@@ -4136,7 +4157,7 @@ class FabricClientCore(FabricClient):
             digital_twin_builder_flow_id = dtbfs[0].id
         elif digital_twin_builder_flow_id is None:
             raise Exception("digital_twin_builder_flow_id or the digital_twin_builder_flow_name is required")
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/DigitalTwinBuilderFlows/{digital_twin_builder_flow_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/DigitalTwinBuilderFlows/{digital_twin_builder_flow_id}"
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting digital twin builder flow", return_format="json")
         dtbf = DigitalTwinBuilderFlow.from_dict(item_dict, core_client=self)
@@ -4204,7 +4225,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/cancelPublish"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/cancelPublish"
 
         resp_dict = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error canceling publish", return_format="json")
         return resp_dict
@@ -4255,7 +4276,7 @@ class FabricClientCore(FabricClient):
         elif environment_id is None:
             raise Exception("environment_id or the environment_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}"
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting environment", return_format="json")
         env = Environment.from_dict(item_dict, core_client=self)
@@ -4294,7 +4315,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/publish?preview={preview}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/publish?preview={preview}"
 
         resp_dict = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error publishing staging",
                                          return_format="json+operation_result")
@@ -4339,7 +4360,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The exported external libraries
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/libraries/exportExternalLibraries"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/libraries/exportExternalLibraries"
 
         headers = self.auth.get_headers()
         headers["Content-Type"] = "application/octet-stream"
@@ -4356,7 +4377,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The spark compute settings
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/sparkcompute?preview={preview}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/sparkcompute?preview={preview}"
 
         resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting spark compute settings", return_format="json")     
         return resp_json
@@ -4376,7 +4397,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The libraries
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/libraries?preview={preview}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/libraries?preview={preview}"
 
         resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error listing libraries", return_format="json")
         return resp_json
@@ -4400,7 +4421,7 @@ class FabricClientCore(FabricClient):
         Returns:
             requests.Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/{library_name}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/{library_name}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
                                         error_message="Error deleting staging library", return_format="response")
@@ -4419,7 +4440,7 @@ class FabricClientCore(FabricClient):
         """
         logger.warning("delete_staging_library is deprecated. Use delete_custom_library instead.")
         print("WARNING: delete_staging_library is deprecated. Use delete_custom_library instead.")
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries?libraryToDelete={library_to_delete}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries?libraryToDelete={library_to_delete}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429], error_message="Error deleting staging library", return_format="response")
 
@@ -4433,7 +4454,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The exported external libraries
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/exportExternalLibraries"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/exportExternalLibraries"
 
         headers = self.auth.get_headers()
         headers["Content-Type"] = "application/octet-stream"
@@ -4451,7 +4472,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The spark compute settings
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute?preview={preview}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute?preview={preview}"
 
         resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting staging spark compute settings", return_format="json")       
         return resp_json
@@ -4473,7 +4494,7 @@ class FabricClientCore(FabricClient):
         """
         headers = self.auth.get_headers()
         headers["Content-Type"] = "application/octet-stream"
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/importExternalLibraries"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/importExternalLibraries"
         response = self.calling_routine(url, headers=headers, operation="POST", file_path=file_path, response_codes=[200, 429],
                                         error_message="Error importing external libraries to staging", return_format="response")
         return response
@@ -4488,7 +4509,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The staging libraries
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries?preview={preview}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries?preview={preview}"
 
         resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], paging=True,
                                          error_message="Error listing staging libraries", return_format="libraries")
@@ -4513,7 +4534,7 @@ class FabricClientCore(FabricClient):
         Returns:
             Response: The response object
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/removeExternalLibrary"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/removeExternalLibrary"
         body = {
             "name": name,
             "version": version
@@ -4529,7 +4550,7 @@ class FabricClientCore(FabricClient):
                                        executor_cores=None, executor_memory=None, instance_pool=None,
                                        runtime_version=None, spark_properties=None, preview="false"):
         """Update the staging spark compute settings of the environment"""
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute?preview={preview}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/sparkcompute?preview={preview}"
         body = {}
         if driver_cores is not None:
             body['driverCores'] = driver_cores
@@ -4579,7 +4600,7 @@ class FabricClientCore(FabricClient):
         """
         headers = self.auth.get_headers()
         headers["Content-Type"] = "application/octet-stream"
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/{library_name}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries/{library_name}"
         response = self.calling_routine(url, headers=headers, operation="POST", file_path=file_path, response_codes=[200, 429],
                                         error_message="Error uploading custom library", return_format="response")
         return response
@@ -4595,7 +4616,7 @@ class FabricClientCore(FabricClient):
         """
         logger.warning("upload_staging_library is deprecated. Use upload_custom_library instead.")
         print("WARNING: upload_staging_library is deprecated. Use upload_custom_library instead.")
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/environments/{environment_id}/staging/libraries"
         response = self.calling_routine(url, operation="POST", file_path=file_path, response_codes=[200, 429],
                                         error_message="Error uploading staging library", return_format="response")
         return response
@@ -4651,7 +4672,7 @@ class FabricClientCore(FabricClient):
         if eventhouse_id is None:
             raise Exception("eventhouse_id or the eventhouse_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventhouses/{eventhouse_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventhouses/{eventhouse_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting eventhouse", return_format="json")
@@ -4746,7 +4767,7 @@ class FabricClientCore(FabricClient):
         if eventstream_id is None:
             raise Exception("eventstream_id or the eventstream_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting eventstream", return_format="json")
@@ -4825,7 +4846,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The eventstream destination
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting eventstream destination", return_format="json")
@@ -4841,7 +4862,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The eventstream destination connection
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/connection"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/connection"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting eventstream destination connection", return_format="json")
@@ -4857,7 +4878,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The eventstream source
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting eventstream source", return_format="json")
@@ -4873,7 +4894,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The eventstream source connection
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/connection"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/connection"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting eventstream source connection", return_format="json")
@@ -4889,7 +4910,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The eventstream topology
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/topology"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/topology"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting eventstream topology", return_format="json")
@@ -4904,7 +4925,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/pause"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/pause"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error pausing eventstream",
                                          return_format="response")
@@ -4921,7 +4942,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/pause"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/pause"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error pausing eventstream destination",
                                          return_format="response")
@@ -4938,7 +4959,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/pause"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/pause"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 429], error_message="Error pausing eventstream source",
                                          return_format="response")
@@ -4964,7 +4985,7 @@ class FabricClientCore(FabricClient):
         if custom_start_date_time is not None:
             body["customStartDateTime"] = custom_start_date_time
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/resume"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/resume"
 
         response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429], error_message="Error resuming eventstream",
                                          return_format="response")
@@ -4990,7 +5011,7 @@ class FabricClientCore(FabricClient):
         if custom_start_date_time is not None:
             body["customStartDateTime"] = custom_start_date_time
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/resume"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/destinations/{destination_id}/resume"
 
         response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429], error_message="Error resuming eventstream destination",
                                          return_format="response")
@@ -5016,7 +5037,7 @@ class FabricClientCore(FabricClient):
         if custom_start_date_time is not None:
             body["customStartDateTime"] = custom_start_date_time
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/resume"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/eventstreams/{eventstream_id}/sources/{source_id}/resume"
 
         response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429], error_message="Error resuming eventstream source",
                                          return_format="response")
@@ -5069,7 +5090,7 @@ class FabricClientCore(FabricClient):
         if graphql_api_id is None:
             raise Exception("graphql_api_id or the graphql_api_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/GraphQLApis/{graphql_api_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/GraphQLApis/{graphql_api_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting graphql api", return_format="json")
@@ -5168,7 +5189,7 @@ class FabricClientCore(FabricClient):
         if kql_dashboard_id is None:
             raise Exception("kql_dashboard_id or the kql_dashboard_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/kqlDashboards/{kql_dashboard_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/kqlDashboards/{kql_dashboard_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting kql dashboard", return_format="json")
@@ -5270,7 +5291,7 @@ class FabricClientCore(FabricClient):
         if kql_database_id is None:
             raise Exception("kql_database_id or the kql_database_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/kqlDatabases/{kql_database_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/kqlDatabases/{kql_database_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting kql database", return_format="json")
@@ -5442,7 +5463,7 @@ class FabricClientCore(FabricClient):
         if kql_queryset_id is None:
             raise Exception("kql_queryset_id or the kql_queryset_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/kqlQuerysets/{kql_queryset_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/kqlQuerysets/{kql_queryset_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting kql queryset", return_format="json")
@@ -5551,7 +5572,7 @@ class FabricClientCore(FabricClient):
             mirrored_azure_databricks_catalog_id = mirrored_azure_databricks_catalogs[0].id
         if mirrored_azure_databricks_catalog_id is None:
             raise Exception("mirrored_azure_databricks_catalog_id or the mirrored_azure_databricks_catalog_name is required")
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredAzureDatabricksCatalogs/{mirrored_azure_databricks_catalog_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mirroredAzureDatabricksCatalogs/{mirrored_azure_databricks_catalog_id}"
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting mirrored azure databricks catalog", return_format="json")
         madc = MirroredAzureDatabricksCatalog.from_dict(item_dict, core_client=self)
@@ -5614,7 +5635,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredAzureDatabricksCatalogs/{mirrored_azure_databricks_catalog_id}/refreshCatalogMetadata"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mirroredAzureDatabricksCatalogs/{mirrored_azure_databricks_catalog_id}/refreshCatalogMetadata"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
                                          error_message="Error refreshing mirrored azure databricks catalog metadata",
@@ -5632,7 +5653,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of mirrored azure databricks catalogs
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/azuredatabricks/catalogs?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/azuredatabricks/catalogs?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
         
         if max_results is not None:
             url += f"&maxResults={max_results}"
@@ -5653,7 +5674,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of mirrored azure databricks catalog schemas
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/azuredatabricks/catalogs/{catalog_name}/schemas?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/azuredatabricks/catalogs/{catalog_name}/schemas?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
         
         if max_results is not None:
             url += f"&maxResults={max_results}"
@@ -5676,7 +5697,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of mirrored azure databricks catalog tables
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/azuredatabricks/catalogs/{catalog_name}/schemas/{schema_name}/tables?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/azuredatabricks/catalogs/{catalog_name}/schemas/{schema_name}/tables?databricksWorkspaceConnectionId={databricks_workspace_connection_id}"
         
         if max_results is not None:
             url += f"&maxResults={max_results}"
@@ -5702,7 +5723,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/instances?jobType={job_type}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/instances?jobType={job_type}"
 
         body = {
                 "executionData": execution_data
@@ -5759,7 +5780,7 @@ class FabricClientCore(FabricClient):
         if lakehouse_id is None:
             raise Exception("lakehouse_id or the lakehouse_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting lakehouse", return_format="json")
@@ -5821,7 +5842,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of tables
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/tables"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/tables"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                         error_message="Error listing tables", return_format="data", paging=True)
@@ -5862,7 +5883,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/tables/{table_name}/load"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/tables/{table_name}/load"
 
         body = {
                 "relativePath": relative_path,
@@ -5942,7 +5963,7 @@ class FabricClientCore(FabricClient):
         elif "sparkjobdef" in item_type.lower() or "sjd" in item_type.lower():
             item_type = "sparkJobDefinitions"
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{item_type}/{item_id}/livySessions/{livy_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/{item_type}/{item_id}/livySessions/{livy_id}"
         
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting livy session", return_format="json")
@@ -5967,9 +5988,9 @@ class FabricClientCore(FabricClient):
             item_type = "sparkJobDefinitions"
         
         if item_id is None:
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/livySessions"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/livySessions"
         else:
-            url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/{item_type}/{item_id}/livySessions"
+            url = f"{self.base_url}/v1/workspaces/{workspace_id}/{item_type}/{item_id}/livySessions"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                       error_message="Error listing livy sessions", return_format="value_json", paging=True)
@@ -5989,7 +6010,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The created schedule
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules"
 
         body = {
                 "enabled": enabled,
@@ -6011,7 +6032,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules/{schedule_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules/{schedule_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 204, 429],
                                         error_message="Error deleting refresh materialized lake view schedule", return_format="response")
@@ -6028,7 +6049,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result or response value
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/instances?jobType={job_type}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/instances?jobType={job_type}"
 
     
         response = self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
@@ -6049,7 +6070,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated schedule
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules/{schedule_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/jobs/RefreshMaterializedLakeViews/schedules/{schedule_id}"
 
         body = {}
         body["enabled"] = enabled
@@ -6108,7 +6129,7 @@ class FabricClientCore(FabricClient):
         if mirrored_database_id is None:
             raise Exception("mirrored_database_id or the mirrored_database_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting mirrored database", return_format="json")
@@ -6169,7 +6190,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The mirroring status of the mirrored database
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/getMirroringStatus"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/getMirroringStatus"
 
         return self.calling_routine(url, operation="POST", response_codes=[200, 429],
                                     error_message="Error getting mirroring status", return_format="json")
@@ -6182,7 +6203,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The tables mirroring status of the mirrored database
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/getTablesMirroringStatus"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/getTablesMirroringStatus"
 
         return self.calling_routine(url, operation="POST", response_codes=[200, 429],
                                     error_message="Error getting tables mirroring status", return_format="json")
@@ -6195,7 +6216,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/startMirroring"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/startMirroring"
 
         return self.calling_routine(url, operation="POST", response_codes=[200, 429],
                                     error_message="Error starting mirroring", return_format="response")
@@ -6208,7 +6229,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The operation result
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/stopMirroring"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mirroredDatabases/{mirrored_database_id}/stopMirroring"
 
         return self.calling_routine(url, operation="POST", response_codes=[200, 429],
                                     error_message="Error stopping mirroring", return_format="response")
@@ -6259,7 +6280,7 @@ class FabricClientCore(FabricClient):
         if ml_experiment_id is None:
             raise Exception("ml_experiment_id or the ml_experiment_name is required")
               
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlExperiments/{ml_experiment_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlExperiments/{ml_experiment_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting ml experiment", return_format="json")
@@ -6331,7 +6352,7 @@ class FabricClientCore(FabricClient):
         if ml_model_id is None:
             raise Exception("ml_model_id or the ml_model_name is required")
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlModels/{ml_model_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlModels/{ml_model_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting ml model", return_format="json")
@@ -6374,7 +6395,7 @@ class FabricClientCore(FabricClient):
             dict: The activated endpoint version
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/activate"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/activate"
         return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
                                      error_message="Error activating ml model endpoint version", return_format="json", wait_for_completion=wait_for_completion)
 
@@ -6387,7 +6408,7 @@ class FabricClientCore(FabricClient):
         Returns:
             Response: The operation result
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/deactivateAll"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/deactivateAll"
         return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
                                      error_message="Error deactivating all ml model endpoint versions", return_format="response", wait_for_completion=wait_for_completion)
 
@@ -6401,7 +6422,7 @@ class FabricClientCore(FabricClient):
         Returns:
             Response: The operation result
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/deactivate"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/deactivate"
         return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
                                      error_message="Error deactivating ml model endpoint version", return_format="response", wait_for_completion=wait_for_completion)
     
@@ -6414,7 +6435,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The ml model endpoint
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint"
         return self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error getting ml model endpoint", return_format="json")
 
@@ -6428,7 +6449,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The ml model endpoint version
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}"
         return self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error getting ml model endpoint version", return_format="json")
 
@@ -6441,7 +6462,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of ml model endpoint versions
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions"
         return self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing ml model endpoint versions", return_format="value_json", paging=True)
     
@@ -6457,7 +6478,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The scoring result
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlModels/{model_id}/endpoint/score"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlModels/{model_id}/endpoint/score"
 
         body = {
                 "inputs": inputs
@@ -6484,7 +6505,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The scoring result
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/score"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}/score"
 
         body = {
                 "inputs": inputs
@@ -6509,7 +6530,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated endpoint
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint"
 
         body = {
                 "defaultVersionAssignmentBehavior": default_version_assignment_behavior,
@@ -6531,7 +6552,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated endpoint version
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mlmodels/{model_id}/endpoint/versions/{name}"
 
         body = {
                 "scaleRule": scale_rule
@@ -6592,7 +6613,7 @@ class FabricClientCore(FabricClient):
             map_id = maps_filtered[0].id
         elif map_id is None:
             raise Exception("map_id or the map_name is required")
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/Maps/{map_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/Maps/{map_id}"
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting map", return_format="json")
         map_obj = Map.from_dict(item_dict, core_client=self)
@@ -6695,7 +6716,7 @@ class FabricClientCore(FabricClient):
         if mounted_data_factory_id is None:
             raise Exception("mounted_data_factory_id or the mounted_data_factory_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mountedDataFactories/{mounted_data_factory_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/mountedDataFactories/{mounted_data_factory_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting mounted data factory", return_format="json")
@@ -6781,7 +6802,7 @@ class FabricClientCore(FabricClient):
         if notebook_id is None:
             raise Exception("notebook_id or the notebook_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/notebooks/{notebook_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/notebooks/{notebook_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting notebook", return_format="json")
@@ -6930,7 +6951,7 @@ class FabricClientCore(FabricClient):
         if reflex_id is None:
             raise Exception("reflex_id or the reflex_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/reflexes/{reflex_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/reflexes/{reflex_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting reflex", return_format="json")
@@ -7027,7 +7048,7 @@ class FabricClientCore(FabricClient):
         if report_id is None:
             raise Exception("report_id or the report_name is required")        
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/reports/{report_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/reports/{report_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting report", return_format="json")
@@ -7094,7 +7115,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated semantic model
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/semanticModels/{semantic_model_id}/bindConnection"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/semanticModels/{semantic_model_id}/bindConnection"
 
         body = {
                 "connectionBinding": connection_binding
@@ -7144,7 +7165,7 @@ class FabricClientCore(FabricClient):
         if semantic_model_id is None:
             raise Exception("semantic_model_id or the semantic_model_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/semanticModels/{semantic_model_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/semanticModels/{semantic_model_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting semantic model", return_format="json")
@@ -7214,7 +7235,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.spark_custom_pool import SparkCustomPool
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/pools"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/pools"
 
         body = {
             "name": name,
@@ -7239,7 +7260,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.spark_custom_pool import SparkCustomPool
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/pools/{pool_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/pools/{pool_id}"
         response_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting workspace custom pool", return_format="json")
         response_dict["workspaceId"] = workspace_id
@@ -7254,7 +7275,7 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/pools/{pool_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/pools/{pool_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
                                         error_message="Error deleting workspace custom pool", return_format="response")
@@ -7270,7 +7291,7 @@ class FabricClientCore(FabricClient):
         """
         from msfabricpysdkcore.spark_custom_pool import SparkCustomPool
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/pools"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/pools"
         
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing workspace custom pools", return_format="json", paging=True)
@@ -7295,7 +7316,7 @@ class FabricClientCore(FabricClient):
             int: The status code of the response
         """
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/pools/{pool_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/pools/{pool_id}"
         body = {}
 
         if name is not None:
@@ -7328,7 +7349,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The spark settings
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/settings"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/settings"
 
         response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting spark settings", return_format="json")
@@ -7348,7 +7369,7 @@ class FabricClientCore(FabricClient):
             dict: The updated spark settings
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/settings"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/spark/settings"
 
         body = {}
 
@@ -7409,7 +7430,7 @@ class FabricClientCore(FabricClient):
         elif spark_job_definition_id is None:
             raise Exception("spark_job_definition_id or the spark_job_definition_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sparkjobdefinitions/{spark_job_definition_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/sparkjobdefinitions/{spark_job_definition_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting spark job definition", return_format="json")
@@ -7472,7 +7493,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The job instance
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sparkJobDefinitions/{spark_job_definition_id}/jobs/instances?jobType={job_type}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/sparkJobDefinitions/{spark_job_definition_id}/jobs/instances?jobType={job_type}"
 
         response = self.calling_routine(url, operation="POST", response_codes=[202, 429], wait_for_completion = False,
                                         error_message="Error running on demand spark job definition", return_format="response")
@@ -7548,7 +7569,7 @@ class FabricClientCore(FabricClient):
         elif sql_database_id is None:
             raise Exception("sql_database_id or the sql_database_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/SQLDatabases/{sql_database_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/SQLDatabases/{sql_database_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting SQL database", return_format="json")
@@ -7658,7 +7679,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The connection string of the SQL endpoint
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/connectionString"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/connectionString"
         params = ""
         if guest_tenant_id is not None:
             params += f"?guestTenantId={guest_tenant_id}"
@@ -7691,7 +7712,7 @@ class FabricClientCore(FabricClient):
         body = {}
         if timeout is not None:
             body["timeout"] = timeout
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/refreshMetadata?preview={preview}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/refreshMetadata?preview={preview}"
         
         response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
                                              error_message="Error refreshing SQL endpoint metadata", return_format="response",
@@ -7708,7 +7729,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The audit settings of the SQL endpoint
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit"
 
         response_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting SQL endpoint audit settings", return_format="json")
@@ -7725,7 +7746,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated audit settings of the SQL endpoint
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit/setAuditActionsAndGroups"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit/setAuditActionsAndGroups"
 
         body = set_audit_actions_and_groups_request
 
@@ -7745,7 +7766,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated audit settings of the SQL endpoint
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/sqlEndpoints/{sql_endpoint_id}/settings/sqlAudit"
 
         body = {
             "retentionDays": retention_days,
@@ -7791,7 +7812,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The connection string of the warehouse
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/connectionString"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/connectionString"
         params = ""
         if guest_tenant_id is not None:
             params += f"?guestTenantId={guest_tenant_id}"
@@ -7827,7 +7848,7 @@ class FabricClientCore(FabricClient):
         if warehouse_id is None:
             raise Exception("warehouse_id or the warehouse_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting warehouse", return_format="json")
@@ -7870,7 +7891,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The created restore point
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints"
 
         body = {}
         if display_name is not None:
@@ -7894,7 +7915,7 @@ class FabricClientCore(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
 
         response = self.calling_routine(url, operation="DELETE", response_codes=[200, 429],
                                         error_message="Error deleting warehouse restore point", return_format="response")
@@ -7911,7 +7932,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The restore point
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
 
         response_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                             error_message="Error getting warehouse restore point", return_format="json")
@@ -7927,7 +7948,7 @@ class FabricClientCore(FabricClient):
         Returns:
             list: The list of restore points
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints"
 
         items = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                      error_message="Error listing warehouse restore points", return_format="value_json", paging=True)
@@ -7945,7 +7966,7 @@ class FabricClientCore(FabricClient):
         Returns:
             response: The response of the restore operation
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}/restore"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}/restore"
 
         response = self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
                                         error_message="Error restoring warehouse to restore point", return_format="response",
@@ -7965,7 +7986,7 @@ class FabricClientCore(FabricClient):
         Returns:
             dict: The updated restore point
         """
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehouses/{warehouse_id}/restorePoints/{restore_point_id}"
 
         body = {}
         if display_name is not None:
@@ -8062,7 +8083,7 @@ class FabricClientCore(FabricClient):
         if warehouse_snapshot_id is None:
             raise Exception("warehouse_snapshot_id or the warehouse_snapshot_name is required")
         
-        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/warehousesnapshots/{warehouse_snapshot_id}"
+        url = f"{self.base_url}/v1/workspaces/{workspace_id}/warehousesnapshots/{warehouse_snapshot_id}"
 
         item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
                                          error_message="Error getting warehouse snapshot", return_format="json")

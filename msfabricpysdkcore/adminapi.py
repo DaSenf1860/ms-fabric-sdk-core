@@ -9,18 +9,22 @@ from msfabricpysdkcore.client import FabricClient
 class FabricClientAdmin(FabricClient):
     """FabricClientAdmin class to interact with Fabric Admin APIs"""
 
+    DEFAULT_BASE_URL = "https://api.fabric.microsoft.com"
+
     def __init__(self, tenant_id = None, client_id = None, client_secret = None,
-                 username = None, password = None) -> None:
+                 username = None, password = None, base_url = None) -> None:
         """Initialize FabricClientAdmin object"""
         super().__init__(scope="https://api.fabric.microsoft.com/.default", 
                          tenant_id=tenant_id, client_id=client_id, client_secret=client_secret,
-                         username=username, password=password)
+                         username=username, password=password,
+                         base_url=base_url if base_url else self.DEFAULT_BASE_URL)
 
 
     def long_running_operation(self, response_headers):
         """Check the status of a long running operation"""
         from msfabricpysdkcore.coreapi import FabricClientCore
-        fc = FabricClientCore(tenant_id=self.tenant_id, client_id=self.client_id, client_secret=self.client_secret)
+        fc = FabricClientCore(tenant_id=self.tenant_id, client_id=self.client_id, client_secret=self.client_secret,
+                              base_url=self.base_url)
 
         return fc.long_running_operation(response_headers)
 
@@ -36,7 +40,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/assignWorkspaces"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/assignWorkspaces"
         body = {
             "workspacesIds": workspaces_ids
         }
@@ -56,7 +60,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/assignWorkspacesByPrincipals"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/assignWorkspacesByPrincipals"
         body = {
             "principals": principals
         }
@@ -79,7 +83,7 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.domain import Domain
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains?preview={preview}"
+        url = f"{self.base_url}/v1/admin/domains?preview={preview}"
         body = {
             "displayName": display_name
         }
@@ -103,7 +107,7 @@ class FabricClientAdmin(FabricClient):
             status_code (int): The status code of the request
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}"
 
         response:requests.Response = self.calling_routine(url = url, operation = "DELETE", response_codes = [200, 429],
                                                           error_message = "Error deleting domain",
@@ -121,7 +125,7 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.domain import Domain
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}?preview={preview}"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}?preview={preview}"
 
         domain_dict = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429], error_message = "Error getting domain",
                                            return_format="json")
@@ -167,7 +171,7 @@ class FabricClientAdmin(FabricClient):
         """
 
        
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/workspaces"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/workspaces"
 
         workspaces = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429], error_message = "Error listing domain workspaces",
                                           return_format="value_json", paging=True)
@@ -188,7 +192,7 @@ class FabricClientAdmin(FabricClient):
             list: List of Domain objects"""
         from msfabricpysdkcore.domain import Domain
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains?preview={preview}"
+        url = f"{self.base_url}/v1/admin/domains?preview={preview}"
         if nonEmptyOnly:
             url = f"{url}?nonEmptyOnly=True"
 
@@ -208,7 +212,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             list: The list of role assignments
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/roleAssignments"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/roleAssignments"
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                            error_message = "Error listing role assignments",
@@ -227,7 +231,7 @@ class FabricClientAdmin(FabricClient):
             int: The status code of the response
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/roleAssignments/bulkAssign"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/roleAssignments/bulkAssign"
         body = {
             "type": type,
             "principals": principals
@@ -249,7 +253,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/roleAssignments/bulkUnassign"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/roleAssignments/bulkUnassign"
         body = {
             "type": type,
             "principals": principals
@@ -271,7 +275,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/roleAssignments/syncToSubdomains"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/roleAssignments/syncToSubdomains"
         body = {
             "role": role
         }
@@ -290,7 +294,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/unassignAllWorkspaces"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/unassignAllWorkspaces"
 
         response:requests.Response = self.calling_routine(url = url, operation = "POST", response_codes = [200, 429],
                                                           error_message = "Error unassigning all workspaces",
@@ -306,7 +310,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/unassignWorkspaces"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/unassignWorkspaces"
         body = {
             "workspacesIds": workspace_ids
         }
@@ -325,7 +329,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             Domain: The Domain object
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}?preview={preview}"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}?preview={preview}"
         body = {}
         if description:
             body["description"] = description
@@ -355,7 +359,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/domains/{domain_id}/assignWorkspacesByCapacities"
+        url = f"{self.base_url}/v1/admin/domains/{domain_id}/assignWorkspacesByCapacities"
 
         body = {
             "capacitiesIds": capacities_ids
@@ -376,7 +380,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             list: The list of external data shares
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/items/externalDataShares"
+        url = f"{self.base_url}/v1/admin/items/externalDataShares"
 
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
@@ -394,7 +398,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}/revoke"
+        url = f"{self.base_url}/v1/admin/workspaces/{workspace_id}/items/{item_id}/externalDataShares/{external_data_share_id}/revoke"
 
         response:requests.Response = self.calling_routine(url = url, operation = "POST", response_codes = [200, 429],
                                                           error_message = "Error revoking external data share",
@@ -416,7 +420,7 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.admin_item import AdminItem
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/items/{item_id}"
+        url = f"{self.base_url}/v1/admin/workspaces/{workspace_id}/items/{item_id}"
         if type:
             url += f"?type={type}"
 
@@ -436,7 +440,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The access details of the item
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/items/{item_id}/users"
+        url = f"{self.base_url}/v1/admin/workspaces/{workspace_id}/items/{item_id}/users"
 
         if type:
             url += f"?type={type}"
@@ -455,7 +459,7 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.admin_item import AdminItem
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/items"
+        url = f"{self.base_url}/v1/admin/items"
         first_parameter = False
         if workspace_id:
             url = f"{url}?workspaceId={workspace_id}"
@@ -494,7 +498,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The response from the API"""
 
-        url = "https://api.fabric.microsoft.com/v1/admin/items/bulkRemoveLabels"
+        url = f"{self.base_url}/v1/admin/items/bulkRemoveLabels"
 
         if len(items) > 2000:
             self.bulk_remove_labels(items[2000:])
@@ -520,7 +524,7 @@ class FabricClientAdmin(FabricClient):
             dict: The response from the API
         """
 
-        url = "https://api.fabric.microsoft.com/v1/admin/items/bulkSetLabels"
+        url = f"{self.base_url}/v1/admin/items/bulkSetLabels"
 
         if len(items) > 2000:
             self.bulk_set_labels(items[2000:], label_id, assignment_method, delegated_principal)
@@ -550,7 +554,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             Response: The response from the API
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/items/bulkRemoveSharingLinks"
+        url = f"{self.base_url}/v1/admin/items/bulkRemoveSharingLinks"
 
         if len(items) > 500:
             self.bulk_remove_sharing_links(items = items[500:], sharing_link_type = sharing_link_type)
@@ -574,7 +578,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             Response: The response from the API
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/items/removeAllSharingLinks"
+        url = f"{self.base_url}/v1/admin/items/removeAllSharingLinks"
 
         body = {
             "sharingLinkType": sharing_link_type
@@ -595,7 +599,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The response from the API
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/tags/bulkCreateTags"
+        url = f"{self.base_url}/v1/admin/tags/bulkCreateTags"
 
         body = {
             "createTagsRequest": create_tags_request
@@ -615,7 +619,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/tags/{tag_id}"
+        url = f"{self.base_url}/v1/admin/tags/{tag_id}"
 
         response:requests.Response = self.calling_routine(url = url, operation = "DELETE", response_codes = [200, 429],
                                                           error_message = "Error deleting tag", return_format="response")
@@ -628,7 +632,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             list: The list of tags
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/tags"
+        url = f"{self.base_url}/v1/admin/tags"
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                            error_message = "Error listing tags", return_format="value_json", paging=True)
@@ -644,7 +648,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The response from the API
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/tags/{tag_id}"
+        url = f"{self.base_url}/v1/admin/tags/{tag_id}"
         body = {}
         if display_name:
             body["displayName"] = display_name
@@ -668,7 +672,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             int: The status code of the response
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides/{tenant_setting_name}"
+        url = f"{self.base_url}/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides/{tenant_setting_name}"
 
         response:requests.Response = self.calling_routine(url = url, operation = "DELETE", response_codes = [200, 429],
                                                           error_message = "Error deleting capacity tenant setting override",
@@ -682,7 +686,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             list: The capacities tenant settings overrides
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/capacities/delegatedTenantSettingOverrides"
+        url = f"{self.base_url}/v1/admin/capacities/delegatedTenantSettingOverrides"
 
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
@@ -700,7 +704,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             list: The capacities tenant settings overrides
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides"
+        url = f"{self.base_url}/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides"
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                            error_message = "Error listing capacity tenant settings overrides",
@@ -715,7 +719,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             list: The domains tenant settings overrides
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/domains/delegatedTenantSettingOverrides"
+        url = f"{self.base_url}/v1/admin/domains/delegatedTenantSettingOverrides"
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                            error_message = "Error listing domain tenant settings overrides",
@@ -729,7 +733,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The tenant settings
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/tenantsettings"
+        url = f"{self.base_url}/v1/admin/tenantsettings"
 
         response_json = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                              error_message = "Error getting tenant settings", paging= True, return_format="value")
@@ -742,7 +746,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             list: The workspaces tenant settings overrides
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/workspaces/delegatedTenantSettingOverrides"
+        url = f"{self.base_url}/v1/admin/workspaces/delegatedTenantSettingOverrides"
 
         items: list = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                            error_message = "Error listing workspace tenant settings overrides",
@@ -765,7 +769,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The overrides
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides/{tenant_setting_name}/update"
+        url = f"{self.base_url}/v1/admin/capacities/{capacity_id}/delegatedTenantSettingOverrides/{tenant_setting_name}/update"
         body = {
             "enabled": enabled
         }
@@ -799,7 +803,7 @@ class FabricClientAdmin(FabricClient):
             dict: The tenant settings
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/tenantsettings/{tenant_setting_name}/update"
+        url = f"{self.base_url}/v1/admin/tenantsettings/{tenant_setting_name}/update"
 
         body = {
             "enabled": enabled
@@ -836,7 +840,7 @@ class FabricClientAdmin(FabricClient):
             list: The list of access entities
         """
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/users/{user_id}/access"
+        url = f"{self.base_url}/v1/admin/users/{user_id}/access"
 
         if type:
             url = f"{url}?type={type}"
@@ -858,7 +862,7 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.admin_workspace import AdminWorkspace
 
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}"
+        url = f"{self.base_url}/v1/admin/workspaces/{workspace_id}"
 
         response_json: dict = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                                    error_message = "Error getting workspace", return_format="json")
@@ -873,7 +877,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The Git connections
         """
-        url = "https://api.fabric.microsoft.com/v1/admin/workspaces/discoverGitConnections"
+        url = f"{self.base_url}/v1/admin/workspaces/discoverGitConnections"
 
         response_json = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                              error_message = "Error discovering Git connections", return_format="value_json", paging=True)
@@ -887,7 +891,7 @@ class FabricClientAdmin(FabricClient):
         Returns:
             dict: The access details of the workspace
         """
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/users"
+        url = f"{self.base_url}/v1/admin/workspaces/{workspace_id}/users"
 
         response_json = self.calling_routine(url = url, operation = "GET", response_codes = [200, 429],
                                              error_message = "Error getting workspace access details", return_format="json")
@@ -904,7 +908,7 @@ class FabricClientAdmin(FabricClient):
         """
         from msfabricpysdkcore.admin_workspace import AdminWorkspace
 
-        url = "https://api.fabric.microsoft.com/v1/admin/workspaces"
+        url = f"{self.base_url}/v1/admin/workspaces"
         first_parameter = False
         if type:
             url = f"{url}?type={type}"
@@ -950,7 +954,7 @@ class FabricClientAdmin(FabricClient):
             "newWorkspaceAdminPrincipal": new_workspace_admin_principal,
             "newWorkspaceName": new_workspace_name
         }
-        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/restore"
+        url = f"{self.base_url}/v1/admin/workspaces/{workspace_id}/restore"
 
         response_json = self.calling_routine(url = url, operation = "POST", body = restore_request,
                                              response_codes = [200, 429], error_message = "Error restoring workspace",
