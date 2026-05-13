@@ -122,6 +122,8 @@ fc = FabricClientCore(tenant_id = "tenant_id",
                       client_id = "your_service_principal_id",
                       client_secret = "your_service_principal_secret")
 
+# Or use a custom base URL for internal Fabric environments
+fc = FabricClientCore(base_url = "https://api.fabric.internal.contoso.com")
 
 ```
 ### Getting a token

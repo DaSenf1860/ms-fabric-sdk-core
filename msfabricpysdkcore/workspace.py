@@ -419,9 +419,10 @@ class Workspace:
                                                     schedule_id=schedule_id, configuration=configuration, enabled=enabled)
 
 
-    def commit_to_git(self, mode, comment=None, items=None, workspace_head=None):
+    def commit_to_git(self, mode, comment=None, items=None, workspace_head=None, wait_for_completion=True):
         return self.core_client.commit_to_git(workspace_id=self.id, mode=mode, comment=comment,
-                                              items=items, workspace_head=workspace_head)
+                                              items=items, workspace_head=workspace_head,
+                                              wait_for_completion=wait_for_completion)
 
     def git_connect(self, git_provider_details, my_git_credentials):
         return self.core_client.git_connect(workspace_id=self.id, git_provider_details=git_provider_details,
@@ -430,9 +431,10 @@ class Workspace:
     def git_disconnect(self):
         return self.core_client.git_disconnect(workspace_id=self.id)
 
-    def git_initialize_connection(self, initialization_strategy):
+    def git_initialize_connection(self, initialization_strategy, wait_for_completion=True):
         return self.core_client.git_initialize_connection(workspace_id=self.id,
-                                                          initialization_strategy=initialization_strategy)
+                                                          initialization_strategy=initialization_strategy,
+                                                          wait_for_completion=wait_for_completion)
     def git_get_connection(self):
         return self.core_client.git_get_connection(workspace_id=self.id)
  
@@ -442,10 +444,11 @@ class Workspace:
     def git_get_status(self):
         return self.core_client.git_get_status(workspace_id=self.id)
 
-    def update_from_git(self, remote_commit_hash, conflict_resolution = None, options = None, workspace_head = None):
+    def update_from_git(self, remote_commit_hash, conflict_resolution = None, options = None, workspace_head = None, wait_for_completion=True):
         return self.core_client.update_from_git(workspace_id=self.id, remote_commit_hash=remote_commit_hash,
                                                conflict_resolution=conflict_resolution,
-                                               options=options, workspace_head=workspace_head)
+                                               options=options, workspace_head=workspace_head,
+                                               wait_for_completion=wait_for_completion)
     
     def update_my_git_credentials(self, source, connection_id = None):
         return self.core_client.update_my_git_credentials(workspace_id=self.id, source=source, connection_id=connection_id)
