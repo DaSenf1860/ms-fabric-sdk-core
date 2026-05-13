@@ -251,6 +251,26 @@ class FabricClientCore(FabricClient):
         response_json = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
                                              error_message="Error updating connection role assignment", return_format="json")
         return response_json
+    
+    def test_connection(self, connection_id, principal = None, role = None):
+        """Test a connection
+        Args:
+            connection_id (str): The ID of the connection
+            principal (dict): The principal to test
+            role (str): The role to test
+        Returns:
+            dict: The test result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/connections/{connection_id}/testConnection"
+        
+        body = {}
+        if principal:
+            body["principal"] = principal
+        if role:
+            body["role"] = role
+        
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                    error_message="Error testing connection", return_format="json")
         
     # Deployment Pipelines
 
@@ -1651,6 +1671,33 @@ class FabricClientCore(FabricClient):
                                     error_message="Error getting item definition",
                                     return_format="json+operation_result")
     
+    def get_item_payload(self, workspace_id, item_id, item_type):
+        """Get the item payload
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+            item_type (str): The type of the item
+        Returns:
+            dict: The item payload
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/getPayload?type={item_type}"
+
+        return self.calling_routine(url, operation="POST", response_codes=[200, 429],
+                                    error_message="Error getting item payload", return_format="json")
+    
+    def resolve_item_permissions(self, workspace_id, item_id):
+        """Resolve item permissions
+        Args:
+            workspace_id (str): The ID of the workspace
+            item_id (str): The ID of the item
+        Returns:
+            dict: The resolved permissions
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/items/{item_id}/permissions/resolve"
+
+        return self.calling_routine(url, operation="POST", response_codes=[200, 429],
+                                    error_message="Error resolving item permissions", return_format="json")
+    
     
     def update_item(self, workspace_id, item_id, display_name = None, description = None, type = None, return_item=False, **kwargs):
         """Update the item
@@ -1751,6 +1798,42 @@ class FabricClientCore(FabricClient):
                                         error_message="Error bulk moving items", return_format="response")
 
         return response.status_code
+    
+    def bulk_export_item_definitions(self, workspace_id, items, mode = None):
+        """Bulk export item definitions (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            items (list): List of items to export
+            mode (str): The export mode
+        Returns:
+            dict: The export response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/bulkExportItemDefinitions?beta=true"
+        
+        body = {"items": items}
+        if mode:
+            body["mode"] = mode
+        
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                    error_message="Error bulk exporting item definitions", return_format="json")
+    
+    def bulk_import_item_definitions(self, workspace_id, definition_parts, options = None):
+        """Bulk import item definitions (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            definition_parts (list): The definition parts to import
+            options (dict): The import options
+        Returns:
+            dict: The import response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/bulkImportItemDefinitions?beta=true"
+        
+        body = {"definitionParts": definition_parts}
+        if options:
+            body["options"] = options
+        
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                    error_message="Error bulk importing item definitions", return_format="json")
 
     # Job Scheduler
     
@@ -1910,6 +1993,34 @@ class FabricClientCore(FabricClient):
 
         return self.calling_routine(url=url, operation="PATCH", body=payload, response_codes=[200, 429],
                                     error_message="Error updating job schedule", return_format="json")
+    
+    def search(self, search_text = None, filter_expr = None, page_size = None, continuation_token = None):
+        """Search for items across the tenant
+        Args:
+            search_text (str): The search text
+            filter_expr (str): The filter expression
+            page_size (int): The page size
+            continuation_token (str): The continuation token
+        Returns:
+            dict: The search results
+        """
+        url = "https://api.fabric.microsoft.com/v1/search"
+        
+        if continuation_token:
+            url += f"?continuationToken={continuation_token}"
+        
+        body = {}
+        if search_text:
+            body["search"] = search_text
+        if filter_expr:
+            body["filter"] = filter_expr
+        if page_size:
+            body["pageSize"] = page_size
+        if continuation_token:
+            body["continuationToken"] = continuation_token
+        
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                    error_message="Error searching", return_format="json")
     
     # long running operations
 
@@ -2435,6 +2546,73 @@ class FabricClientCore(FabricClient):
                                         response_codes=[200, 429], error_message="Error unapplying tags", return_format="response")
 
         return response.status_code
+    
+    def apply_workspace_tags(self, workspace_id, tags):
+        """Apply tags to a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            tags (list): The list of tags to apply
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/applyTags"
+
+        payload = {'tags': tags}
+
+        response = self.calling_routine(url, operation="POST", body=payload,
+                                        response_codes=[200, 429], error_message="Error applying workspace tags", return_format="response")
+
+        return response.status_code
+    
+    def unapply_workspace_tags(self, workspace_id, tags):
+        """Unapply tags from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            tags (list): The list of tags to unapply
+        Returns:
+            int: The status code of the response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/unapplyTags"
+
+        payload = {'tags': tags}
+
+        response = self.calling_routine(url, operation="POST", body=payload,
+                                        response_codes=[200, 429], error_message="Error unapplying workspace tags", return_format="response")
+
+        return response.status_code
+    
+    def modify_workspace_diagnostics(self, workspace_id, status, destination = None):
+        """Modify workspace diagnostics settings
+        Args:
+            workspace_id (str): The ID of the workspace
+            status (str): The diagnostics status (e.g., 'Enabled' or 'Disabled')
+            destination (dict): The diagnostics destination
+        Returns:
+            int: The status code
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/modifyDiagnostics"
+        
+        body = {"status": status}
+        if destination:
+            body["destination"] = destination
+        
+        response = self.calling_routine(url, operation="POST", body=body, response_codes=[200, 429],
+                                       error_message="Error modifying workspace diagnostics", return_format="response")
+        return response.status_code
+    
+    def modify_workspace_default_tier(self, workspace_id, default_tier):
+        """Modify workspace default tier
+        Args:
+            workspace_id (str): The ID of the workspace
+            default_tier (str): The default tier
+        Returns:
+            int: The status code
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/modifyDefaultTier?defaultTier={default_tier}"
+        
+        response = self.calling_routine(url, operation="POST", response_codes=[200, 429],
+                                       error_message="Error modifying workspace default tier", return_format="response")
+        return response.status_code
 
     ### Workspaces
 
@@ -2571,6 +2749,37 @@ class FabricClientCore(FabricClient):
                                              error_message="Error getting network communication policy", return_format="json")
 
         return response_json
+    
+    def get_inbound_azure_resource_rules(self, workspace_id):
+        """Get the inbound Azure resource rules for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The inbound Azure resource rules
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/inboundAzureResourceRules"
+
+        response_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                             error_message="Error getting inbound Azure resource rules", return_format="json")
+
+        return response_json
+    
+    def set_inbound_azure_resource_rules(self, workspace_id, rules):
+        """Set the inbound Azure resource rules for a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            rules (list): The list of inbound Azure resource rules
+        Returns:
+            dict: The operation result
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/networking/inboundAzureResourceRules"
+        
+        body = {"rules": rules}
+
+        response = self.calling_routine(url, operation="PUT", body=body, response_codes=[200, 429],
+                                       error_message="Error setting inbound Azure resource rules", return_format="response")
+
+        return response.status_code
 
     def get_workspace(self, id = None, name = None, return_item=True):
         """Get workspace by id or name
@@ -3232,6 +3441,73 @@ class FabricClientCore(FabricClient):
 
         return self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
                                     error_message="Error updating Airflow workspace settings", return_format="json")
+    
+    def deploy_apache_airflow_job_requirements(self, workspace_id, apache_airflow_job_id, file_path, requirements_content_request):
+        """Deploy Apache Airflow job requirements (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            file_path (str): The file path
+            requirements_content_request (dict): The requirements content request
+        Returns:
+            dict: The deployment response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/deployRequirements?filePath={file_path}&beta=true"
+        
+        body = {"requirementsContentRequest": requirements_content_request}
+
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                    error_message="Error deploying Apache Airflow job requirements", return_format="response")
+    
+    def start_apache_airflow_job_environment(self, workspace_id, apache_airflow_job_id):
+        """Start Apache Airflow job environment (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+        Returns:
+            dict: The start response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/startEnvironment?beta=true"
+
+        return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                    error_message="Error starting Apache Airflow job environment", return_format="response")
+    
+    def stop_apache_airflow_job_environment(self, workspace_id, apache_airflow_job_id):
+        """Stop Apache Airflow job environment (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+        Returns:
+            dict: The stop response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/stopEnvironment?beta=true"
+
+        return self.calling_routine(url, operation="POST", response_codes=[200, 202, 429],
+                                    error_message="Error stopping Apache Airflow job environment", return_format="response")
+    
+    def update_apache_airflow_job_settings(self, workspace_id, apache_airflow_job_id, airflow_configuration_overrides = None, environment_variables = None, triggerers = None):
+        """Update Apache Airflow job settings (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            apache_airflow_job_id (str): The ID of the Apache Airflow job
+            airflow_configuration_overrides (dict): The Airflow configuration overrides
+            environment_variables (dict): The environment variables
+            triggerers (dict): The triggerers configuration
+        Returns:
+            dict: The updated settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/ApacheAirflowJobs/{apache_airflow_job_id}/settings?beta=true"
+        
+        body = {}
+        if airflow_configuration_overrides:
+            body["airflowConfigurationOverrides"] = airflow_configuration_overrides
+        if environment_variables:
+            body["environmentVariables"] = environment_variables
+        if triggerers:
+            body["triggerers"] = triggerers
+
+        return self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                    error_message="Error updating Apache Airflow job settings", return_format="json")
 
     # Anomaly Detectors
     # POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/anomalydetectors
@@ -4359,6 +4635,62 @@ class FabricClientCore(FabricClient):
         url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/sparkcompute?preview={preview}"
 
         resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429], error_message="Error getting spark compute settings", return_format="json")     
+        return resp_json
+    
+    def get_spark_compute_beta(self, workspace_id, environment_id):
+        """Get the spark compute settings of the environment (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+        Returns:
+            dict: The spark compute settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/sparkcompute?beta=true"
+
+        resp_json = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                        error_message="Error getting spark compute settings (beta)", return_format="json")
+        return resp_json
+    
+    def update_spark_compute_beta(self, workspace_id, environment_id, driver_cores = None, driver_memory = None,
+                                  dynamic_executor_allocation = None, executor_cores = None, executor_memory = None,
+                                  instance_pool = None, runtime_version = None, spark_properties = None):
+        """Update the spark compute settings of the environment (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            environment_id (str): The ID of the environment
+            driver_cores (int): The number of driver cores
+            driver_memory (str): The driver memory
+            dynamic_executor_allocation (dict): Dynamic executor allocation settings
+            executor_cores (int): The number of executor cores
+            executor_memory (str): The executor memory
+            instance_pool (dict): The instance pool settings
+            runtime_version (str): The runtime version
+            spark_properties (dict): The Spark properties
+        Returns:
+            dict: The updated spark compute settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/environments/{environment_id}/sparkcompute?beta=true"
+        
+        body = {}
+        if driver_cores is not None:
+            body["driverCores"] = driver_cores
+        if driver_memory is not None:
+            body["driverMemory"] = driver_memory
+        if dynamic_executor_allocation is not None:
+            body["dynamicExecutorAllocation"] = dynamic_executor_allocation
+        if executor_cores is not None:
+            body["executorCores"] = executor_cores
+        if executor_memory is not None:
+            body["executorMemory"] = executor_memory
+        if instance_pool is not None:
+            body["instancePool"] = instance_pool
+        if runtime_version is not None:
+            body["runtimeVersion"] = runtime_version
+        if spark_properties is not None:
+            body["sparkProperties"] = spark_properties
+
+        resp_json = self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                        error_message="Error updating spark compute settings (beta)", return_format="json")
         return resp_json
     
     def get_published_settings(self, workspace_id, environment_id, preview = "false"):
@@ -6213,6 +6545,118 @@ class FabricClientCore(FabricClient):
         return self.calling_routine(url, operation="POST", response_codes=[200, 429],
                                     error_message="Error stopping mirroring", return_format="response")
 
+    # Mirrored Catalogs
+
+    def create_mirrored_catalog(self, workspace_id, display_name, description = None, definition = None, folder_id = None):
+        """Create a mirrored catalog in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            display_name (str): The display name of the mirrored catalog
+            description (str): The description of the mirrored catalog
+            definition (dict): The definition of the mirrored catalog
+            folder_id (str): The ID of the folder
+        Returns:
+            dict: The created mirrored catalog
+        """
+        return self.create_item(workspace_id = workspace_id,
+                                display_name = display_name,
+                                type = "mirroredCatalogs",
+                                description = description,
+                                definition=definition,
+                                folder_id=folder_id)
+    
+    def delete_mirrored_catalog(self, workspace_id, mirrored_catalog_id):
+        """Delete a mirrored catalog from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_catalog_id (str): The ID of the mirrored catalog
+        Returns:
+            int: The status code of the response
+        """
+        return self.delete_item(workspace_id, mirrored_catalog_id, type="mirroredCatalogs")
+    
+    def get_mirrored_catalog(self, workspace_id, mirrored_catalog_id = None, mirrored_catalog_name = None):
+        """Get a mirrored catalog from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_catalog_id (str): The ID of the mirrored catalog
+            mirrored_catalog_name (str): The name of the mirrored catalog
+        Returns:
+            MirroredCatalog: The mirrored catalog object
+        """
+        from msfabricpysdkcore.otheritems import MirroredCatalog
+
+        if mirrored_catalog_id is None and mirrored_catalog_name is not None:
+            mirrored_catalogs = self.list_mirrored_catalogs(workspace_id)
+            mirrored_catalogs = [mc for mc in mirrored_catalogs if mc.display_name == mirrored_catalog_name]
+            if len(mirrored_catalogs) == 0:
+                raise Exception(f"Mirrored catalog with name {mirrored_catalog_name} not found")
+            mirrored_catalog_id = mirrored_catalogs[0].id
+        
+        if mirrored_catalog_id is None:
+            raise Exception("mirrored_catalog_id or mirrored_catalog_name is required")
+        
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredCatalogs/{mirrored_catalog_id}"
+
+        item_dict = self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                            error_message="Error getting mirrored catalog", return_format="json")
+        mirrored_catalog = MirroredCatalog.from_dict(item_dict, core_client=self)
+        return mirrored_catalog
+
+    def get_mirrored_catalog_definition(self, workspace_id, mirrored_catalog_id, format = None):
+        """Get the definition of a mirrored catalog
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_catalog_id (str): The ID of the mirrored catalog
+            format (str): The format of the definition
+        Returns:
+            dict: The definition of the mirrored catalog
+        """
+        return self.get_item_definition(workspace_id, mirrored_catalog_id, type="mirroredCatalogs", format=format)
+
+    def list_mirrored_catalogs(self, workspace_id, with_properties = False):
+        """List mirrored catalogs in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            with_properties (bool): Whether to get the item object with properties
+        Returns:
+            list: The list of mirrored catalogs
+        """
+        return self.list_items(workspace_id=workspace_id, type="mirroredCatalogs", with_properties=with_properties)
+    
+    def update_mirrored_catalog(self, workspace_id, mirrored_catalog_id, display_name = None, description = None, return_item=False): 
+        """Update a mirrored catalog in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_catalog_id (str): The ID of the mirrored catalog
+            display_name (str): The display name of the mirrored catalog
+            description (str): The description of the mirrored catalog
+            return_item (bool): Whether to return the updated item
+        Returns:
+            dict: The updated mirrored catalog
+        """
+        return self.update_item(workspace_id, mirrored_catalog_id, display_name = display_name, description = description,
+                                type="mirroredCatalogs", return_item=return_item)
+    
+    def update_mirrored_catalog_definition(self, workspace_id, mirrored_catalog_id, definition, update_metadata = None):
+        """Update the definition of a mirrored catalog
+        Args:
+            workspace_id (str): The ID of the workspace
+            mirrored_catalog_id (str): The ID of the mirrored catalog
+            definition (dict): The definition of the mirrored catalog
+            update_metadata (bool): Whether to update metadata
+        Returns:
+            dict: The updated definition of the mirrored catalog
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/mirroredCatalogs/{mirrored_catalog_id}/updateDefinition"
+        
+        if update_metadata is not None:
+            url += f"?updateMetadata={str(update_metadata).lower()}"
+        
+        body = {"definition": definition}
+        
+        return self.calling_routine(url, operation="POST", body=body, response_codes=[200, 202, 429],
+                                    error_message="Error updating mirrored catalog definition", return_format="response")
 
     # mlExperiments
 
@@ -6867,6 +7311,35 @@ class FabricClientCore(FabricClient):
         """
 
         return self.list_livy_sessions(workspace_id=workspace_id, item_id=notebook_id, item_type="notebooks")
+    
+    def get_notebook_job_instance(self, workspace_id, notebook_id, job_instance_id):
+        """Get a job instance for a notebook (beta)
+        
+        This is a notebook-specific endpoint that delegates to the generic get_item_job_instance method.
+        
+        Args:
+            workspace_id (str): The ID of the workspace
+            notebook_id (str): The ID of the notebook
+            job_instance_id (str): The ID of the job instance
+        Returns:
+            JobInstance: The job instance object
+        """
+        return self.get_item_job_instance(workspace_id, notebook_id, job_instance_id)
+    
+    def run_on_demand_notebook(self, workspace_id, notebook_id, job_type="RunNotebook", execution_data=None):
+        """Run a notebook on demand (beta)
+        
+        This is a notebook-specific endpoint that delegates to the generic run_on_demand_item_job method.
+        
+        Args:
+            workspace_id (str): The ID of the workspace
+            notebook_id (str): The ID of the notebook
+            job_type (str): The type of the job (default: "RunNotebook")
+            execution_data (dict): The execution data including parameters
+        Returns:
+            JobInstance: The job instance object
+        """
+        return self.run_on_demand_item_job(workspace_id, notebook_id, job_type, execution_data)
 
     # paginatedReports
 
@@ -7365,6 +7838,38 @@ class FabricClientCore(FabricClient):
                                             error_message="Error updating spark settings", return_format="json")
 
         return response_json
+    
+    def get_sql_pools_configuration(self, workspace_id):
+        """Get SQL pools configuration for a workspace (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The SQL pools configuration
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/sqlPoolsConfiguration?beta=true"
+
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting SQL pools configuration", return_format="json")
+    
+    def update_sql_pools_configuration(self, workspace_id, custom_sql_pools = None, custom_sql_pools_enabled = None):
+        """Update SQL pools configuration for a workspace (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            custom_sql_pools (list): The custom SQL pools
+            custom_sql_pools_enabled (bool): Whether custom SQL pools are enabled
+        Returns:
+            dict: The updated SQL pools configuration
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/spark/sqlPoolsConfiguration?beta=true"
+        
+        body = {}
+        if custom_sql_pools is not None:
+            body["customSQLPools"] = custom_sql_pools
+        if custom_sql_pools_enabled is not None:
+            body["customSQLPoolsEnabled"] = custom_sql_pools_enabled
+
+        return self.calling_routine(url, operation="PATCH", body=body, response_codes=[200, 429],
+                                    error_message="Error updating SQL pools configuration", return_format="json")
 
     # sparkJobDefinitions
 
@@ -7644,6 +8149,56 @@ class FabricClientCore(FabricClient):
 
         return self.calling_routine(url, operation="POST", response_codes=[200, 429],
                                     error_message="Error stopping SQL database mirroring", return_format="response")
+    
+    def list_restorable_deleted_databases(self, workspace_id, recursive = None, root_folder_id = None):
+        """List restorable deleted databases in a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+            recursive (bool): Whether to list recursively
+            root_folder_id (str): The root folder ID
+        Returns:
+            list: The list of restorable deleted databases
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/restorableDeletedDatabases"
+        
+        params = []
+        if recursive is not None:
+            params.append(f"recursive={str(recursive).lower()}")
+        if root_folder_id:
+            params.append(f"rootFolderId={root_folder_id}")
+        
+        if params:
+            url += "?" + "&".join(params)
+        
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing restorable deleted databases", return_format="value_json", paging=True)
+    
+    def list_scopes(self, workspace_id, connection_id, continuation_token = None, parent = None, recursive = None):
+        """List scopes for a connection (beta)
+        Args:
+            workspace_id (str): The ID of the workspace
+            connection_id (str): The ID of the connection
+            continuation_token (str): The continuation token
+            parent (str): The parent scope
+            recursive (bool): Whether to list recursively
+        Returns:
+            dict: The list of scopes
+        """
+        url = f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/connections/{connection_id}/scopes?beta=true"
+        
+        params = []
+        if continuation_token:
+            params.append(f"continuationToken={continuation_token}")
+        if parent:
+            params.append(f"parent={parent}")
+        if recursive is not None:
+            params.append(f"recursive={str(recursive).lower()}")
+        
+        if params:
+            url += "&" + "&".join(params)
+        
+        return self.calling_routine(url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing scopes", return_format="json")
 
     # SQL endpoints
     

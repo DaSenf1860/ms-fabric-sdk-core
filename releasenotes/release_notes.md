@@ -1,5 +1,37 @@
 # Release Notes
 
+## 0.3.2
+### New Features
+- **Mirrored Catalogs**: CRUDL, Get/Update Definition - New MirroredCatalog class added to otheritems.py
+- **Workspace Operations**: 
+  - Apply/Unapply Workspace Tags - Tag workspace containers themselves
+  - Modify Workspace Diagnostics - Enable/disable workspace diagnostics
+  - Modify Workspace Default Tier - Set default tier for workspace
+  - Get/Set Inbound Azure Resource Rules - Manage networking rules
+  - Bulk Export/Import Item Definitions (beta) - Bulk operations on items
+  - Search - Search for items in workspace
+  - Get/Update SQL Pools Configuration (beta) - Manage SQL pools
+  - List Restorable Deleted Databases - View recoverable databases
+- **Item Operations**:
+  - Get Item Payload - Retrieve item payload
+  - Resolve Item Permissions - Get resolved permissions
+  - Test Connection - Validate item connections
+- **Environment Operations**:
+  - Get/Update Spark Compute (beta) - Beta version of spark compute settings
+- **Notebook Background Jobs (beta)**:
+  - Get Notebook Job Instance - Retrieve notebook job instances
+  - Run On Demand Notebook - Execute notebooks on demand
+- **Apache Airflow Job Extensions (beta)**:
+  - Deploy Apache Airflow Job Requirements - Deploy requirements files
+  - Start/Stop Apache Airflow Job Environment - Manage Airflow environments
+  - Get/Update Apache Airflow Job Settings - Configure Airflow settings
+- **Admin Operations**:
+  - Grant/Remove Admin Temporary Access - Temporary admin workspace access
+  - Capacity Custom Pools (beta): CRUDL for capacity custom pools
+  - Capacity Spark Settings (beta): Get/Update capacity spark settings
+- **List Scopes (beta)** - List scopes in warehouse/lakehouse
+- All new methods properly organized in Workspace, Item, and Environment classes following SDK architecture patterns
+
 ## 0.3.1
 ### New Features
 - Cosmos DB Databases: CRUDL, Get/Update Definition

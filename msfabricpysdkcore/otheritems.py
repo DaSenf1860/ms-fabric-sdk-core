@@ -454,6 +454,25 @@ class MirroredDatabase(Item):
     def stop_mirroring(self):
         return self.core_client.stop_mirroring(workspace_id=self.workspace_id, mirrored_database_id=self.id)
 
+class MirroredCatalog(Item):
+    """Class to represent a mirrored catalog in Microsoft Fabric"""
+     
+    def __init__(self, id, display_name, type, workspace_id, core_client, properties = None, definition=None, description=""):
+        super().__init__(id, display_name, type, workspace_id, core_client, properties, definition, description)
+    
+    def from_dict(item_dict, core_client):
+        return MirroredCatalog(id=item_dict['id'], display_name=item_dict['displayName'], type=item_dict['type'], workspace_id=item_dict['workspaceId'],
+            properties=item_dict.get('properties', None),
+            definition=item_dict.get('definition', None), description=item_dict.get('description', ""), core_client=core_client)
+    
+    def get_definition(self, format = None): 
+        """Method to get the definition of the mirrored catalog"""
+        return self.core_client.get_mirrored_catalog_definition(self.workspace_id, self.id, format=format)
+    
+    def update_definition(self, definition, update_metadata = None):
+        """Method to update the definition of the mirrored catalog"""
+        return self.core_client.update_mirrored_catalog_definition(self.workspace_id, self.id, definition, update_metadata=update_metadata)
+
 class MLExperiment(Item):
     """Class to represent a ml experiment in Microsoft Fabric"""
      

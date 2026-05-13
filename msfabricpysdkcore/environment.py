@@ -27,6 +27,36 @@ class Environment(Item):
     def get_published_spark_compute(self, preview="false"):
         """Get the spark compute settings of the environment"""
         return self.core_client.get_published_spark_compute(self.workspace_id, self.id, preview=preview)
+
+    def get_spark_compute_beta(self):
+        """Get the spark compute settings of the environment (beta)
+        Returns:
+            dict: The spark compute settings
+        """
+        return self.core_client.get_spark_compute_beta(workspace_id=self.workspace_id, environment_id=self.id)
+
+    def update_spark_compute_beta(self, driver_cores=None, driver_memory=None,
+                                  dynamic_executor_allocation=None, executor_cores=None, executor_memory=None,
+                                  instance_pool=None, runtime_version=None, spark_properties=None):
+        """Update the spark compute settings of the environment (beta)
+        Args:
+            driver_cores (int): The number of driver cores
+            driver_memory (str): The driver memory
+            dynamic_executor_allocation (dict): Dynamic executor allocation settings
+            executor_cores (int): The number of executor cores
+            executor_memory (str): The executor memory
+            instance_pool (dict): The instance pool settings
+            runtime_version (str): The runtime version
+            spark_properties (dict): Additional Spark properties
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.update_spark_compute_beta(workspace_id=self.workspace_id, environment_id=self.id,
+                                                         driver_cores=driver_cores, driver_memory=driver_memory,
+                                                         dynamic_executor_allocation=dynamic_executor_allocation,
+                                                         executor_cores=executor_cores, executor_memory=executor_memory,
+                                                         instance_pool=instance_pool, runtime_version=runtime_version,
+                                                         spark_properties=spark_properties)
     
     def get_published_settings(self, preview="false"):
         """Get the published settings of the environment"""

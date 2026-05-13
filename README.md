@@ -1,6 +1,6 @@
 # Python SDK for Microsoft Fabric
 
-This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of March 10, 2026).
+This is a Python SDK for Microsoft Fabric. It is a wrapper around the REST APIs (v1) of Fabric*. It supports all Fabric REST APIs as well as Azure Resource Management APIs for Fabric (as of May 13, 2026).
 
 ![Python hugging a F](assets/fabricpythontransparent.png)
 
@@ -937,11 +937,262 @@ tags = fcc.list_tags()
 
 tag_ids = [tag["id"] for tag in tags]
 
-# Apply tags
+# Apply tags to items
 resp = fcc.apply_tags(workspace_id = "adsfsdf", item_id = "a9e59ec1-524b-49b1-a185-37e47dc0ceb9", tags = tag_ids)
 
-# Unapply tags
+# Unapply tags from items
 resp = fcc.unapply_tags(workspace_id = "adsfsdf", item_id = "a9e59ec1-524b-49b1-a185-37e47dc0ceb9", tags = tag_ids)
+
+# Apply tags to workspace itself
+resp = fcc.apply_workspace_tags(workspace_id = "workspace_id", tags = tag_ids)
+# or
+ws.apply_workspace_tags(tags = tag_ids)
+
+# Unapply tags from workspace
+resp = fcc.unapply_workspace_tags(workspace_id = "workspace_id", tags = tag_ids)
+# or
+ws.unapply_workspace_tags(tags = tag_ids)
+
+```
+
+### Workspace Settings and Operations
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# Modify workspace diagnostics
+fcc.modify_workspace_diagnostics(workspace_id="workspace_id", status="Enabled", 
+                                  destination={"type": "LogAnalytics", "workspaceId": "log_analytics_id"})
+# or
+ws.modify_diagnostics(status="Enabled", destination={"type": "LogAnalytics", "workspaceId": "log_analytics_id"})
+
+# Modify workspace default tier
+fcc.modify_workspace_default_tier(workspace_id="workspace_id", default_tier="Premium")
+# or
+ws.modify_default_tier(default_tier="Premium")
+
+# Get inbound Azure resource rules
+rules = fcc.get_inbound_azure_resource_rules(workspace_id="workspace_id")
+# or
+rules = ws.get_inbound_azure_resource_rules()
+
+# Set inbound Azure resource rules
+fcc.set_inbound_azure_resource_rules(workspace_id="workspace_id", rules=[{"resourceId": "resource_id"}])
+# or
+ws.set_inbound_azure_resource_rules(rules=[{"resourceId": "resource_id"}])
+
+# Search in workspace
+results = fcc.search(workspace_id="workspace_id", query="lakehouse")
+# or
+results = ws.search(query="lakehouse")
+
+# Get SQL pools configuration
+config = fcc.get_sql_pools_configuration(workspace_id="workspace_id")
+# or
+config = ws.get_sql_pools_configuration()
+
+# Update SQL pools configuration
+fcc.update_sql_pools_configuration(workspace_id="workspace_id", custom_sql_pools_enabled=True)
+# or
+ws.update_sql_pools_configuration(custom_sql_pools_enabled=True)
+
+# List restorable deleted databases
+databases = fcc.list_restorable_deleted_databases(workspace_id="workspace_id", lakehouse_id="lakehouse_id")
+# or
+databases = ws.list_restorable_deleted_databases(lakehouse_id="lakehouse_id")
+
+```
+
+### Bulk Operations
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# Bulk export item definitions
+items_to_export = [
+    {"itemId": "item_id_1", "itemType": "Notebook"},
+    {"itemId": "item_id_2", "itemType": "Lakehouse"}
+]
+export_result = fcc.bulk_export_item_definitions(workspace_id="workspace_id", items=items_to_export)
+# or
+export_result = ws.bulk_export_item_definitions(items=items_to_export)
+
+# Bulk import item definitions
+items_to_import = [
+    {"itemName": "NewNotebook", "itemType": "Notebook", "definition": {...}},
+    {"itemName": "NewLakehouse", "itemType": "Lakehouse", "definition": {...}}
+]
+import_result = fcc.bulk_import_item_definitions(workspace_id="workspace_id", items=items_to_import)
+# or
+import_result = ws.bulk_import_item_definitions(items=items_to_import)
+
+```
+
+### Item Utilities
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# Get item payload
+payload = fcc.get_item_payload(workspace_id="workspace_id", item_id="item_id")
+# or
+payload = item.get_payload()
+
+# Resolve item permissions
+permissions = fcc.resolve_item_permissions(workspace_id="workspace_id", item_id="item_id")
+# or
+permissions = item.resolve_permissions()
+
+# Test connection
+connection_result = fcc.test_connection(workspace_id="workspace_id", item_id="item_id", 
+                                       connection_details={"connectionString": "..."})
+# or
+connection_result = item.test_connection(connection_details={"connectionString": "..."})
+
+# List scopes (beta)
+scopes = fcc.list_scopes(workspace_id="workspace_id", item_id="lakehouse_id")
+
+```
+
+### Notebook Background Jobs
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# Run notebook on demand
+job = fcc.run_on_demand_notebook(workspace_id="workspace_id", notebook_id="notebook_id", 
+                                  execution_data={"param1": "value1"})
+
+# Get notebook job instance
+job_instance = fcc.get_notebook_job_instance(workspace_id="workspace_id", notebook_id="notebook_id",
+                                              job_instance_id="job_instance_id")
+
+```
+
+### Apache Airflow Job Extensions
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# Deploy Apache Airflow job requirements
+fcc.deploy_apache_airflow_job_requirements(workspace_id="workspace_id", apache_airflow_job_id="job_id",
+                                           requirements_txt="pandas==2.0.0\nnumpy==1.24.0")
+
+# Start Apache Airflow job environment
+fcc.start_apache_airflow_job_environment(workspace_id="workspace_id", apache_airflow_job_id="job_id")
+
+# Stop Apache Airflow job environment
+fcc.stop_apache_airflow_job_environment(workspace_id="workspace_id", apache_airflow_job_id="job_id")
+
+# Get Apache Airflow job settings
+settings = fcc.get_apache_airflow_job_settings(workspace_id="workspace_id", apache_airflow_job_id="job_id")
+
+# Update Apache Airflow job settings
+fcc.update_apache_airflow_job_settings(workspace_id="workspace_id", apache_airflow_job_id="job_id",
+                                       settings={"parallelism": 10})
+
+```
+
+### Environment Spark Compute (Beta)
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# Get spark compute (beta)
+compute = fcc.get_spark_compute_beta(workspace_id="workspace_id", environment_id="environment_id")
+# or
+env = fcc.get_environment(workspace_id="workspace_id", environment_id="environment_id", return_item=True)
+compute = env.get_spark_compute_beta()
+
+# Update spark compute (beta)
+fcc.update_spark_compute_beta(workspace_id="workspace_id", environment_id="environment_id",
+                              driver_cores=4, driver_memory="28g", executor_cores=4, executor_memory="28g")
+# or
+env.update_spark_compute_beta(driver_cores=4, driver_memory="28g", executor_cores=4, executor_memory="28g")
+
+```
+
+### Mirrored Catalogs
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+# Create mirrored catalog
+mirrored_catalog = fcc.create_mirrored_catalog(workspace_id="workspace_id", display_name="My Mirrored Catalog",
+                                               description="Catalog description", return_item=True)
+
+# Get mirrored catalog
+catalog = fcc.get_mirrored_catalog(workspace_id="workspace_id", mirrored_catalog_id="catalog_id", return_item=True)
+
+# List mirrored catalogs
+catalogs = fcc.list_mirrored_catalogs(workspace_id="workspace_id")
+
+# Update mirrored catalog
+fcc.update_mirrored_catalog(workspace_id="workspace_id", mirrored_catalog_id="catalog_id",
+                            display_name="Updated Name")
+# or
+catalog.update(display_name="Updated Name")
+
+# Get mirrored catalog definition
+definition = fcc.get_mirrored_catalog_definition(workspace_id="workspace_id", mirrored_catalog_id="catalog_id")
+# or
+definition = catalog.get_definition()
+
+# Update mirrored catalog definition
+fcc.update_mirrored_catalog_definition(workspace_id="workspace_id", mirrored_catalog_id="catalog_id",
+                                       definition={"catalogType": "Unity", ...})
+# or
+catalog.update_definition(definition={"catalogType": "Unity", ...})
+
+# Delete mirrored catalog
+fcc.delete_mirrored_catalog(workspace_id="workspace_id", mirrored_catalog_id="catalog_id")
+
+```
+
+### Admin Operations
+
+```python
+from msfabricpysdkcore import FabricClientAdmin
+fca = FabricClientAdmin()
+
+# Grant temporary admin access to workspace
+fca.grant_admin_temporary_access(workspace_id="workspace_id")
+
+# Remove temporary admin access
+fca.remove_admin_temporary_access(workspace_id="workspace_id")
+
+# Capacity custom pools (beta)
+# Create capacity custom pool
+pool = fca.create_capacity_custom_pool(capacity_id="capacity_id", name="MyPool",
+                                       max_node_count=10, type="Workspace")
+
+# Get capacity custom pool
+pool = fca.get_capacity_custom_pool(capacity_id="capacity_id", pool_id="pool_id")
+
+# List capacity custom pools
+pools = fca.list_capacity_custom_pools(capacity_id="capacity_id")
+
+# Update capacity custom pool
+fca.update_capacity_custom_pool(capacity_id="capacity_id", pool_id="pool_id", max_node_count=15)
+
+# Delete capacity custom pool
+fca.delete_capacity_custom_pool(capacity_id="capacity_id", pool_id="pool_id")
+
+# Capacity Spark settings (beta)
+# Get capacity spark settings
+settings = fca.get_capacity_spark_settings(capacity_id="capacity_id")
+
+# Update capacity spark settings
+fca.update_capacity_spark_settings(capacity_id="capacity_id", 
+                                   pool_auto_allocation_enabled=True,
+                                   default_pool_name="DefaultPool")
 
 ```
 

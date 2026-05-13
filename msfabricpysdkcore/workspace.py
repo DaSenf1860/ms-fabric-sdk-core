@@ -2599,6 +2599,128 @@ class Workspace:
     def get_queryable_graph_type(self, graph_model_id):
         return self.core_client.get_queryable_graph_type(workspace_id=self.id, graph_model_id=graph_model_id)
 
+    # Workspace Tags
+
+    def apply_workspace_tags(self, tags):
+        """Apply tags to the workspace itself
+        Args:
+            tags (list): The list of tags to apply
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.apply_workspace_tags(workspace_id=self.id, tags=tags)
+
+    def unapply_workspace_tags(self, tags):
+        """Unapply tags from the workspace itself
+        Args:
+            tags (list): The list of tags to unapply
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.unapply_workspace_tags(workspace_id=self.id, tags=tags)
+
+    # Workspace Settings
+
+    def modify_diagnostics(self, status, destination=None):
+        """Modify workspace diagnostics settings
+        Args:
+            status (str): The status of diagnostics (e.g., 'Enabled', 'Disabled')
+            destination (dict): The destination for diagnostics data
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.modify_workspace_diagnostics(workspace_id=self.id, status=status, destination=destination)
+
+    def modify_default_tier(self, default_tier):
+        """Modify the default tier for the workspace
+        Args:
+            default_tier (str): The default tier to set
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.modify_workspace_default_tier(workspace_id=self.id, default_tier=default_tier)
+
+    # Networking
+
+    def get_inbound_azure_resource_rules(self):
+        """Get inbound Azure resource rules for the workspace
+        Returns:
+            dict: The inbound Azure resource rules
+        """
+        return self.core_client.get_inbound_azure_resource_rules(workspace_id=self.id)
+
+    def set_inbound_azure_resource_rules(self, rules):
+        """Set inbound Azure resource rules for the workspace
+        Args:
+            rules (list): The list of inbound Azure resource rules
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.set_inbound_azure_resource_rules(workspace_id=self.id, rules=rules)
+
+    # Bulk Operations
+
+    def bulk_export_item_definitions(self, items):
+        """Bulk export item definitions from the workspace
+        Args:
+            items (list): The list of items to export
+        Returns:
+            dict: The export response
+        """
+        return self.core_client.bulk_export_item_definitions(workspace_id=self.id, items=items)
+
+    def bulk_import_item_definitions(self, items):
+        """Bulk import item definitions into the workspace
+        Args:
+            items (list): The list of items to import
+        Returns:
+            dict: The import response
+        """
+        return self.core_client.bulk_import_item_definitions(workspace_id=self.id, items=items)
+
+    # Search
+
+    def search(self, query, continuation_token=None):
+        """Search for items in the workspace
+        Args:
+            query (str): The search query
+            continuation_token (str): Token for pagination
+        Returns:
+            dict: The search results
+        """
+        return self.core_client.search(workspace_id=self.id, query=query, continuation_token=continuation_token)
+
+    # SQL Pools
+
+    def get_sql_pools_configuration(self):
+        """Get SQL pools configuration for the workspace
+        Returns:
+            dict: The SQL pools configuration
+        """
+        return self.core_client.get_sql_pools_configuration(workspace_id=self.id)
+
+    def update_sql_pools_configuration(self, custom_sql_pools=None, custom_sql_pools_enabled=None):
+        """Update SQL pools configuration for the workspace
+        Args:
+            custom_sql_pools (list): The list of custom SQL pools
+            custom_sql_pools_enabled (bool): Whether custom SQL pools are enabled
+        Returns:
+            int: The status code of the response
+        """
+        return self.core_client.update_sql_pools_configuration(workspace_id=self.id, custom_sql_pools=custom_sql_pools,
+                                                               custom_sql_pools_enabled=custom_sql_pools_enabled)
+
+    # Database Operations
+
+    def list_restorable_deleted_databases(self, lakehouse_id):
+        """List restorable deleted databases in a lakehouse
+        Args:
+            lakehouse_id (str): The ID of the lakehouse
+        Returns:
+            list: The list of restorable deleted databases
+        """
+        return self.core_client.list_restorable_deleted_databases(workspace_id=self.id, lakehouse_id=lakehouse_id)
+
     # graph query sets
 
     def create_graph_query_set(self, display_name, definition = None, description = None):

@@ -28,6 +28,7 @@ Go to:
 - [Lakehouse](#lakehouse)
 - [Maps](#maps)
 - [Mirrored Azure Databricks Catalogs](#mirrored-azure-databricks-catalogs)
+- [Mirrored Catalogs](#mirrored-catalogs)
 - [Mirrored Database](#mirrored-database)
 - [ML Experiments](#ml-experiments)
 - [ML Models](#ml-models)
@@ -931,6 +932,69 @@ tables = fcc.discover_mirrored_azure_databricks_catalog_tables(workspace_id=work
 # Refresh Mirrored Azure Databricks Catalog Metadata
 status = fcc.refresh_mirrored_azure_databricks_catalog_metadata(workspace_id=workspace_id,
                                                         item_id= item_id, wait_for_completion=False)
+```
+
+## Mirrored Catalogs
+
+```python
+from msfabricpysdkcore import FabricClientCore
+fcc = FabricClientCore()
+
+workspace_id = "05bc5baa-ef02-4a31-ab20-158a478151d3"
+item_id = "eb5a54af-f282-4612-97c1-95120620b5d3"
+
+# List Mirrored Catalogs
+mirrored_catalogs = fcc.list_mirrored_catalogs(workspace_id=workspace_id)
+
+# Get Mirrored Catalog Definition
+mirrored_catalog_definition = fcc.get_mirrored_catalog_definition(workspace_id=workspace_id, 
+                                                                   mirrored_catalog_id=item_id)
+definition = mirrored_catalog_definition["definition"]
+
+# Create Mirrored Catalog
+from datetime import datetime
+date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+date_str = date_str.replace(" ", "T").replace(":", "").replace("-", "")
+date_str = f"mirrored_catalog_{date_str}"
+
+creation_payload = {
+    "catalogType": "Unity",
+    "connectionId": "c1128asdfas1e35f86",
+    "catalogName": "my_catalog"
+}
+
+mirrored_catalog_new = fcc.create_mirrored_catalog(workspace_id=workspace_id, 
+                                                   display_name=date_str, 
+                                                   creation_payload=creation_payload,
+                                                   return_item=True)
+
+# Get Mirrored Catalog
+mirrored_catalog_get = fcc.get_mirrored_catalog(workspace_id=workspace_id, 
+                                               mirrored_catalog_id=mirrored_catalog_new.id,
+                                               return_item=True)
+
+# Update Mirrored Catalog
+date_str_updated = date_str + "_updated"
+mirrored_catalog_updated = fcc.update_mirrored_catalog(workspace_id=workspace_id, 
+                                                       mirrored_catalog_id=mirrored_catalog_new.id, 
+                                                       display_name=date_str_updated, 
+                                                       return_item=True)
+# or
+mirrored_catalog_new.update(display_name=date_str_updated)
+
+# Update Mirrored Catalog Definition
+mirrored_catalog_updated = fcc.update_mirrored_catalog_definition(workspace_id=workspace_id, 
+                                                                  mirrored_catalog_id=mirrored_catalog_new.id, 
+                                                                  definition=definition)
+# or
+mirrored_catalog_new.update_definition(definition=definition)
+
+# Get Mirrored Catalog Definition via object
+definition = mirrored_catalog_new.get_definition()
+
+# Delete Mirrored Catalog
+resp = fcc.delete_mirrored_catalog(workspace_id=workspace_id, 
+                                  mirrored_catalog_id=mirrored_catalog_updated.id)
 ```
 
 ## Maps

@@ -973,3 +973,168 @@ class FabricClientAdmin(FabricClient):
         return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
                                     error_message="Error listing networking communication policies",
                                     return_format="json", paging=True)
+    
+    def grant_admin_temporary_access(self, workspace_id):
+        """Grant admin temporary access to a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The grant response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/grantTemporaryAccess"
+
+        return self.calling_routine(url=url, operation="POST", response_codes=[200, 429],
+                                    error_message="Error granting admin temporary access", return_format="response")
+    
+    def remove_admin_temporary_access(self, workspace_id):
+        """Remove admin temporary access from a workspace
+        Args:
+            workspace_id (str): The ID of the workspace
+        Returns:
+            dict: The removal response
+        """
+        url = f"https://api.fabric.microsoft.com/v1/admin/workspaces/{workspace_id}/removeTemporaryAccess"
+
+        return self.calling_routine(url=url, operation="POST", response_codes=[200, 429],
+                                    error_message="Error removing admin temporary access", return_format="response")
+    
+    # Capacity Custom Pools (beta)
+    
+    def create_capacity_custom_pool(self, capacity_id, name, node_family, node_size, auto_scale = None, dynamic_executor_allocation = None):
+        """Create a capacity custom pool (beta)
+        Args:
+            capacity_id (str): The ID of the capacity
+            name (str): The name of the pool
+            node_family (str): The node family
+            node_size (str): The node size
+            auto_scale (dict): Auto scale configuration
+            dynamic_executor_allocation (dict): Dynamic executor allocation configuration
+        Returns:
+            dict: The created pool
+        """
+        url = f"https://api.fabric.microsoft.com/v1/capacities/{capacity_id}/customPools?beta=true"
+        
+        body = {
+            "name": name,
+            "nodeFamily": node_family,
+            "nodeSize": node_size
+        }
+        if auto_scale:
+            body["autoScale"] = auto_scale
+        if dynamic_executor_allocation:
+            body["dynamicExecutorAllocation"] = dynamic_executor_allocation
+
+        return self.calling_routine(url=url, operation="POST", body=body, response_codes=[201, 429],
+                                    error_message="Error creating capacity custom pool", return_format="json")
+    
+    def delete_capacity_custom_pool(self, capacity_id, pool_id):
+        """Delete a capacity custom pool (beta)
+        Args:
+            capacity_id (str): The ID of the capacity
+            pool_id (str): The ID of the pool
+        Returns:
+            int: The status code
+        """
+        url = f"https://api.fabric.microsoft.com/v1/capacities/{capacity_id}/customPools/{pool_id}?beta=true"
+
+        response = self.calling_routine(url=url, operation="DELETE", response_codes=[200, 429],
+                                       error_message="Error deleting capacity custom pool", return_format="response")
+        return response.status_code
+    
+    def get_capacity_custom_pool(self, capacity_id, pool_id):
+        """Get a capacity custom pool (beta)
+        Args:
+            capacity_id (str): The ID of the capacity
+            pool_id (str): The ID of the pool
+        Returns:
+            dict: The pool details
+        """
+        url = f"https://api.fabric.microsoft.com/v1/capacities/{capacity_id}/customPools/{pool_id}?beta=true"
+
+        return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting capacity custom pool", return_format="json")
+    
+    def list_capacity_custom_pools(self, capacity_id, continuation_token = None):
+        """List capacity custom pools (beta)
+        Args:
+            capacity_id (str): The ID of the capacity
+            continuation_token (str): The continuation token
+        Returns:
+            list: The list of pools
+        """
+        url = f"https://api.fabric.microsoft.com/v1/capacities/{capacity_id}/customPools?beta=true"
+        
+        if continuation_token:
+            url += f"&continuationToken={continuation_token}"
+
+        return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error listing capacity custom pools", return_format="value_json", paging=True)
+    
+    def update_capacity_custom_pool(self, capacity_id, pool_id, name = None, node_family = None, node_size = None,
+                                   auto_scale = None, dynamic_executor_allocation = None):
+        """Update a capacity custom pool (beta)
+        Args:
+            capacity_id (str): The ID of the capacity
+            pool_id (str): The ID of the pool
+            name (str): The name of the pool
+            node_family (str): The node family
+            node_size (str): The node size
+            auto_scale (dict): Auto scale configuration
+            dynamic_executor_allocation (dict): Dynamic executor allocation configuration
+        Returns:
+            dict: The updated pool
+        """
+        url = f"https://api.fabric.microsoft.com/v1/capacities/{capacity_id}/customPools/{pool_id}?beta=true"
+        
+        body = {}
+        if name:
+            body["name"] = name
+        if node_family:
+            body["nodeFamily"] = node_family
+        if node_size:
+            body["nodeSize"] = node_size
+        if auto_scale:
+            body["autoScale"] = auto_scale
+        if dynamic_executor_allocation:
+            body["dynamicExecutorAllocation"] = dynamic_executor_allocation
+
+        return self.calling_routine(url=url, operation="PATCH", body=body, response_codes=[200, 429],
+                                    error_message="Error updating capacity custom pool", return_format="json")
+    
+    # Capacity Spark Settings (beta)
+    
+    def get_capacity_spark_settings(self, capacity_id):
+        """Get capacity Spark settings (beta)
+        Args:
+            capacity_id (str): The ID of the capacity
+        Returns:
+            dict: The Spark settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/capacities/{capacity_id}/sparkSettings?beta=true"
+
+        return self.calling_routine(url=url, operation="GET", response_codes=[200, 429],
+                                    error_message="Error getting capacity Spark settings", return_format="json")
+    
+    def update_capacity_spark_settings(self, capacity_id, job_burst_support = None, workspace_custom_pools_support = None,
+                                      workspace_starter_pool_status = None):
+        """Update capacity Spark settings (beta)
+        Args:
+            capacity_id (str): The ID of the capacity
+            job_burst_support (str): Job burst support setting
+            workspace_custom_pools_support (str): Workspace custom pools support setting
+            workspace_starter_pool_status (str): Workspace starter pool status
+        Returns:
+            dict: The updated Spark settings
+        """
+        url = f"https://api.fabric.microsoft.com/v1/capacities/{capacity_id}/sparkSettings?beta=true"
+        
+        body = {}
+        if job_burst_support:
+            body["jobBurstSupport"] = job_burst_support
+        if workspace_custom_pools_support:
+            body["workspaceCustomPoolsSupport"] = workspace_custom_pools_support
+        if workspace_starter_pool_status:
+            body["workspaceStarterPoolStatus"] = workspace_starter_pool_status
+
+        return self.calling_routine(url=url, operation="PATCH", body=body, response_codes=[200, 429],
+                                    error_message="Error updating capacity Spark settings", return_format="json")

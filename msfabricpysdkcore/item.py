@@ -178,6 +178,32 @@ class Item:
         return self.core_client.get_external_data_share(workspace_id=self.workspace_id, item_id=self.id,
                                                        external_data_share_id=external_data_share_id)
 
+    # Item Utilities
+
+    def get_payload(self):
+        """Get the item payload
+        Returns:
+            dict: The item payload
+        """
+        return self.core_client.get_item_payload(workspace_id=self.workspace_id, item_id=self.id)
+
+    def resolve_permissions(self):
+        """Resolve item permissions
+        Returns:
+            dict: The resolved permissions
+        """
+        return self.core_client.resolve_item_permissions(workspace_id=self.workspace_id, item_id=self.id)
+
+    def test_connection(self, connection_details=None):
+        """Test the connection for the item
+        Args:
+            connection_details (dict): The connection details to test
+        Returns:
+            dict: The test connection result
+        """
+        return self.core_client.test_connection(workspace_id=self.workspace_id, item_id=self.id,
+                                                connection_details=connection_details)
+
     def list_external_data_shares_in_item(self):
         return self.core_client.list_external_data_shares_in_item(workspace_id=self.workspace_id, item_id=self.id)
     
